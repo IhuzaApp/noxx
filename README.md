@@ -292,8 +292,6 @@ Both light and dark modes are supported with the same token names.
 
 ## Contributing
 
-This is currently a **frontend-only** project running on mock data. To wire it up to a real backend, enable **Lovable Cloud** from the editor — it provisions Postgres, auth, storage, and serverless functions automatically. Then replace the mock modules in `src/lib/` with real queries.
+This is currently a **frontend-only** project running on mock data.
 
----
-
-**Built with [Lovable](https://lovable.dev).**
+**Built for Noxx.**
