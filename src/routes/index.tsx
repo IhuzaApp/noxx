@@ -730,7 +730,7 @@ function SiteFooter() {
           <a href="#" className="hover:text-foreground transition-colors">Contact</a>
         </div>
         <p className="text-sm text-muted-foreground font-light">
-          © {new Date().getFullYear()} Noxx Inc.
+          © 2025 - {new Date().getFullYear()} Noxx Inc.
         </p>
       </div>
     </footer>
