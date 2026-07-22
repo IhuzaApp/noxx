@@ -41,7 +41,7 @@ export const Route = createFileRoute("/")({
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const } }
 };
 
 const staggerContainer = {
@@ -135,7 +135,7 @@ function Hero() {
         <motion.div 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ delay: 0.3, duration: 1, ease: [0.16, 1, 0.3, 1] as const }}
           className="relative w-full"
         >
           {/* SaaS UI Mockup */}
