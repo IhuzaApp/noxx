@@ -4,7 +4,7 @@ import {
   Mail, MessageSquare, Instagram, Phone, Sparkles, Bot, Send,
   Search, MoreHorizontal, ChevronRight, ArrowUpRight, Tag, Wand2,
   Ticket as TicketIcon, Plus, UserCircle2, CheckCircle2, Clock,
-  RefreshCw, Inbox, XCircle, Loader2, Flag,
+  RefreshCw, Inbox, XCircle, Loader2, Flag, ArrowLeft,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Topbar } from "@/components/Topbar";
@@ -440,9 +440,9 @@ ${conversationText || "No message content yet."}`;
           action={
             <button
               onClick={() => setSelectedId(null)}
-              className="inline-flex items-center gap-1.5 rounded-md border border-input bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent transition-all shadow-soft"
             >
-              ← All Tickets
+              <ArrowLeft className="h-4 w-4" /> Back to tickets
             </button>
           }
         />
@@ -577,6 +577,12 @@ ${conversationText || "No message content yet."}`;
           {/* Conversation */}
           <section className="col-span-12 lg:col-span-9 flex flex-col h-[calc(100vh-4rem)] bg-background">
             <div className="flex items-center gap-3 px-5 py-3 border-b border-border shrink-0">
+              <button
+                onClick={() => setSelectedId(null)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition shrink-0"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" /> Back
+              </button>
               <span className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0", CHANNEL_TINT[selected.channel] || "bg-muted text-muted-foreground")}>
                 <ChanIcon className="h-4 w-4" />
               </span>
