@@ -367,28 +367,84 @@ app.post("/webhook", async (req, res) => {
             name
             trigger
             nodes
+            simulation
           }
         }
       `);
       const activeFlows = flowsRes?.data?.flows || [];
+      const recip = (recipientEmail || "").trim().toLowerCase();
+      const currentSubj = (cleanSubj || "").toLowerCase();
+
       for (const f of activeFlows) {
         if (!f.nodes || !Array.isArray(f.nodes)) continue;
+
+        let flowTargetEmail = "";
+        let flowSubjectFilter = "";
+        let flowAiMode = "";
+        let flowAiFocusArea = "";
+        let flowAiLanguage = "auto";
+        let flowKnowledgeLink = "";
+
+        // Aggregate settings across all nodes in this flow
         for (const node of f.nodes) {
           const d = node.data || {};
-          const target = (d.targetEmail || "").trim().toLowerCase();
-          const recip = (recipientEmail || "").trim().toLowerCase();
-          const subjFilter = (d.subjectFilter || "").trim().toLowerCase();
-          const currentSubj = (cleanSubj || "").toLowerCase();
-
-          const emailMatches = target && (target === recip || target === "*" || recip.includes(target));
-          const subjectMatches = subjFilter && currentSubj.includes(subjFilter);
-
-          if (emailMatches || subjectMatches || d.aiMode === "skip_ai_ticket") {
-            matchedRule = { flowName: f.name, nodeData: d };
-            break;
+          if (d.targetEmail) flowTargetEmail = d.targetEmail;
+          if (!flowTargetEmail && d.detail && typeof d.detail === "string" && d.detail.toLowerCase().includes("@")) {
+            const match = d.detail.match(/[\w.-]+@[\w.-]+/);
+            if (match) flowTargetEmail = match[0];
           }
+          if (d.subjectFilter) flowSubjectFilter = d.subjectFilter;
+          if (d.aiMode) flowAiMode = d.aiMode;
+          if (d.aiFocusArea) flowAiFocusArea = d.aiFocusArea;
+          if (d.aiLanguage) flowAiLanguage = d.aiLanguage;
+          if (d.knowledgeLink) flowKnowledgeLink = d.knowledgeLink;
         }
-        if (matchedRule) break;
+
+        // Check resources associated with this flow
+        const flowResources = f.simulation?.resources || f.resources || [];
+        let resourceMatch = false;
+        if (Array.isArray(flowResources)) {
+          resourceMatch = flowResources.some((r) => {
+            const val = (r?.value || "").trim().toLowerCase();
+            return val && (recip.includes(val) || val.includes(recip));
+          });
+        }
+
+        const target = (flowTargetEmail || "").trim().toLowerCase();
+        const subjFilter = (flowSubjectFilter || "").trim().toLowerCase();
+
+        const emailMatches = (target && (target === recip || target === "*" || recip.includes(target) || target.includes(recip))) || resourceMatch;
+        const subjectMatches = subjFilter && currentSubj.includes(subjFilter);
+
+        if (emailMatches || subjectMatches) {
+          matchedRule = {
+            flowName: f.name,
+            nodeData: {
+              targetEmail: flowTargetEmail || recip,
+              subjectFilter: flowSubjectFilter,
+              aiMode: flowAiMode,
+              aiFocusArea: flowAiFocusArea,
+              aiLanguage: flowAiLanguage,
+              knowledgeLink: flowKnowledgeLink,
+            },
+          };
+          break; // Exact target match found!
+        }
+
+        // Keep as fallback if flow has general AI rules
+        if (!matchedRule && (flowAiFocusArea || flowAiLanguage !== "auto" || flowKnowledgeLink || flowAiMode)) {
+          matchedRule = {
+            flowName: f.name,
+            nodeData: {
+              targetEmail: flowTargetEmail,
+              subjectFilter: flowSubjectFilter,
+              aiMode: flowAiMode,
+              aiFocusArea: flowAiFocusArea,
+              aiLanguage: flowAiLanguage,
+              knowledgeLink: flowKnowledgeLink,
+            },
+          };
+        }
       }
     } catch (err) {
       console.error("Error querying active flow rules:", err);
