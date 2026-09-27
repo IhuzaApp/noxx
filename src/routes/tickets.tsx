@@ -10,6 +10,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { Topbar } from "@/components/Topbar";
 import { Card } from "@/components/Card";
 import { cn } from "@/lib/utils";
+import { API_BASE } from "@/lib/api-config";
 
 export const Route = createFileRoute("/tickets")({
   head: () => ({
@@ -285,7 +286,7 @@ function TicketsPage() {
     setSending(true);
     setSendError(null);
     try {
-      const res = await fetch("http://localhost:4000/send-reply", {
+      const res = await fetch(`${API_BASE}/send-reply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ticket_id: selected.id, message: draft.trim() }),

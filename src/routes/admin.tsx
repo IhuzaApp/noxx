@@ -677,6 +677,7 @@ function ProjectsTab() {
   const envColor = {
     production: "bg-success/10 text-success border-success/20",
     sandbox: "bg-channel-whatsapp/10 text-channel-whatsapp border-channel-whatsapp/20",
+    staging: "bg-warning/10 text-warning-foreground border-warning/20",
   };
 
   const statusDot = {

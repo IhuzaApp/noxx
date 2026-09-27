@@ -293,11 +293,11 @@ export const flowTemplates: Record<string, FlowTemplate> = {
   },
   "ot4": {
     nodes: [
-      { id: "1", type: "flow", position: { x: 320, y: 20 }, data: { kind: "trigger", label: "Customer Message Received", detail: "Inbound Email / WhatsApp" } },
-      { id: "2", type: "flow", position: { x: 320, y: 180 }, data: { kind: "ai", label: "AI Auto-Respond", detail: "GPT-4 Support Agent" } },
-      { id: "3", type: "flow", position: { x: 320, y: 360 }, data: { kind: "condition", label: "Escalation requested?", detail: "Check customer sentiment / request" } },
+      { id: "1", type: "flow", position: { x: 320, y: 20 }, data: { kind: "trigger", label: "Customer Message Received", detail: "Target: support@agatike.com", targetEmail: "support@agatike.com" } },
+      { id: "2", type: "flow", position: { x: 320, y: 180 }, data: { kind: "agent", label: "AI Support Agent", detail: "Technical Support FAQs", aiMode: "auto_reply", aiFocusArea: "Answer technical support FAQs concisely. If customer requests human help or is frustrated, escalate immediately." } },
+      { id: "3", type: "flow", position: { x: 320, y: 360 }, data: { kind: "condition", label: "Escalation requested?", detail: "Check customer sentiment / request", conditionType: "If user requested human agent", yesLabel: "Escalate to Human Agent", noLabel: "AI Self-Service Resolved" } },
       { id: "4", type: "flow", position: { x: 60, y: 540 }, data: { kind: "delay", label: "Resolved by AI", detail: "No human action needed" } },
-      { id: "5", type: "flow", position: { x: 580, y: 540 }, data: { kind: "whatsapp", label: "Escalate to Agent", detail: "Notify live support team" } },
+      { id: "5", type: "flow", position: { x: 580, y: 540 }, data: { kind: "whatsapp", label: "Escalate to Agent", detail: "Notify live support team", ticketDepartment: "Support", ticketPriority: "high" } },
     ],
     edges: [
       makeEdge("e1-2", "1", "2", "default"),
@@ -312,6 +312,52 @@ export const flowTemplates: Record<string, FlowTemplate> = {
         { msg: "Inbound message: I need to speak to a human manager", kind: "info" },
         { msg: "AI Agent analyzed intent: Human Handover required", kind: "warn" },
         { msg: "Escalated ticket to live agent via WhatsApp", kind: "ok" },
+      ],
+    },
+  },
+  "ot5": {
+    nodes: [
+      { id: "1", type: "flow", position: { x: 320, y: 20 }, data: { kind: "trigger", label: "Inbound Sales Email", detail: "Target: sales@agatike.com", targetEmail: "sales@agatike.com" } },
+      { id: "2", type: "flow", position: { x: 320, y: 180 }, data: { kind: "agent", label: "AI Sales Representative", detail: "Focus on Enterprise Pricing & Demos", aiMode: "auto_reply", aiFocusArea: "Focus on sales inquiries, Enterprise pricing tiers, demo scheduling, and feature comparisons." } },
+      { id: "3", type: "flow", position: { x: 320, y: 360 }, data: { kind: "condition", label: "Demo requested?", detail: "Check if customer wants demo", conditionType: "If user requested demo", yesLabel: "Schedule Calendar Demo", noLabel: "Send Product One-Pager" } },
+      { id: "4", type: "flow", position: { x: 60, y: 540 }, data: { kind: "email", label: "Send Demo Scheduling Link", detail: "Calendar invite", ticketDepartment: "Sales", ticketPriority: "high" } },
+      { id: "5", type: "flow", position: { x: 580, y: 540 }, data: { kind: "email", label: "Send Product Specs PDF", detail: "Enterprise Overview", ticketDepartment: "Sales", ticketPriority: "normal" } },
+    ],
+    edges: [
+      makeEdge("e1-2", "1", "2", "default"),
+      makeEdge("e2-3", "2", "3", "default"),
+      makeEdge("e3-4", "3", "4", "yes"),
+      makeEdge("e3-5", "3", "5", "no"),
+    ],
+    simulation: {
+      path: ["1", "2", "3", "4"],
+      edgePath: ["e1-2", "e2-3", "e3-4"],
+      messages: [
+        { msg: "Inbound email received for sales@agatike.com", kind: "info" },
+        { msg: "AI Sales Representative processed email with Sales focus instructions", kind: "ok" },
+        { msg: "Condition: Demo request detected", kind: "ok" },
+        { msg: "Demo scheduling link sent to prospect", kind: "ok" },
+      ],
+    },
+  },
+  "ot6": {
+    nodes: [
+      { id: "1", type: "flow", position: { x: 320, y: 20 }, data: { kind: "trigger", label: "Urgent Support Inbound", detail: "Subject filter: URGENT", targetEmail: "support@agatike.com", subjectFilter: "URGENT" } },
+      { id: "2", type: "flow", position: { x: 320, y: 180 }, data: { kind: "agent", label: "Bypass AI & Create Open Ticket", detail: "⚡ Skip AI → Human Agent directly", aiMode: "skip_ai_ticket", ticketDepartment: "Engineering", ticketPriority: "urgent" } },
+      { id: "3", type: "flow", position: { x: 320, y: 360 }, data: { kind: "email", label: "Notify On-Call Support Agent", detail: "Urgent ticket created", ticketDepartment: "Support", ticketPriority: "urgent" } },
+    ],
+    edges: [
+      makeEdge("e1-2", "1", "2", "default"),
+      makeEdge("e2-3", "2", "3", "default"),
+    ],
+    simulation: {
+      path: ["1", "2", "3"],
+      edgePath: ["e1-2", "e2-3"],
+      messages: [
+        { msg: "Inbound email received: 'URGENT: Server outage'", kind: "info" },
+        { msg: "Flow Rule Matched: Skip AI auto-reply activated", kind: "warn" },
+        { msg: "Created Open Ticket #8912 directly for Human Handling", kind: "ok" },
+        { msg: "Dispatched alert to On-Call Support Agent", kind: "ok" },
       ],
     },
   },

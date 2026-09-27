@@ -97,7 +97,29 @@ const INITIAL_OMNI_TEMPLATES: OmnichannelTemplate[] = [
     ],
     uses: 2103,
   },
+  {
+    id: "ot5",
+    name: "Sales Inquiry & Demo Routing (Target: sales@domain.com)",
+    description: "Routes sales@ emails to AI Sales Rep with Enterprise pricing focus & demo calendar booking.",
+    steps: [
+      { channel: "ai", label: "AI Sales Representative (sales@agatike.com)", kind: "primary" },
+      { channel: "email", label: "Send Demo Link or Product Specs PDF", kind: "branch" },
+    ],
+    uses: 4890,
+  },
+  {
+    id: "ot6",
+    name: "Urgent Support Bypass (Skip AI → Direct Human Ticket)",
+    description: "Filters subject for 'URGENT'; bypasses AI auto-reply and creates open ticket for human agents.",
+    steps: [
+      { channel: "email", label: "Filter Subject: URGENT (support@agatike.com)", kind: "primary" },
+      { channel: "email", label: "⚡ Skip AI → Create Open Ticket directly", kind: "fallback" },
+    ],
+    uses: 3410,
+  },
 ];
+
+import { API_BASE } from "@/lib/api-config";
 
 const PRESET_VARIABLES = ["{{name}}", "{{code}}", "{{order_id}}", "{{time}}", "{{amount}}", "{{org}}", "{{transcript}}"];
 
@@ -109,7 +131,7 @@ function TemplatesPage() {
   const [search, setSearch] = useState("");
   const [channelFilter, setChannelFilter] = useState<string>("all");
 
-  const handleUseFlow = (t: OmnichannelTemplate) => {
+  const handleUseFlow = async (t: OmnichannelTemplate) => {
     const existingFlows = userFlowStore.get();
     const targetId = t.id.startsWith("fl_") || t.id.startsWith("ot") ? t.id : `fl_${t.id}`;
     let existing = existingFlows.find((f) => f.id === targetId || f.id === t.id || f.name === t.name);
@@ -129,7 +151,11 @@ function TemplatesPage() {
       existing = newFlow;
     }
 
-    if (!flowTemplates[existing.id] && !flowTemplates[t.id]) {
+    let nodesToSave = flowTemplates[existing.id]?.nodes || flowTemplates[t.id]?.nodes;
+    let edgesToSave = flowTemplates[existing.id]?.edges || flowTemplates[t.id]?.edges;
+    let simToSave = flowTemplates[existing.id]?.simulation || flowTemplates[t.id]?.simulation;
+
+    if (!nodesToSave) {
       const nodes: Node<FlowNodeData>[] = [
         {
           id: "1",
@@ -162,24 +188,50 @@ function TemplatesPage() {
         currentY += 160;
       });
 
+      nodesToSave = nodes;
+      edgesToSave = edges;
+      simToSave = {
+        path: nodes.map((n) => n.id),
+        edgePath: edges.map((e) => e.id),
+        messages: [
+          { msg: `Triggered: ${t.name}`, kind: "info" },
+          ...t.steps.map((s) => ({
+            msg: `${s.label || s.channel} step executed`,
+            kind: (s.kind === "fallback" ? "warn" : "ok") as "warn" | "ok",
+          })),
+        ],
+      };
+
       flowTemplates[existing.id] = {
-        nodes,
-        edges,
-        simulation: {
-          path: nodes.map((n) => n.id),
-          edgePath: edges.map((e) => e.id),
-          messages: [
-            { msg: `Triggered: ${t.name}`, kind: "info" },
-            ...t.steps.map((s) => ({
-              msg: `${s.label || s.channel} step executed`,
-              kind: (s.kind === "fallback" ? "warn" : "ok") as "warn" | "ok",
-            })),
-          ],
-        },
+        nodes: nodesToSave,
+        edges: edgesToSave,
+        simulation: simToSave,
       };
     }
 
     const finalId = flowTemplates[t.id] ? t.id : existing.id;
+
+    // Save flow to Hasura DB
+    try {
+      await fetch(`${API_BASE}/flows`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: finalId,
+          name: t.name,
+          description: t.description || "Created from omnichannel template",
+          channels: Array.from(new Set(t.steps.map((s) => s.channel))),
+          trigger: "Webhook Event",
+          status: "active",
+          nodes: nodesToSave,
+          edges: edgesToSave,
+          simulation: simToSave || {},
+        }),
+      });
+    } catch (e) {
+      console.error("Failed to save flow to database:", e);
+    }
+
     navigate({ to: "/flows", search: { id: finalId } });
   };
 
@@ -200,7 +252,7 @@ function TemplatesPage() {
 
   const loadTemplates = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:4000/templates");
+      const res = await fetch(`${API_BASE}/templates`);
       if (res.ok) {
         const json = await res.json();
         if (json.templates) setSingleTemplates(json.templates);
@@ -233,7 +285,7 @@ function TemplatesPage() {
         type: modalType,
       };
 
-      const res = await fetch("http://localhost:4000/templates", {
+      const res = await fetch(`${API_BASE}/templates`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -263,7 +315,7 @@ function TemplatesPage() {
         ? { name: `${t.name} (Copy)`, description: (t as OmnichannelTemplate).description, steps: (t as OmnichannelTemplate).steps, type: "omnichannel" }
         : { name: `${t.name} (Copy)`, channel: (t as SingleTemplate).channel, body: (t as SingleTemplate).body, type: "single" };
 
-      const res = await fetch("http://localhost:4000/templates", {
+      const res = await fetch(`${API_BASE}/templates`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -278,7 +330,7 @@ function TemplatesPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`http://localhost:4000/templates/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/templates/${id}`, { method: "DELETE" });
       if (res.ok) {
         await loadTemplates();
       }

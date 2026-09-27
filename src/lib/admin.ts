@@ -48,7 +48,7 @@ export type AdminProject = {
   flowsCount: number;
   status: "active" | "archived";
   createdAt: string;
-  environment: "production" | "sandbox";
+  environment: "production" | "sandbox" | "staging";
 };
 
 // ── Users ──────────────────────────────────────────────────────────────────

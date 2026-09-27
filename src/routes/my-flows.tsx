@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Plus,
@@ -49,10 +49,60 @@ const resourceMeta: Record<FlowResource["kind"], { label: string; icon: typeof P
   folder: { label: "Shared folder", icon: Folder, placeholder: "https://drive.google.com/drive/folders/…", hint: "Cloud folder Noxx can read or write to (Drive, S3, Dropbox)." },
 };
 
+import { API_BASE } from "@/lib/api-config";
+
 function MyFlowsPage() {
-  const flows = useStore(userFlowStore);
+  const storeFlows = useStore(userFlowStore);
+  const [dbFlows, setDbFlows] = useState<UserFlow[]>([]);
   const [openNew, setOpenNew] = useState(false);
   const [editing, setEditing] = useState<UserFlow | null>(null);
+
+  const loadDbFlows = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/flows`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.flows && Array.isArray(json.flows)) {
+          setDbFlows(json.flows);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load flows from database:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDbFlows();
+  }, [loadDbFlows]);
+
+  const flows = dbFlows.length > 0 ? dbFlows : storeFlows;
+
+  const handleToggleStatus = async (f: UserFlow) => {
+    const newStatus = f.status === "active" ? "paused" : "active";
+    userFlowStore.update((x) => x.id === f.id, { status: newStatus });
+    setDbFlows((prev) => prev.map((x) => (x.id === f.id ? { ...x, status: newStatus } : x)));
+
+    try {
+      await fetch(`${API_BASE}/flows`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...f, status: newStatus }),
+      });
+    } catch (e) {
+      console.error("Failed to update flow status in database:", e);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    userFlowStore.remove((x) => x.id === id);
+    setDbFlows((prev) => prev.filter((x) => x.id !== id));
+
+    try {
+      await fetch(`${API_BASE}/flows/${id}`, { method: "DELETE" });
+    } catch (e) {
+      console.error("Failed to delete flow from database:", e);
+    }
+  };
 
   return (
     <AppLayout>
@@ -119,19 +169,14 @@ function MyFlowsPage() {
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <button
-                      onClick={() =>
-                        userFlowStore.update(
-                          (x) => x.id === f.id,
-                          { status: f.status === "active" ? "paused" : "active" },
-                        )
-                      }
+                      onClick={() => handleToggleStatus(f)}
                       className="rounded-md border border-input bg-card p-1.5 text-muted-foreground hover:text-foreground transition"
                       title={f.status === "active" ? "Pause" : "Activate"}
                     >
                       {f.status === "active" ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
                     </button>
                     <button
-                      onClick={() => userFlowStore.remove((x) => x.id === f.id)}
+                      onClick={() => handleDelete(f.id)}
                       className="rounded-md border border-input bg-card p-1.5 text-muted-foreground hover:text-destructive transition"
                       title="Delete"
                     >
@@ -151,7 +196,7 @@ function MyFlowsPage() {
                   ))}
                 </div>
 
-                {f.resources.length > 0 && (
+                {f.resources && f.resources.length > 0 && (
                   <div className="mt-4 rounded-lg border border-dashed border-border bg-muted/30 p-3 space-y-1.5">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                       Connected resources
@@ -190,7 +235,7 @@ function MyFlowsPage() {
         )}
       </main>
 
-      <NewFlowModal open={openNew} onClose={() => setOpenNew(false)} />
+      <NewFlowModal open={openNew} onClose={() => { setOpenNew(false); loadDbFlows(); }} />
       {editing && (
         <EditResourcesModal flow={editing} onClose={() => setEditing(null)} />
       )}
@@ -204,6 +249,7 @@ function NewFlowModal({ open, onClose }: { open: boolean; onClose: () => void })
   const [trigger, setTrigger] = useState("API request");
   const [channels, setChannels] = useState<UserFlow["channels"]>(["whatsapp"]);
   const [resources, setResources] = useState<FlowResource[]>([]);
+  const [saving, setSaving] = useState(false);
 
   const reset = () => {
     setName("");
@@ -213,11 +259,23 @@ function NewFlowModal({ open, onClose }: { open: boolean; onClose: () => void })
     setResources([]);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
-    userFlowStore.add({
-      id: makeId("fl"),
+    if (!name.trim() || saving) return;
+    setSaving(true);
+
+    const newId = makeId("fl");
+    const initialNodes = [
+      {
+        id: "1",
+        type: "flow",
+        position: { x: 320, y: 20 },
+        data: { kind: "trigger", label: `${name.trim()} Event`, detail: `Trigger: ${trigger}` },
+      },
+    ];
+
+    const newFlow: UserFlow = {
+      id: newId,
       name: name.trim(),
       description: description.trim() || "No description.",
       trigger,
@@ -225,9 +283,33 @@ function NewFlowModal({ open, onClose }: { open: boolean; onClose: () => void })
       resources,
       status: "draft",
       createdAt: new Date().toISOString(),
-    });
-    reset();
-    onClose();
+    };
+
+    userFlowStore.add(newFlow);
+
+    try {
+      await fetch(`${API_BASE}/flows`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: newId,
+          name: name.trim(),
+          description: description.trim() || "No description.",
+          trigger,
+          channels,
+          status: "draft",
+          nodes: initialNodes,
+          edges: [],
+          simulation: { path: ["1"], edgePath: [], messages: [{ msg: `Triggered: ${name.trim()}`, kind: "info" }] },
+        }),
+      });
+    } catch (e) {
+      console.error("Failed to save new flow to database:", e);
+    } finally {
+      setSaving(false);
+      reset();
+      onClose();
+    }
   };
 
   const toggleChannel = (c: UserFlow["channels"][number]) =>

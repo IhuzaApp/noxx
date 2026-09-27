@@ -20,9 +20,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Raw body for webhook; JSON for /send-reply and /templates
+// Raw body for webhook; JSON for /send-reply, /templates, /flows
 app.use((req, res, next) => {
-  if (req.path === "/send-reply" || req.path.startsWith("/templates")) return express.json()(req, res, next);
+  if (req.path === "/send-reply" || req.path.startsWith("/templates") || req.path.startsWith("/flows")) return express.json()(req, res, next);
   express.raw({ type: "*/*" })(req, res, next);
 });
 
@@ -59,15 +59,37 @@ function getCompanyName(recipientEmail) {
   return "Support";
 }
 
-function getSystemInstruction(recipientEmail) {
+function getSystemInstruction(recipientEmail, aiFocusArea = "", aiLanguage = "auto", knowledgeLink = "") {
   const companyName = getCompanyName(recipientEmail);
-  return `You are the AI customer support assistant for ${companyName}.
+  let focusRule = "";
+  if (aiFocusArea && aiFocusArea.trim()) {
+    focusRule = `\n- Flow Instructions & Focus: ${aiFocusArea.trim()}`;
+  }
+  let langRule = "";
+  if (aiLanguage && aiLanguage !== "auto") {
+    const langNames = {
+      en: "English",
+      fr: "French (Français)",
+      sw: "Swahili (Kiswahili)",
+      rw: "Kinyarwanda",
+      es: "Spanish (Español)",
+      de: "German (Deutsch)",
+      ar: "Arabic (العربية)",
+    };
+    const targetLang = langNames[aiLanguage] || aiLanguage;
+    langRule = `\n- Language Policy: You MUST respond in ${targetLang}.`;
+  }
+  let kbRule = "";
+  if (knowledgeLink && knowledgeLink.trim()) {
+    kbRule = `\n- Knowledge Base / Documentation Link: Refer to documentation at ${knowledgeLink.trim()} when providing guidance.`;
+  }
+  return `You are the AI assistant for ${companyName}.
 Your job is to respond to customer emails professionally, clearly, and warmly.
 Rules:
-- Represent ${companyName} — do NOT mention any internal platform names under any circumstances.
+- Represent ${companyName} — do NOT mention any internal platform names under any circumstances.${focusRule}${langRule}${kbRule}
 - Answer the customer's question directly and helpfully.
 - Be friendly, professional, and concise (2-4 sentences).
-- If the customer asks to speak with a human or live agent, let them know that a support agent will follow up with them shortly.
+- If the customer asks to speak with a human or live agent, let them know that an agent will follow up with them shortly.
 - Do not invent information you do not have.
 - Do NOT include a subject line in your output.`;
 }
@@ -180,7 +202,7 @@ async function findExistingTicket(senderEmail, subject) {
 
 // ─── Groq helper ─────────────────────────────────────────────────────────────
 
-async function callGroq(userMessage, recipientEmail = "") {
+async function callGroq(userMessage, recipientEmail = "", aiFocusArea = "", aiLanguage = "auto", knowledgeLink = "") {
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -190,7 +212,7 @@ async function callGroq(userMessage, recipientEmail = "") {
     body: JSON.stringify({
       model: "openai/gpt-oss-20b",
       messages: [
-        { role: "system", content: getSystemInstruction(recipientEmail) },
+        { role: "system", content: getSystemInstruction(recipientEmail, aiFocusArea, aiLanguage, knowledgeLink) },
         { role: "user", content: userMessage },
       ],
       max_tokens: 512,
@@ -335,7 +357,56 @@ app.post("/webhook", async (req, res) => {
     await addConversationMessage(ticketId, "customer", textBody);
     await updateEmailStatus(emailId, "processing", { message: textBody });
 
-    // 5. Build prompt context including previous thread history
+    // 5. Query active flows from Hasura DB to match dynamic rules (target email, skip AI, subject filters, prompt instructions)
+    let matchedRule = null;
+    try {
+      const flowsRes = await hasuraQuery(`
+        query GetActiveFlows {
+          flows(where: { status: { _eq: "active" } }) {
+            id
+            name
+            trigger
+            nodes
+          }
+        }
+      `);
+      const activeFlows = flowsRes?.data?.flows || [];
+      for (const f of activeFlows) {
+        if (!f.nodes || !Array.isArray(f.nodes)) continue;
+        for (const node of f.nodes) {
+          const d = node.data || {};
+          const target = (d.targetEmail || "").trim().toLowerCase();
+          const recip = (recipientEmail || "").trim().toLowerCase();
+          const subjFilter = (d.subjectFilter || "").trim().toLowerCase();
+          const currentSubj = (cleanSubj || "").toLowerCase();
+
+          const emailMatches = target && (target === recip || target === "*" || recip.includes(target));
+          const subjectMatches = subjFilter && currentSubj.includes(subjFilter);
+
+          if (emailMatches || subjectMatches || d.aiMode === "skip_ai_ticket") {
+            matchedRule = { flowName: f.name, nodeData: d };
+            break;
+          }
+        }
+        if (matchedRule) break;
+      }
+    } catch (err) {
+      console.error("Error querying active flow rules:", err);
+    }
+
+    if (matchedRule) {
+      console.log(`🎯 Matched active flow rule "${matchedRule.flowName}" for recipient ${recipientEmail}`);
+      const ruleData = matchedRule.nodeData;
+
+      if (ruleData.aiMode === "skip_ai_ticket") {
+        console.log(`⚡ Flow rule [Skip AI & Create Ticket Directly] matched for ${recipientEmail}. Re-routing to human agent.`);
+        await updateTicketStatus(ticketId, "open");
+        await updateEmailStatus(emailId, "human-handling", { message: textBody });
+        return;
+      }
+    }
+
+    // 6. Build prompt context including previous thread history
     let contextPrompt = `Subject: ${cleanSubj}\n\n`;
     if (threadHistory.length > 0) {
       contextPrompt += "Previous Conversation Thread:\n";
@@ -348,10 +419,13 @@ app.post("/webhook", async (req, res) => {
       contextPrompt += `Message:\n${textBody}`;
     }
 
-    // 6. Generate AI response via Groq
+    // 7. Generate AI response via Groq (passing custom aiFocusArea, aiLanguage, and knowledgeLink if configured in flow)
+    const customFocusArea = matchedRule?.nodeData?.aiFocusArea || "";
+    const customAiLanguage = matchedRule?.nodeData?.aiLanguage || "auto";
+    const customKnowledgeLink = matchedRule?.nodeData?.knowledgeLink || "";
     let aiResponseText = "";
     try {
-      aiResponseText = await callGroq(contextPrompt, recipientEmail);
+      aiResponseText = await callGroq(contextPrompt, recipientEmail, customFocusArea, customAiLanguage, customKnowledgeLink);
       console.log("AI response preview:", aiResponseText.slice(0, 120));
     } catch (error) {
       console.error("AI Generation error:", error.message);
@@ -548,6 +622,131 @@ app.delete("/templates/:id", async (req, res) => {
   } catch (err) {
     console.error("DELETE /templates error:", err);
     res.status(500).json({ error: "Failed to delete template from database" });
+  }
+});
+
+// ─── Flows API (Hasura Postgres DB) ───────────────────────────────────────────
+
+app.get("/flows", async (_req, res) => {
+  try {
+    const query = `
+      query GetFlows {
+        flows(order_by: { updated_at: desc }) {
+          id
+          name
+          description
+          channels
+          trigger
+          status
+          nodes
+          edges
+          simulation
+          created_at
+          updated_at
+        }
+      }
+    `;
+    const result = await hasuraQuery(query);
+    res.json({ flows: result?.data?.flows ?? [] });
+  } catch (err) {
+    console.error("GET /flows error:", err);
+    res.status(500).json({ error: "Failed to fetch flows from database" });
+  }
+});
+
+app.get("/flows/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const query = `
+      query GetFlow($id: String!) {
+        flows_by_pk(id: $id) {
+          id
+          name
+          description
+          channels
+          trigger
+          status
+          nodes
+          edges
+          simulation
+          created_at
+          updated_at
+        }
+      }
+    `;
+    const result = await hasuraQuery(query, { id });
+    const flow = result?.data?.flows_by_pk;
+    if (!flow) return res.status(404).json({ error: "Flow not found" });
+    res.json({ flow });
+  } catch (err) {
+    console.error("GET /flows/:id error:", err);
+    res.status(500).json({ error: "Failed to fetch flow from database" });
+  }
+});
+
+app.post("/flows", async (req, res) => {
+  const { id, name, description, channels, trigger, status, nodes, edges, simulation } = req.body || {};
+  if (!name?.trim()) {
+    return res.status(400).json({ error: "Flow name is required" });
+  }
+
+  const flowId = id || `fl_${Date.now()}`;
+  const object = {
+    id: flowId,
+    name: name.trim(),
+    description: description?.trim() || "",
+    channels: channels || ["whatsapp"],
+    trigger: trigger || "Webhook",
+    status: status || "active",
+    nodes: nodes || [],
+    edges: edges || [],
+    simulation: simulation || {},
+  };
+
+  try {
+    const mutation = `
+      mutation UpsertFlow($object: flows_insert_input!) {
+        insert_flows_one(
+          object: $object,
+          on_conflict: { constraint: flows_pkey, update_columns: [name, description, channels, trigger, status, nodes, edges, simulation, updated_at] }
+        ) {
+          id
+          name
+          description
+          channels
+          trigger
+          status
+          nodes
+          edges
+          simulation
+          updated_at
+        }
+      }
+    `;
+    const result = await hasuraQuery(mutation, { object });
+    const upsertedFlow = result?.data?.insert_flows_one;
+    return res.json({ success: true, flow: upsertedFlow });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to save flow to database" });
+  }
+});
+
+app.delete("/flows/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const mutation = `
+      mutation DeleteFlow($id: String!) {
+        delete_flows_by_pk(id: $id) {
+          id
+        }
+      }
+    `;
+    await hasuraQuery(mutation, { id });
+    console.log(`🗑️ Deleted flow ${id} from Hasura Postgres database`);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("DELETE /flows error:", err);
+    res.status(500).json({ error: "Failed to delete flow from database" });
   }
 });
 
