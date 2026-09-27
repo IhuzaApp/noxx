@@ -34,28 +34,29 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
 const HASURA_ENDPOINT = process.env.HASURA_GRAPHQL_ENDPOINT;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET;
 
+function getFromEmailAddress(recipientEmail, matchedRule = null, flowResources = []) {
+  let flowEmail = matchedRule?.nodeData?.targetEmail || "";
+  if (!flowEmail && Array.isArray(flowResources)) {
+    const emailRes = flowResources.find((r) => r && r.kind === "email" && r.value && r.value.includes("@"));
+    if (emailRes) flowEmail = emailRes.value.trim();
+  }
+
+  const targetEmail = (flowEmail || recipientEmail || "").trim().toLowerCase();
+  const companyName = getCompanyName(targetEmail);
+  const local = targetEmail.split("@")[0] || "support";
+  const deptName = local.charAt(0).toUpperCase() + local.slice(1);
+
+  return `${companyName} ${deptName} <${targetEmail}>`;
+}
+
 function getCompanyName(recipientEmail) {
-  if (recipientEmail) {
+  if (recipientEmail && typeof recipientEmail === "string" && recipientEmail.includes("@")) {
     const domain = recipientEmail.split("@")[1] || "";
     const name = domain.split(".")[0];
     if (name && !["gmail", "yahoo", "hotmail", "outlook", "icloud"].includes(name.toLowerCase())) {
       return name.charAt(0).toUpperCase() + name.slice(1);
     }
   }
-
-  const fromEmail = process.env.RESEND_FROM_EMAIL || "";
-  if (fromEmail.includes("<")) {
-    const displayName = fromEmail.split("<")[0].replace(/support/i, "").trim();
-    if (displayName) return displayName;
-  }
-  if (fromEmail.includes("@")) {
-    const domain = fromEmail.split("@")[1]?.replace(">", "") || "";
-    const name = domain.split(".")[0];
-    if (name && !["gmail", "yahoo", "hotmail", "outlook", "icloud"].includes(name.toLowerCase())) {
-      return name.charAt(0).toUpperCase() + name.slice(1);
-    }
-  }
-
   return "Support";
 }
 
@@ -357,6 +358,40 @@ app.post("/webhook", async (req, res) => {
     await addConversationMessage(ticketId, "customer", textBody);
     await updateEmailStatus(emailId, "processing", { message: textBody });
 
+    // Detect if customer asks for human escalation or expresses dissatisfaction in follow-up
+    const bodyLower = (textBody || "").toLowerCase();
+    const isEscalationRequested =
+      bodyLower.includes("human") ||
+      bodyLower.includes("agent") ||
+      bodyLower.includes("unsatisfied") ||
+      bodyLower.includes("not satisfied") ||
+      bodyLower.includes("escalate") ||
+      bodyLower.includes("talk to someone") ||
+      bodyLower.includes("speak to a person") ||
+      bodyLower.includes("wrong bill") ||
+      bodyLower.includes("bad service");
+
+    if (isEscalationRequested && existingTicket) {
+      console.log(`⚡ Customer requested human escalation for ticket ${ticketId}. Transferring to human support.`);
+      const escalationMsg = `I understand your request. I have escalated your ticket to our human support team. A representative will follow up with you directly shortly.`;
+
+      await addConversationMessage(ticketId, "ai", escalationMsg);
+      await updateEmailStatus(emailId, "human-handling", { message: textBody });
+      await updateTicketStatus(ticketId, "open");
+
+      try {
+        await resend.emails.send({
+          from: getFromEmailAddress(recipientEmail),
+          to: [senderEmail],
+          subject: `Re: ${cleanSubj}`,
+          text: escalationMsg,
+        });
+      } catch (e) {
+        console.error("Failed to send escalation email:", e);
+      }
+      return;
+    }
+
     // 5. Query active flows from Hasura DB to match dynamic rules (target email, skip AI, subject filters, prompt instructions)
     let matchedRule = null;
     try {
@@ -419,6 +454,7 @@ app.post("/webhook", async (req, res) => {
         if (emailMatches || subjectMatches) {
           matchedRule = {
             flowName: f.name,
+            flowResources,
             nodeData: {
               targetEmail: flowTargetEmail || recip,
               subjectFilter: flowSubjectFilter,
@@ -435,6 +471,7 @@ app.post("/webhook", async (req, res) => {
         if (!matchedRule && (flowAiFocusArea || flowAiLanguage !== "auto" || flowKnowledgeLink || flowAiMode)) {
           matchedRule = {
             flowName: f.name,
+            flowResources,
             nodeData: {
               targetEmail: flowTargetEmail,
               subjectFilter: flowSubjectFilter,
@@ -495,7 +532,7 @@ app.post("/webhook", async (req, res) => {
 
     // 8. Send AI reply via Resend
     const { error: sendError } = await resend.emails.send({
-      from: RESEND_FROM_EMAIL,
+      from: getFromEmailAddress(recipientEmail, matchedRule, matchedRule?.flowResources),
       to: [senderEmail],
       subject: `Re: ${cleanSubj}`,
       text: aiResponseText,
