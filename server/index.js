@@ -33,13 +33,28 @@ const HASURA_ENDPOINT = process.env.HASURA_GRAPHQL_ENDPOINT;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET;
 
 function getCompanyName(recipientEmail) {
-  if (!recipientEmail) return "Noxx";
-  const domain = recipientEmail.split("@")[1] || "";
-  const name = domain.split(".")[0];
-  if (!name || ["gmail", "yahoo", "hotmail", "outlook", "icloud"].includes(name.toLowerCase())) {
-    return "Agatike";
+  if (recipientEmail) {
+    const domain = recipientEmail.split("@")[1] || "";
+    const name = domain.split(".")[0];
+    if (name && !["gmail", "yahoo", "hotmail", "outlook", "icloud"].includes(name.toLowerCase())) {
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
   }
-  return name.charAt(0).toUpperCase() + name.slice(1);
+
+  const fromEmail = process.env.RESEND_FROM_EMAIL || "";
+  if (fromEmail.includes("<")) {
+    const displayName = fromEmail.split("<")[0].replace(/support/i, "").trim();
+    if (displayName) return displayName;
+  }
+  if (fromEmail.includes("@")) {
+    const domain = fromEmail.split("@")[1]?.replace(">", "") || "";
+    const name = domain.split(".")[0];
+    if (name && !["gmail", "yahoo", "hotmail", "outlook", "icloud"].includes(name.toLowerCase())) {
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+  }
+
+  return "Support";
 }
 
 function getSystemInstruction(recipientEmail) {

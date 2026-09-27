@@ -56,13 +56,28 @@ async function saveToHasura(object: {
 }
 
 function getCompanyName(recipientEmail: string = ""): string {
-  if (!recipientEmail) return "Agatike";
-  const domain = recipientEmail.split("@")[1] || "";
-  const name = domain.split(".")[0];
-  if (!name || ["gmail", "yahoo", "hotmail", "outlook", "icloud"].includes(name.toLowerCase())) {
-    return "Agatike";
+  if (recipientEmail) {
+    const domain = recipientEmail.split("@")[1] || "";
+    const name = domain.split(".")[0];
+    if (name && !["gmail", "yahoo", "hotmail", "outlook", "icloud"].includes(name.toLowerCase())) {
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
   }
-  return name.charAt(0).toUpperCase() + name.slice(1);
+
+  const fromEmail = process.env.RESEND_FROM_EMAIL || "";
+  if (fromEmail.includes("<")) {
+    const displayName = fromEmail.split("<")[0].replace(/support/i, "").trim();
+    if (displayName) return displayName;
+  }
+  if (fromEmail.includes("@")) {
+    const domain = fromEmail.split("@")[1]?.replace(">", "") || "";
+    const name = domain.split(".")[0];
+    if (name && !["gmail", "yahoo", "hotmail", "outlook", "icloud"].includes(name.toLowerCase())) {
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+  }
+
+  return "Support";
 }
 
 function getSystemInstruction(recipientEmail: string = ""): string {
@@ -70,7 +85,7 @@ function getSystemInstruction(recipientEmail: string = ""): string {
   return `You are the AI customer support assistant for ${companyName}.
 Your job is to respond to customer emails professionally, clearly, and concisely.
 Rules:
-- Represent ${companyName} — do NOT mention Noxx or any internal platform names under any circumstances.
+- Represent ${companyName} — do NOT mention any internal platform names under any circumstances.
 - Answer the customer's question directly and helpfully — do NOT just acknowledge receipt.
 - Be friendly and professional.
 - Do not invent information you don't have.
