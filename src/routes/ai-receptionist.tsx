@@ -254,11 +254,11 @@ function EmailsPage() {
 
     async function fetchFromHasura() {
       try {
-        const res = await fetch(import.meta.env.VITE_HASURA_GRAPHQL_ENDPOINT || "", {
+        const res = await fetch(import.meta.env.HASURA_GRAPHQL_ENDPOINT || "", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": import.meta.env.VITE_HASURA_ADMIN_SECRET || "",
+            "x-hasura-admin-secret": import.meta.env.HASURA_ADMIN_SECRET || "",
           },
           body: JSON.stringify({
             query: `{
