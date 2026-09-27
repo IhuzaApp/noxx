@@ -178,6 +178,7 @@ function MyFlowsPage() {
                   </button>
                   <Link
                     to="/flows"
+                    search={{ id: f.id }}
                     className="inline-flex items-center gap-1 rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background hover:opacity-90 transition"
                   >
                     Open in builder <ArrowRight className="h-3 w-3" />

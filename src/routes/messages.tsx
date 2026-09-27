@@ -30,7 +30,7 @@ export const Route = createFileRoute("/messages")({
   component: MessagesPage,
 });
 
-const channelIcons = { sms: Phone, email: Mail, whatsapp: MessageSquare, ai: Sparkles };
+const channelIcons = { sms: Phone, email: Mail, whatsapp: MessageSquare, ai: Sparkles, voice: Phone };
 
 function MessagesPage() {
   const [view, setView] = useState<"table" | "conversations">("conversations");

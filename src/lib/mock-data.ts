@@ -1,4 +1,4 @@
-export type Channel = "sms" | "email" | "whatsapp" | "ai";
+export type Channel = "sms" | "email" | "whatsapp" | "ai" | "voice";
 export type Status = "delivered" | "sent" | "failed" | "pending";
 
 export const channelMeta: Record<
@@ -9,6 +9,7 @@ export const channelMeta: Record<
   email: { label: "Email", color: "text-channel-email", bg: "bg-channel-email/10" },
   whatsapp: { label: "WhatsApp", color: "text-channel-whatsapp", bg: "bg-channel-whatsapp/10" },
   ai: { label: "AI", color: "text-channel-ai", bg: "bg-channel-ai/10" },
+  voice: { label: "Voice", color: "text-channel-sms", bg: "bg-channel-sms/10" },
 };
 
 export const statusMeta: Record<Status, { label: string; className: string }> = {
@@ -19,17 +20,18 @@ export const statusMeta: Record<Status, { label: string; className: string }> = 
 };
 
 export const overviewStats = [
-  { label: "Messages sent", value: 248_932, delta: 12.4, channel: "all" as const },
-  { label: "Delivery rate", value: 98.7, delta: 0.3, channel: "all" as const, suffix: "%" },
-  { label: "Active flows", value: 24, delta: 4, channel: "all" as const },
-  { label: "Avg. latency", value: 142, delta: -8.1, channel: "all" as const, suffix: "ms" },
+  { label: "Messages sent", value: 15_450, delta: 18.2, channel: "all" as const },
+  { label: "Delivery rate", value: 94.6, delta: -1.2, channel: "all" as const, suffix: "%" },
+  { label: "Active flows", value: 6, delta: 2, channel: "all" as const },
+  { label: "Avg. latency", value: 242, delta: -12.1, channel: "all" as const, suffix: "ms" },
 ];
 
 export const usageByChannel = [
-  { channel: "SMS", sent: 84210, delivered: 83120 },
-  { channel: "Email", sent: 102430, delivered: 101005 },
-  { channel: "WhatsApp", sent: 41280, delivered: 40890 },
-  { channel: "AI", sent: 21012, delivered: 20987 },
+  { channel: "SMS", sent: 4120, delivered: 4050 },
+  { channel: "Email", sent: 7430, delivered: 7315 },
+  { channel: "WhatsApp", sent: 2150, delivered: 2120 },
+  { channel: "AI", sent: 1120, delivered: 1115 },
+  { channel: "Voice", sent: 630, delivered: 25 },
 ];
 
 export const trendData = Array.from({ length: 14 }).map((_, i) => {
@@ -37,39 +39,45 @@ export const trendData = Array.from({ length: 14 }).map((_, i) => {
   d.setDate(d.getDate() - (13 - i));
   return {
     date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    sms: 4000 + Math.round(Math.sin(i / 2) * 1200 + Math.random() * 1500),
-    email: 6500 + Math.round(Math.cos(i / 3) * 1500 + Math.random() * 1800),
-    whatsapp: 2200 + Math.round(Math.sin(i / 1.5) * 800 + Math.random() * 900),
-    ai: 900 + Math.round(Math.cos(i / 2) * 400 + Math.random() * 500),
+    sms: 200 + Math.round(Math.sin(i / 2) * 60 + Math.random() * 80),
+    email: 350 + Math.round(Math.cos(i / 3) * 80 + Math.random() * 120),
+    whatsapp: 100 + Math.round(Math.sin(i / 1.5) * 30 + Math.random() * 40),
+    ai: 40 + Math.round(Math.cos(i / 2) * 20 + Math.random() * 30),
+    voice: 20 + Math.round(Math.sin(i) * 5 + Math.random() * 10),
   };
 });
 
 const recipients = [
-  "+1 (415) 555-0143",
-  "alice@northwind.io",
-  "+44 7700 900812",
-  "support@acme.co",
-  "+33 6 12 34 56 78",
-  "billing@vercel.com",
-  "+1 (628) 555-0199",
-  "noreply@stripe.dev",
+  "+250 788 123 456",
+  "amanda.uwase@officeats.co",
+  "+250 722 987 654",
+  "support@candidigital.com",
+  "+250 733 456 789",
+  "billing@kddesign.studio",
+  "+250 788 555 111",
+  "noreply@rwandair.com",
 ];
 const previews = [
   "Your verification code is 482910",
   "Order #A2391 has shipped — track it here",
   "Reminder: appointment tomorrow at 10am",
-  "Welcome to Northwind! Let's get started.",
-  "Payment of $42.00 received. Thank you.",
+  "Welcome to Candi Digital! Let's get started.",
+  "Payment of RWF 42,000 received. Thank you.",
   "Your AI summary is ready to review",
   "Password reset requested for your account",
   "We tried to reach you about your booking",
 ];
 
 export const messageLogs = Array.from({ length: 42 }).map((_, i) => {
-  const channels: Channel[] = ["sms", "email", "whatsapp", "ai"];
+  const channels: Channel[] = ["sms", "email", "whatsapp", "ai", "voice"];
   const statuses: Status[] = ["delivered", "delivered", "delivered", "sent", "pending", "failed"];
   const channel = channels[i % channels.length];
-  const status = statuses[i % statuses.length];
+  let status = statuses[i % statuses.length];
+  
+  if (channel === "voice") {
+    status = "failed";
+  }
+
   const d = new Date();
   d.setMinutes(d.getMinutes() - i * 17);
   return {

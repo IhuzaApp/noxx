@@ -16,7 +16,7 @@ export const Route = createFileRoute("/templates")({
   component: TemplatesPage,
 });
 
-const channelIcons = { sms: Phone, email: Mail, whatsapp: MessageSquare, ai: Sparkles };
+const channelIcons = { sms: Phone, email: Mail, whatsapp: MessageSquare, ai: Sparkles, voice: Phone };
 
 type OmnichannelTemplate = {
   id: string;

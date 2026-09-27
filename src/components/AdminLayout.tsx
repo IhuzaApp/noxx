@@ -9,12 +9,14 @@ import {
   ScrollText,
   ArrowLeft,
   AlertTriangle,
+  FolderKanban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const adminNav = [
   { to: "/admin", label: "Overview", icon: Activity, exact: true },
   { to: "/admin/users", label: "Users & Orgs", icon: Users },
+  { to: "/admin/projects", label: "Projects", icon: FolderKanban },
   { to: "/admin/system", label: "System Health", icon: Server },
   { to: "/admin/billing", label: "Billing", icon: DollarSign },
   { to: "/admin/flags", label: "Feature Flags", icon: Flag },

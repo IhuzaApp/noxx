@@ -124,10 +124,10 @@ function Hero() {
               Start Building Your Noxx Agent
             </Link>
             <a
-              href="#demo"
+              href="#contact"
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-6 py-3.5 text-base font-medium hover:bg-muted/50 transition-all shadow-sm"
             >
-              Request Demo
+              Contact Sales
             </a>
           </motion.div>
         </motion.div>

@@ -58,7 +58,7 @@ function ContactsPage() {
     const cols = header.split(",").map((c) => c.replace(/^"|"$/g, "").trim().toLowerCase());
     const idx = (k: string) => cols.indexOf(k);
     for (const line of lines) {
-      // very small CSV parser, good enough for the demo
+      // very small CSV parser, good enough for the prototype
       const fields: string[] = [];
       let cur = "";
       let inQ = false;

@@ -21,6 +21,8 @@ import {
   Zap,
   Globe,
   LayoutTemplate,
+  Shield,
+  Mail,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -41,6 +43,7 @@ const nav: Array<{ to: string; label: string; icon: typeof LayoutDashboard; exac
   { to: "/tickets", label: "Support Tickets", icon: Ticket, section: "Engage" },
   { to: "/voice", label: "Voice Support", icon: PhoneCall },
   { to: "/messages", label: "Messages", icon: MessageSquare },
+  { to: "/ai-receptionist", label: "Emails", icon: Mail },
 
   { to: "/integrations", label: "Integrations", icon: Plug, section: "Configure" },
   { to: "/api-keys", label: "API Keys", icon: KeyRound },

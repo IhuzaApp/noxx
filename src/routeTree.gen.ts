@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AiReceptionistRouteImport } from './routes/ai-receptionist'
 import { Route as ApiKeysRouteImport } from './routes/api-keys'
 import { Route as AutomationsRouteImport } from './routes/automations'
 import { Route as CampaignsRouteImport } from './routes/campaigns'
@@ -56,6 +57,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiReceptionistRoute = AiReceptionistRouteImport.update({
+  id: '/ai-receptionist',
+  path: '/ai-receptionist',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiKeysRoute = ApiKeysRouteImport.update({
@@ -242,6 +248,7 @@ const SiteSlugRoute = SiteSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/ai-receptionist': typeof AiReceptionistRoute
   '/api-keys': typeof ApiKeysRoute
   '/automations': typeof AutomationsRoute
   '/campaigns': typeof CampaignsRoute
@@ -282,6 +289,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/ai-receptionist': typeof AiReceptionistRoute
   '/api-keys': typeof ApiKeysRoute
   '/automations': typeof AutomationsRoute
   '/campaigns': typeof CampaignsRoute
@@ -323,6 +331,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/ai-receptionist': typeof AiReceptionistRoute
   '/api-keys': typeof ApiKeysRoute
   '/automations': typeof AutomationsRoute
   '/campaigns': typeof CampaignsRoute
@@ -365,6 +374,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/ai-receptionist'
     | '/api-keys'
     | '/automations'
     | '/campaigns'
@@ -405,6 +415,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/ai-receptionist'
     | '/api-keys'
     | '/automations'
     | '/campaigns'
@@ -445,6 +456,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/ai-receptionist'
     | '/api-keys'
     | '/automations'
     | '/campaigns'
@@ -486,6 +498,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AiReceptionistRoute: typeof AiReceptionistRoute
   ApiKeysRoute: typeof ApiKeysRoute
   AutomationsRoute: typeof AutomationsRoute
   CampaignsRoute: typeof CampaignsRoute
@@ -526,6 +539,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-receptionist': {
+      id: '/ai-receptionist'
+      path: '/ai-receptionist'
+      fullPath: '/ai-receptionist'
+      preLoaderRoute: typeof AiReceptionistRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api-keys': {
@@ -818,6 +838,7 @@ const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AiReceptionistRoute: AiReceptionistRoute,
   ApiKeysRoute: ApiKeysRoute,
   AutomationsRoute: AutomationsRoute,
   CampaignsRoute: CampaignsRoute,

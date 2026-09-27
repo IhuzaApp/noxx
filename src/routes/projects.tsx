@@ -118,7 +118,7 @@ function ProjectsPage() {
 
         <section>
           <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-            Demo projects
+            Sandbox projects
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {all.map((p) => {

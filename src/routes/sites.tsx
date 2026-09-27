@@ -2,6 +2,8 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus, Globe, ExternalLink, Trash2, Eye, Pencil, Copy, Check } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
+import { Topbar } from "@/components/Topbar";
+import { Card } from "@/components/Card";
 import { Modal, Field, inputCls } from "@/components/Modal";
 import { useStore } from "@/lib/store";
 import {
@@ -47,24 +49,34 @@ function SitesPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">Sites</h1>
-            <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
-              Spin up a simple branded website — a shop, a "what we do" page, a contact page or a ticket portal.
-              Share the link, or point your own domain at it. We host and serve it through our APIs.
-            </p>
-          </div>
+      <Topbar
+        title="Sites"
+        subtitle={`${sites.length} active sites`}
+        action={
           <button
             onClick={() => setPicking(true)}
             className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3.5 py-2 text-sm font-medium text-background hover:opacity-90 transition shadow-soft"
           >
             <Plus className="h-4 w-4" /> New site
           </button>
-        </div>
+        }
+      />
+      <main className="flex-1 p-6 space-y-6 overflow-auto">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <Card className="p-4 flex flex-col sm:flex-row items-start gap-3 bg-primary/5 border-primary/20">
+            <div className="h-8 w-8 rounded-md bg-primary/15 text-primary flex items-center justify-center shrink-0">
+              <Globe className="h-4 w-4" />
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-foreground">Launch simple branded websites</div>
+              <p className="text-xs text-muted-foreground mt-0.5 max-w-2xl">
+                Spin up a shop, a "what we do" page, a contact page or a ticket portal. 
+                Share the link, or point your own domain at it. We host and serve it through our APIs.
+              </p>
+            </div>
+          </Card>
 
-        {sites.length === 0 ? (
+          {sites.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-card p-12 text-center">
             <Globe className="mx-auto h-10 w-10 text-muted-foreground" />
             <h3 className="mt-3 text-base font-medium text-foreground">No sites yet</h3>
@@ -130,7 +142,8 @@ function SitesPage() {
             })}
           </div>
         )}
-      </div>
+        </div>
+      </main>
 
       {/* Template picker */}
       <Modal open={picking} onClose={() => setPicking(false)} title="Create a new site" description="Pick a starting template — you can change anything afterwards." size="lg">

@@ -54,6 +54,7 @@ const channelIcons = {
   email: Mail,
   whatsapp: MessageSquare,
   ai: Sparkles,
+  voice: Phone,
 };
 
 function Dashboard() {
@@ -107,7 +108,7 @@ function Dashboard() {
                 <div className="text-xs text-muted-foreground">Last 14 days, by channel</div>
               </div>
               <div className="flex gap-3 text-xs text-muted-foreground">
-                {(["sms", "email", "whatsapp", "ai"] as const).map((c) => (
+                {(["sms", "email", "whatsapp", "ai", "voice"] as const).map((c) => (
                   <div key={c} className="flex items-center gap-1.5">
                     <span className={cn("h-2 w-2 rounded-full", `bg-channel-${c}`)} />
                     {channelMeta[c].label}
@@ -119,7 +120,7 @@ function Dashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
-                    {(["sms", "email", "whatsapp", "ai"] as const).map((c) => (
+                    {(["sms", "email", "whatsapp", "ai", "voice"] as const).map((c) => (
                       <linearGradient key={c} id={`g-${c}`} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor={`var(--channel-${c})`} stopOpacity={0.4} />
                         <stop offset="95%" stopColor={`var(--channel-${c})`} stopOpacity={0} />
@@ -137,7 +138,7 @@ function Dashboard() {
                       fontSize: 12,
                     }}
                   />
-                  {(["sms", "email", "whatsapp", "ai"] as const).map((c) => (
+                  {(["sms", "email", "whatsapp", "ai", "voice"] as const).map((c) => (
                     <Area
                       key={c}
                       type="monotone"
@@ -219,11 +220,11 @@ function Dashboard() {
             <div className="text-sm font-medium text-foreground mb-4">Delivery breakdown</div>
             <div className="space-y-3">
               {[
-                { label: "Delivered", value: 245128, color: "bg-success", icon: CheckCircle2 },
-                { label: "Pending", value: 2104, color: "bg-warning", icon: Clock },
-                { label: "Failed", value: 1700, color: "bg-destructive", icon: XCircle },
+                { label: "Delivered", value: 14625, color: "bg-success", icon: CheckCircle2 },
+                { label: "Pending", value: 120, color: "bg-warning", icon: Clock },
+                { label: "Failed", value: 705, color: "bg-destructive", icon: XCircle },
               ].map((row) => {
-                const total = 245128 + 2104 + 1700;
+                const total = 14625 + 120 + 705;
                 const pct = (row.value / total) * 100;
                 const Icon = row.icon;
                 return (
@@ -249,7 +250,7 @@ function Dashboard() {
                 Trigger a one-off message from any channel.
               </p>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                {(["sms", "email", "whatsapp", "ai"] as const).map((c) => {
+                {(["sms", "email", "whatsapp", "ai", "voice"] as const).map((c) => {
                   const Icon = channelIcons[c];
                   return (
                     <button

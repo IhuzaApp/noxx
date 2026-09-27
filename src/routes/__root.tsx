@@ -2,6 +2,7 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts, useRouterState, us
 import { useEffect } from "react";
 import { ProjectProvider } from "@/lib/project-context";
 import { ThemeProvider } from "@/lib/theme-context";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
 
 import appCss from "../styles.css?url";
 
@@ -73,15 +74,28 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  return (
+    <AuthProvider>
+      <AuthRouter />
+    </AuthProvider>
+  );
+}
+
+function AuthRouter() {
   const routerState = useRouterState();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const publicPaths = ['/', '/login', '/signup'];
-    if (!publicPaths.includes(routerState.location.pathname)) {
+    const isPublicPath = publicPaths.includes(routerState.location.pathname);
+
+    if (!user && !isPublicPath) {
       navigate({ to: '/login', replace: true });
+    } else if (user && (routerState.location.pathname === '/login' || routerState.location.pathname === '/signup')) {
+      navigate({ to: '/dashboard', replace: true });
     }
-  }, [routerState.location.pathname, navigate]);
+  }, [routerState.location.pathname, navigate, user]);
 
   return (
     <ThemeProvider>

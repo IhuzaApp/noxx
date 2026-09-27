@@ -76,9 +76,10 @@ export const omnichannelStats = {
   bestChannelByDelivery: { channel: "whatsapp" as Channel, rate: 99.1 },
   engagementRate: 38.6, // opens + replies / sent
   channelComparison: [
-    { channel: "WhatsApp", delivery: 99.1, engagement: 52, sent: 41280 },
-    { channel: "Email", delivery: 98.6, engagement: 41, sent: 102430 },
-    { channel: "SMS", delivery: 98.7, engagement: 28, sent: 84210 },
-    { channel: "AI", delivery: 99.8, engagement: 64, sent: 21012 },
+    { channel: "WhatsApp", delivery: 99.1, engagement: 52, sent: 2150 },
+    { channel: "Email", delivery: 98.6, engagement: 41, sent: 7430 },
+    { channel: "SMS", delivery: 98.7, engagement: 28, sent: 4120 },
+    { channel: "AI", delivery: 99.8, engagement: 64, sent: 1120 },
+    { channel: "Voice", delivery: 3.9, engagement: 2, sent: 630 },
   ],
 };

@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Sparkles, ArrowRight, Github, Mail } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -14,16 +15,27 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    const formData = new FormData(e.currentTarget);
+    const email = (formData.get("email") as string) || "";
+    
     setTimeout(() => {
-      setLoading(false);
-      setError("Account not found.");
+      if (email !== "admin@noxxdesk.com") {
+        setLoading(false);
+        setError("Invalid credentials.");
+        return;
+      }
+
+      login(email);
+      // __root.tsx will auto-redirect, but we can do it here too just in case
+      navigate({ to: "/dashboard" });
     }, 600);
   };
 
@@ -39,7 +51,7 @@ export function AuthShell({
   mode: "login" | "signup";
   loading: boolean;
   error?: string;
-  onSubmit: (e: FormEvent) => void;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 }) {
   const isLogin = mode === "login";
   return (
@@ -86,6 +98,7 @@ export function AuthShell({
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                   type="email"
+                  name="email"
                   required
                   className="w-full rounded-xl border border-border/80 bg-background pl-11 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition"
                   placeholder="you@company.com"

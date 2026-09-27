@@ -37,8 +37,23 @@ import { Topbar } from "@/components/Topbar";
 import { Card } from "@/components/Card";
 import { FlowNode, type FlowNodeData, type ChannelKind } from "@/components/flow/FlowNode";
 import { cn } from "@/lib/utils";
+import { useStore } from "@/lib/store";
+import { userFlowStore } from "@/lib/user-flows";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { flowTemplates, defaultTemplate, makeEdge } from "@/lib/flow-templates";
 
 export const Route = createFileRoute("/flows")({
+  validateSearch: (search: Record<string, unknown>): { id?: string } => {
+    return {
+      id: typeof search.id === "string" ? search.id : undefined,
+    };
+  },
   head: () => ({
     meta: [
       { title: "Flow Builder — Noxx" },
@@ -49,90 +64,6 @@ export const Route = createFileRoute("/flows")({
 });
 
 const nodeTypes = { flow: FlowNode };
-
-type EdgeKind = "default" | "fallback" | "delivered" | "not-delivered" | "no-response" | "yes" | "no";
-
-const edgeStyles: Record<EdgeKind, { stroke: string; label?: string; bg?: string }> = {
-  default: { stroke: "var(--border)" },
-  fallback: { stroke: "var(--warning)", label: "Fallback", bg: "var(--warning)" },
-  delivered: { stroke: "var(--success)", label: "If Delivered", bg: "var(--success)" },
-  "not-delivered": { stroke: "var(--destructive)", label: "If Not Delivered", bg: "var(--destructive)" },
-  "no-response": { stroke: "var(--info)", label: "If No Response", bg: "var(--info)" },
-  yes: { stroke: "var(--success)", label: "Yes", bg: "var(--success)" },
-  no: { stroke: "var(--destructive)", label: "No", bg: "var(--destructive)" },
-};
-
-function makeEdge(id: string, source: string, target: string, kind: EdgeKind, animated = false): Edge {
-  const s = edgeStyles[kind];
-  return {
-    id,
-    source,
-    target,
-    animated,
-    type: "smoothstep",
-    label: s.label,
-    labelStyle: { fontSize: 10, fontWeight: 600, fill: "var(--foreground)" },
-    labelBgStyle: { fill: "var(--card)", stroke: s.bg ?? s.stroke, strokeWidth: 1 },
-    labelBgPadding: [6, 3] as [number, number],
-    labelBgBorderRadius: 6,
-    style: { stroke: s.stroke, strokeWidth: 2 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: s.stroke },
-    data: { kind },
-  };
-}
-
-const initialNodes: Node<FlowNodeData>[] = [
-  {
-    id: "1",
-    type: "flow",
-    position: { x: 320, y: 20 },
-    data: { kind: "trigger", label: "Order placed", detail: "POST /v1/events/order_placed" },
-  },
-  {
-    id: "2",
-    type: "flow",
-    position: { x: 320, y: 180 },
-    data: {
-      kind: "whatsapp",
-      label: "Send WhatsApp",
-      detail: "Template: order_shipped",
-      fallback: "sms",
-      retryMinutes: 5,
-    },
-  },
-  {
-    id: "3",
-    type: "flow",
-    position: { x: 320, y: 400 },
-    data: { kind: "condition", label: "Did customer reply?", detail: "Wait up to 1 hour for inbound" },
-  },
-  {
-    id: "4",
-    type: "flow",
-    position: { x: 60, y: 580 },
-    data: { kind: "ai", label: "AI auto-respond", detail: "Answer using order context" },
-  },
-  {
-    id: "5",
-    type: "flow",
-    position: { x: 580, y: 580 },
-    data: { kind: "delay", label: "Wait 1 hour", detail: "60 minutes" },
-  },
-  {
-    id: "6",
-    type: "flow",
-    position: { x: 580, y: 740 },
-    data: { kind: "email", label: "Send reminder email", detail: "Template: gentle_reminder" },
-  },
-];
-
-const initialEdges: Edge[] = [
-  makeEdge("e1-2", "1", "2", "default"),
-  makeEdge("e2-3", "2", "3", "delivered"),
-  makeEdge("e3-4", "3", "4", "yes"),
-  makeEdge("e3-5", "3", "5", "no-response"),
-  makeEdge("e5-6", "5", "6", "default"),
-];
 
 const palette: Array<{ kind: FlowNodeData["kind"]; label: string; icon: typeof Webhook; group: string }> = [
   { kind: "trigger", label: "API trigger", icon: Webhook, group: "Triggers" },
@@ -156,13 +87,29 @@ const channelKindAccent: Record<ChannelKind, string> = {
 };
 
 function FlowsPage() {
-  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNodeData>(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const search = Route.useSearch();
+  const flows = useStore(userFlowStore);
+  const flow = flows.find((f) => f.id === search.id) || flows[0];
+  const template = flowTemplates[flow.id] || defaultTemplate;
+  const navigate = useNavigate();
+
+  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNodeData>(template.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(template.edges);
   const [selectedId, setSelectedId] = useState<string | null>("2");
-  const [active, setActive] = useState(true);
+  const [active, setActive] = useState(flow ? flow.status === "active" : true);
   const [simulating, setSimulating] = useState(false);
   const [logs, setLogs] = useState<Array<{ t: string; msg: string; kind: "info" | "ok" | "warn" }>>([]);
   const [showLogs, setShowLogs] = useState(false);
+
+  useEffect(() => {
+    const t = flowTemplates[flow.id] || defaultTemplate;
+    setNodes(t.nodes);
+    setEdges(t.edges);
+    setLogs([]);
+    setShowLogs(false);
+    setSelectedId(t.nodes[0]?.id || null);
+    setActive(flow ? flow.status === "active" : true);
+  }, [flow.id]);
 
   const onConnect = useCallback(
     (params: Edge | Connection) =>
@@ -199,15 +146,8 @@ function FlowsPage() {
     setSimulating(true);
     setShowLogs(true);
     setLogs([]);
-    const path = ["1", "2", "3", "5", "6"];
-    const edgePath = ["e1-2", "e2-3", "e3-5", "e5-6"];
-    const messages: Array<{ msg: string; kind: "info" | "ok" | "warn" }> = [
-      { msg: "Trigger received: POST /v1/events/order_placed", kind: "info" },
-      { msg: "WhatsApp 'order_shipped' sent → delivered (412ms)", kind: "ok" },
-      { msg: "Behavior branch: waiting for inbound reply (60m)", kind: "info" },
-      { msg: "No reply within window → fallback path", kind: "warn" },
-      { msg: "Reminder email queued via Resend", kind: "ok" },
-    ];
+    const { path, edgePath, messages } = template.simulation;
+    
     let i = 0;
     const tick = () => {
       const activeNodes = path.slice(0, i + 1);
@@ -223,7 +163,7 @@ function FlowsPage() {
         setTimeout(tick, 700);
       } else {
         setTimeout(() => {
-          setLogs((l) => [...l, { t: new Date().toLocaleTimeString(), msg: "Run complete · 5 steps · 0 errors", kind: "ok" }]);
+          setLogs((l) => [...l, { t: new Date().toLocaleTimeString(), msg: `Run complete · ${path.length} steps · 0 errors`, kind: "ok" }]);
           setNodes((ns) => ns.map((n) => ({ ...n, data: { ...n.data, active: false } })));
           setEdges((es) => es.map((e) => ({ ...e, animated: false })));
           setSimulating(false);
@@ -244,8 +184,29 @@ function FlowsPage() {
   return (
     <AppLayout>
       <Topbar
-        title="Order shipped notification"
-        subtitle="Omnichannel · Last edited 4 minutes ago · Draft"
+        title={
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-1.5 hover:opacity-80 transition outline-none">
+              <span className="truncate max-w-[200px] sm:max-w-xs">{flow ? flow.name : "Select a flow"}</span>
+              <svg className="h-4 w-4 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64">
+              {flows.map((f) => (
+                <DropdownMenuItem
+                  key={f.id}
+                  onClick={() => navigate({ to: "/flows", search: { id: f.id } })}
+                  className="flex flex-col items-start gap-1 p-2 cursor-pointer"
+                >
+                  <span className="text-sm font-medium">{f.name}</span>
+                  <span className="text-[10px] text-muted-foreground uppercase">{f.trigger}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+        subtitle={flow ? `Omnichannel · Last edited ${flow.createdAt} · ${flow.status.charAt(0).toUpperCase() + flow.status.slice(1)}` : "Omnichannel · Last edited 4 minutes ago · Draft"}
         action={
           <div className="flex items-center gap-2">
             <button

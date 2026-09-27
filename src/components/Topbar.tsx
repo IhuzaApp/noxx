@@ -1,7 +1,24 @@
-import { Search, Bell, Plus } from "lucide-react";
+import { Search, Bell, Plus, Shield, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth-context";
 
-export function Topbar({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) {
+export function Topbar({ title, subtitle, action }: { title: React.ReactNode; subtitle?: string; action?: React.ReactNode }) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate({ to: "/login" });
+  };
+
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-border bg-background/80 backdrop-blur px-6">
       <div className="flex-1 min-w-0">
@@ -27,9 +44,32 @@ export function Topbar({ title, subtitle, action }: { title: string; subtitle?: 
           New message
         </button>
       )}
-      <div className="h-8 w-8 rounded-full bg-gradient-primary text-primary-foreground text-xs font-semibold flex items-center justify-center shadow-soft">
-        AM
-      </div>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="h-8 w-8 rounded-full bg-gradient-primary text-primary-foreground text-xs font-semibold flex items-center justify-center shadow-soft hover:opacity-90 transition-opacity outline-none">
+            {user?.name?.split(" ").map(n => n[0]).join("") || "AM"}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <div className="px-2 py-1.5">
+            <p className="text-sm font-medium text-foreground">{user?.name || "Admin User"}</p>
+            <p className="text-xs text-muted-foreground">{user?.email || "admin@noxxdesk.com"}</p>
+          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link to="/admin" className="cursor-pointer flex items-center gap-2">
+              <Shield className="h-4 w-4 text-muted-foreground" />
+              Admin Portal
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive flex items-center gap-2">
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </header>
   );
 }
