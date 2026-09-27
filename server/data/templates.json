@@ -1,0 +1,135 @@
+{
+  "templates": [
+    {
+      "id": "t1",
+      "name": "OTP verification",
+      "channel": "sms",
+      "body": "Your code is {{code}}. It expires in 10 minutes.",
+      "uses": 18402,
+      "type": "single"
+    },
+    {
+      "id": "t2",
+      "name": "Order shipped",
+      "channel": "email",
+      "body": "Hi {{name}}, your order {{order_id}} has shipped.",
+      "uses": 9201,
+      "type": "single"
+    },
+    {
+      "id": "t3",
+      "name": "Appointment reminder",
+      "channel": "whatsapp",
+      "body": "Reminder: your appointment is at {{time}}.",
+      "uses": 6541,
+      "type": "single"
+    },
+    {
+      "id": "t4",
+      "name": "AI summary",
+      "channel": "ai",
+      "body": "Summarize the following conversation: {{transcript}}",
+      "uses": 2103,
+      "type": "single"
+    },
+    {
+      "id": "t5",
+      "name": "Welcome email",
+      "channel": "email",
+      "body": "Welcome to {{org}}! Here's how to get started.",
+      "uses": 4820,
+      "type": "single"
+    },
+    {
+      "id": "t6",
+      "name": "Payment receipt",
+      "channel": "email",
+      "body": "Thanks {{name}} — we received your payment of {{amount}}.",
+      "uses": 7311,
+      "type": "single"
+    }
+  ],
+  "omnichannelTemplates": [
+    {
+      "id": "ot1",
+      "name": "OTP with SMS fallback",
+      "description": "Send a one-time code over WhatsApp, fall back to SMS if not delivered in 30 seconds.",
+      "steps": [
+        {
+          "channel": "whatsapp",
+          "label": "Send OTP via WhatsApp",
+          "kind": "primary"
+        },
+        {
+          "channel": "sms",
+          "label": "Fallback: Send via SMS",
+          "kind": "fallback"
+        }
+      ],
+      "uses": 18402,
+      "type": "omnichannel"
+    },
+    {
+      "id": "ot2",
+      "name": "Order notification (WhatsApp + Email backup)",
+      "description": "Notify shipping over WhatsApp; if not delivered in 5 minutes, send a richer Email backup.",
+      "steps": [
+        {
+          "channel": "whatsapp",
+          "label": "Send shipping update",
+          "kind": "primary"
+        },
+        {
+          "channel": "email",
+          "label": "Fallback: Email with tracking link",
+          "kind": "fallback"
+        }
+      ],
+      "uses": 9201,
+      "type": "omnichannel"
+    },
+    {
+      "id": "ot3",
+      "name": "Appointment reminder with follow-ups",
+      "description": "Email reminder, then WhatsApp 1h before, SMS 15 min before if still no response.",
+      "steps": [
+        {
+          "channel": "email",
+          "label": "Send Email reminder (24h before)",
+          "kind": "primary"
+        },
+        {
+          "channel": "whatsapp",
+          "label": "WhatsApp nudge (1h before)",
+          "kind": "primary"
+        },
+        {
+          "channel": "sms",
+          "label": "SMS reminder if no reply (15m before)",
+          "kind": "fallback"
+        }
+      ],
+      "uses": 6541,
+      "type": "omnichannel"
+    },
+    {
+      "id": "ot4",
+      "name": "AI support with human handoff",
+      "description": "AI replies first; if user is unsatisfied, escalate to support over WhatsApp.",
+      "steps": [
+        {
+          "channel": "ai",
+          "label": "AI auto-respond",
+          "kind": "primary"
+        },
+        {
+          "channel": "whatsapp",
+          "label": "Escalate to support agent",
+          "kind": "branch"
+        }
+      ],
+      "uses": 2103,
+      "type": "omnichannel"
+    }
+  ]
+}
