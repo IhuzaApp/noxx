@@ -55,9 +55,22 @@ async function saveToHasura(object: {
   }
 }
 
-const systemInstruction = `You are the AI customer support assistant for Agatike.
+function getCompanyName(recipientEmail: string = ""): string {
+  if (!recipientEmail) return "Agatike";
+  const domain = recipientEmail.split("@")[1] || "";
+  const name = domain.split(".")[0];
+  if (!name || ["gmail", "yahoo", "hotmail", "outlook", "icloud"].includes(name.toLowerCase())) {
+    return "Agatike";
+  }
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+function getSystemInstruction(recipientEmail: string = ""): string {
+  const companyName = getCompanyName(recipientEmail);
+  return `You are the AI customer support assistant for ${companyName}.
 Your job is to respond to customer emails professionally, clearly, and concisely.
 Rules:
+- Represent ${companyName} — do NOT mention Noxx or any internal platform names under any circumstances.
 - Answer the customer's question directly and helpfully — do NOT just acknowledge receipt.
 - Be friendly and professional.
 - Do not invent information you don't have.
@@ -67,15 +80,16 @@ Rules:
 - Keep the response reasonably short (2-4 sentences is ideal).
 - Do NOT just say "we received your email" — actually respond to the content of the message.
 - Do not include a subject line because the application will handle the email subject.`;
+}
 
 // Call Groq API - ultra-fast, reliable, free tier
-async function callGroq(userMessage: string): Promise<string> {
+async function callGroq(userMessage: string, recipientEmail: string = ""): Promise<string> {
   const url = "https://api.groq.com/openai/v1/chat/completions";
 
   const body = {
     model: "openai/gpt-oss-20b",
     messages: [
-      { role: "system", content: systemInstruction },
+      { role: "system", content: getSystemInstruction(recipientEmail) },
       { role: "user", content: userMessage }
     ],
     max_tokens: 512,
@@ -176,7 +190,7 @@ export const resendEmailWebhook = functions.https.onRequest(async (req, res) => 
     // 2. Generate AI response via Groq
     let aiResponseText = "";
     try {
-      aiResponseText = await callGroq(`Subject: ${subject}\n\nMessage:\n${textBody}`);
+      aiResponseText = await callGroq(`Subject: ${subject}\n\nMessage:\n${textBody}`, recipientEmail);
       console.log("Groq AI response received, length:", aiResponseText.length);
     } catch (error: any) {
       console.error("AI Generation error:", error);

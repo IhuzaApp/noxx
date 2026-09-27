@@ -32,18 +32,28 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
 const HASURA_ENDPOINT = process.env.HASURA_GRAPHQL_ENDPOINT;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET;
 
-const systemInstruction = `You are the AI customer support assistant for Noxx.
-Your job is to respond to customer emails professionally, clearly, and concisely.
+function getCompanyName(recipientEmail) {
+  if (!recipientEmail) return "Noxx";
+  const domain = recipientEmail.split("@")[1] || "";
+  const name = domain.split(".")[0];
+  if (!name || ["gmail", "yahoo", "hotmail", "outlook", "icloud"].includes(name.toLowerCase())) {
+    return "Agatike";
+  }
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+function getSystemInstruction(recipientEmail) {
+  const companyName = getCompanyName(recipientEmail);
+  return `You are the AI customer support assistant for ${companyName}.
+Your job is to respond to customer emails professionally, clearly, and warmly.
 Rules:
-- Answer the customer's question directly and helpfully — do NOT just acknowledge receipt.
-- Be friendly and professional.
-- Do not invent information you don't have.
-- If the customer wants to talk to a human agent, let them know that a support agent will follow up with them.
-- If the information is unavailable, clearly say that you don't have that information.
-- Do not claim that you performed an action unless you actually did.
-- Keep the response reasonably short (2-4 sentences is ideal).
-- Do NOT just say "we received your email" — actually respond to the content of the message.
-- Do not include a subject line because the application will handle the email subject.`;
+- Represent ${companyName} — do NOT mention any internal platform names under any circumstances.
+- Answer the customer's question directly and helpfully.
+- Be friendly, professional, and concise (2-4 sentences).
+- If the customer asks to speak with a human or live agent, let them know that a support agent will follow up with them shortly.
+- Do not invent information you do not have.
+- Do NOT include a subject line in your output.`;
+}
 
 // ─── Hasura helpers ───────────────────────────────────────────────────────────
 
@@ -153,7 +163,7 @@ async function findExistingTicket(senderEmail, subject) {
 
 // ─── Groq helper ─────────────────────────────────────────────────────────────
 
-async function callGroq(userMessage) {
+async function callGroq(userMessage, recipientEmail = "") {
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -163,7 +173,7 @@ async function callGroq(userMessage) {
     body: JSON.stringify({
       model: "openai/gpt-oss-20b",
       messages: [
-        { role: "system", content: systemInstruction },
+        { role: "system", content: getSystemInstruction(recipientEmail) },
         { role: "user", content: userMessage },
       ],
       max_tokens: 512,
@@ -252,7 +262,7 @@ app.post("/webhook", async (req, res) => {
     if (existingTicket && isHumanHandled) {
       ticketId = existingTicket.id;
       console.log(`👤 Ticket ${ticketId} ("${cleanSubj}") is handled by a human agent. Skipping AI auto-reply.`);
-      
+
       // Fetch full email body from Resend
       let textBody = "No body";
       try {
@@ -324,7 +334,7 @@ app.post("/webhook", async (req, res) => {
     // 6. Generate AI response via Groq
     let aiResponseText = "";
     try {
-      aiResponseText = await callGroq(contextPrompt);
+      aiResponseText = await callGroq(contextPrompt, recipientEmail);
       console.log("AI response preview:", aiResponseText.slice(0, 120));
     } catch (error) {
       console.error("AI Generation error:", error.message);
@@ -350,15 +360,15 @@ app.post("/webhook", async (req, res) => {
       return;
     }
 
-    // 9. Mark email + ticket as replied/resolved
+    // 9. Mark email + ticket as replied/active
     await updateEmailStatus(emailId, "replied", {
       message: textBody,
       ai_response: aiResponseText,
     });
 
-    await updateTicketStatus(ticketId, "resolved");
+    await updateTicketStatus(ticketId, "ai-handling");
 
-    console.log(`✅ Email ${emailId} processed — ticket ${ticketId} resolved`);
+    console.log(`✅ Email ${emailId} processed — ticket ${ticketId} set to ai-handling`);
   })();
 });
 
