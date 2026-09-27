@@ -456,151 +456,103 @@ app.post("/send-reply", async (req, res) => {
   }
 });
 
-// ─── Templates API & Persistence ──────────────────────────────────────────────
+// ─── Templates API (Hasura Postgres DB) ───────────────────────────────────────
 
-const TEMPLATES_FILE = path.join(__dirname, "data", "templates.json");
-
-const DEFAULT_TEMPLATES = {
-  templates: [
-    { id: "t1", name: "OTP verification", channel: "sms", body: "Your code is {{code}}. It expires in 10 minutes.", uses: 18402, type: "single" },
-    { id: "t2", name: "Order shipped", channel: "email", body: "Hi {{name}}, your order {{order_id}} has shipped.", uses: 9201, type: "single" },
-    { id: "t3", name: "Appointment reminder", channel: "whatsapp", body: "Reminder: your appointment is at {{time}}.", uses: 6541, type: "single" },
-    { id: "t4", name: "AI summary", channel: "ai", body: "Summarize the following conversation: {{transcript}}", uses: 2103, type: "single" },
-    { id: "t5", name: "Welcome email", channel: "email", body: "Welcome to {{org}}! Here's how to get started.", uses: 4820, type: "single" },
-    { id: "t6", name: "Payment receipt", channel: "email", body: "Thanks {{name}} — we received your payment of {{amount}}.", uses: 7311, type: "single" },
-  ],
-  omnichannelTemplates: [
-    {
-      id: "ot1",
-      name: "OTP with SMS fallback",
-      description: "Send a one-time code over WhatsApp, fall back to SMS if not delivered in 30 seconds.",
-      steps: [
-        { channel: "whatsapp", label: "Send OTP via WhatsApp", kind: "primary" },
-        { channel: "sms", label: "Fallback: Send via SMS", kind: "fallback" },
-      ],
-      uses: 18402,
-      type: "omnichannel",
-    },
-    {
-      id: "ot2",
-      name: "Order notification (WhatsApp + Email backup)",
-      description: "Notify shipping over WhatsApp; if not delivered in 5 minutes, send a richer Email backup.",
-      steps: [
-        { channel: "whatsapp", label: "Send shipping update", kind: "primary" },
-        { channel: "email", label: "Fallback: Email with tracking link", kind: "fallback" },
-      ],
-      uses: 9201,
-      type: "omnichannel",
-    },
-    {
-      id: "ot3",
-      name: "Appointment reminder with follow-ups",
-      description: "Email reminder, then WhatsApp 1h before, SMS 15 min before if still no response.",
-      steps: [
-        { channel: "email", label: "Send Email reminder (24h before)", kind: "primary" },
-        { channel: "whatsapp", label: "WhatsApp nudge (1h before)", kind: "primary" },
-        { channel: "sms", label: "SMS reminder if no reply (15m before)", kind: "fallback" },
-      ],
-      uses: 6541,
-      type: "omnichannel",
-    },
-    {
-      id: "ot4",
-      name: "AI support with human handoff",
-      description: "AI replies first; if user is unsatisfied, escalate to support over WhatsApp.",
-      steps: [
-        { channel: "ai", label: "AI auto-respond", kind: "primary" },
-        { channel: "whatsapp", label: "Escalate to support agent", kind: "branch" },
-      ],
-      uses: 2103,
-      type: "omnichannel",
-    },
-  ],
-};
-
-function readTemplatesFromDisk() {
+app.get("/templates", async (_req, res) => {
   try {
-    const dir = path.dirname(TEMPLATES_FILE);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    if (!fs.existsSync(TEMPLATES_FILE)) {
-      fs.writeFileSync(TEMPLATES_FILE, JSON.stringify(DEFAULT_TEMPLATES, null, 2));
-      return DEFAULT_TEMPLATES;
-    }
-    const raw = fs.readFileSync(TEMPLATES_FILE, "utf8");
-    return JSON.parse(raw);
+    const query = `
+      query GetTemplates {
+        templates(order_by: { created_at: desc }) {
+          id
+          name
+          channel
+          body
+          description
+          steps
+          uses
+          type
+          created_at
+        }
+      }
+    `;
+    const result = await hasuraQuery(query);
+    const all = result?.data?.templates ?? [];
+    const single = all.filter((t) => t.type !== "omnichannel");
+    const omni = all.filter((t) => t.type === "omnichannel");
+    res.json({ templates: single, omnichannelTemplates: omni });
   } catch (err) {
-    console.error("Error reading templates from disk:", err);
-    return DEFAULT_TEMPLATES;
+    console.error("GET /templates error:", err);
+    res.status(500).json({ error: "Failed to fetch templates from database" });
   }
-}
-
-function writeTemplatesToDisk(data) {
-  try {
-    const dir = path.dirname(TEMPLATES_FILE);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(TEMPLATES_FILE, JSON.stringify(data, null, 2));
-  } catch (err) {
-    console.error("Error writing templates to disk:", err);
-  }
-}
-
-app.get("/templates", (_req, res) => {
-  const data = readTemplatesFromDisk();
-  res.json(data);
 });
 
-app.post("/templates", (req, res) => {
+app.post("/templates", async (req, res) => {
   const { name, channel, body, description, steps, type } = req.body || {};
   if (!name?.trim()) {
     return res.status(400).json({ error: "Template name is required" });
   }
 
-  const data = readTemplatesFromDisk();
   const id = `t_${Date.now()}`;
+  const isOmni = type === "omnichannel" || (steps && Array.isArray(steps) && steps.length > 0);
 
-  if (type === "omnichannel" || (steps && Array.isArray(steps) && steps.length > 0)) {
-    const newOmni = {
-      id,
-      name: name.trim(),
-      description: description?.trim() || "Custom omnichannel flow template",
-      steps: steps || [{ channel: channel || "whatsapp", label: "Primary Step", kind: "primary" }],
-      uses: 0,
-      type: "omnichannel",
-      created_at: new Date().toISOString(),
-    };
-    data.omnichannelTemplates.unshift(newOmni);
-    writeTemplatesToDisk(data);
-    console.log(`✅ Saved new omnichannel template "${newOmni.name}" to database`);
-    return res.json({ success: true, item: newOmni, type: "omnichannel" });
-  } else {
-    const newSingle = {
-      id,
-      name: name.trim(),
-      channel: channel || "email",
-      body: body?.trim() || "",
-      uses: 0,
-      type: "single",
-      created_at: new Date().toISOString(),
-    };
-    data.templates.unshift(newSingle);
-    writeTemplatesToDisk(data);
-    console.log(`✅ Saved new message template "${newSingle.name}" to database`);
-    return res.json({ success: true, item: newSingle, type: "single" });
+  const object = {
+    id,
+    name: name.trim(),
+    channel: channel || "email",
+    body: body?.trim() || "",
+    description: description?.trim() || "",
+    steps: isOmni ? steps || [{ channel: channel || "whatsapp", label: "Primary Step", kind: "primary" }] : [],
+    uses: 0,
+    type: isOmni ? "omnichannel" : "single",
+  };
+
+  try {
+    const mutation = `
+      mutation InsertTemplate($object: templates_insert_input!) {
+        insert_templates_one(object: $object) {
+          id
+          name
+          channel
+          body
+          description
+          steps
+          uses
+          type
+          created_at
+        }
+      }
+    `;
+    const result = await hasuraQuery(mutation, { object });
+    const createdItem = result?.data?.insert_templates_one;
+    console.log(`✅ Saved template "${name}" to Hasura Postgres database`);
+    return res.json({ success: true, item: createdItem, type: object.type });
+  } catch (err) {
+    console.error("POST /templates error:", err);
+    return res.status(500).json({ error: "Failed to save template to database" });
   }
 });
 
-app.delete("/templates/:id", (req, res) => {
+app.delete("/templates/:id", async (req, res) => {
   const { id } = req.params;
-  const data = readTemplatesFromDisk();
-  data.templates = (data.templates || []).filter((t) => t.id !== id);
-  data.omnichannelTemplates = (data.omnichannelTemplates || []).filter((t) => t.id !== id);
-  writeTemplatesToDisk(data);
-  console.log(`🗑️ Deleted template ${id} from database`);
-  res.json({ success: true });
+  try {
+    const mutation = `
+      mutation DeleteTemplate($id: String!) {
+        delete_templates_by_pk(id: $id) {
+          id
+        }
+      }
+    `;
+    await hasuraQuery(mutation, { id });
+    console.log(`🗑️ Deleted template ${id} from Hasura Postgres database`);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("DELETE /templates error:", err);
+    res.status(500).json({ error: "Failed to delete template from database" });
+  }
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 Agatike webhook server running on port ${PORT}`);
+  console.log(`\n🚀 Noxx webhook server running on port ${PORT}`);
   console.log(`   Health  : http://localhost:${PORT}/health`);
   console.log(`   Webhook : http://localhost:${PORT}/webhook`);
   console.log(`   Smee    : https://smee.io/NStgB6a1LP1Bz7x\n`);
