@@ -940,41 +940,55 @@ function FlowsPage() {
                   <div className="space-y-4 pt-2 border-t border-border/60">
                     <Field
                       label="Behavior / Rule Condition"
-                      hint="Evaluation rule to split execution path."
+                      hint="Select evaluation rule to split execution path."
                     >
                       <select
-                        value={selected.data.conditionType || "If message delivered"}
+                        value={selected.data.conditionType || "If customer requests human support or is unsatisfied"}
                         onChange={(e) =>
                           updateSelected({
                             conditionType: e.target.value,
                             detail: `Condition: ${e.target.value}`,
                           })
                         }
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 font-medium"
                       >
-                        <option value="If target email matches (e.g. sales@domain.com)">If target email matches (e.g. sales@domain.com)</option>
-                        <option value="If subject contains keyword (e.g. URGENT)">If subject contains keyword (e.g. URGENT)</option>
-                        <option value="If email body contains 'refund' or 'cancel'">If email body contains 'refund' or 'cancel'</option>
-                        <option value="If message delivered">If message delivered</option>
-                        <option value="If user replied">If user replied</option>
-                        <option value="If AI confidence is low → Skip AI">If AI confidence is low → Skip AI</option>
+                        <option value="If customer requests human support or is unsatisfied">⚡ If customer requests human support or is unsatisfied</option>
+                        <option value="If email body contains 'refund' or 'cancel'">🛒 If email body contains 'refund' or 'cancel'</option>
+                        <option value="If subject contains keyword (e.g. URGENT)">📩 If subject contains keyword (e.g. URGENT)</option>
+                        <option value="If target inbox matches sales@domain.com">✉️ If target inbox matches sales@domain.com</option>
+                        <option value="If sender is VIP / Enterprise domain (@enterprise.com)">⭐ If sender is VIP / Enterprise domain (@enterprise.com)</option>
+                        <option value="If AI confidence is low → Escalate to Human Agent">🤖 If AI confidence is low → Escalate to Human Agent</option>
+                        <option value="If message delivered">✅ If message delivered</option>
+                        <option value="If user replied">💬 If user replied</option>
                       </select>
+                    </Field>
+
+                    <Field
+                      label="Custom Match Keywords / Text (Optional)"
+                      hint="Enter specific keywords separated by commas (e.g. refund, billing, cancel, agent)."
+                    >
+                      <input
+                        value={selected.data.conditionKeyword || ""}
+                        onChange={(e) => updateSelected({ conditionKeyword: e.target.value })}
+                        placeholder="e.g. refund, billing, cancel, agent"
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+                      />
                     </Field>
 
                     <div className="grid grid-cols-2 gap-2">
                       <Field label="If / Yes branch label">
                         <input
-                          value={selected.data.yesLabel || "Yes / True"}
+                          value={selected.data.yesLabel || "Escalate to Human Agent"}
                           onChange={(e) => updateSelected({ yesLabel: e.target.value })}
-                          placeholder="Yes / True"
+                          placeholder="Escalate to Human Agent"
                           className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-medium text-success outline-none focus:ring-2 focus:ring-success/30"
                         />
                       </Field>
                       <Field label="Else / No branch label">
                         <input
-                          value={selected.data.noLabel || "No / Else"}
+                          value={selected.data.noLabel || "AI Self-Service Resolved"}
                           onChange={(e) => updateSelected({ noLabel: e.target.value })}
-                          placeholder="No / Else"
+                          placeholder="AI Self-Service Resolved"
                           className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-medium text-destructive outline-none focus:ring-2 focus:ring-destructive/30"
                         />
                       </Field>

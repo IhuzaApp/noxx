@@ -33,6 +33,7 @@ export type FlowNodeData = {
   retryMinutes?: number;
   /** Condition / behavior branch rules */
   conditionType?: string;
+  conditionKeyword?: string;
   yesLabel?: string;
   noLabel?: string;
   /** Inbound email target address (e.g. sales@agatike.com, support@agatike.com) */

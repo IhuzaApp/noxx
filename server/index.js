@@ -326,19 +326,8 @@ app.post("/webhook", async (req, res) => {
       ticketId = existingTicket.id;
       threadHistory = existingTicket.conversations || [];
       console.log(`📌 Reusing existing ticket ${ticketId} for thread "${cleanSubj}" from ${senderEmail}`);
-      await updateTicketStatus(ticketId, "ai-handling");
     } else {
       ticketId = emailId;
-      await upsertTicket({
-        id: ticketId,
-        email_id: emailId,
-        subject: cleanSubj,
-        contact_name: contactName,
-        contact_email: senderEmail,
-        channel: "email",
-        status: "ai-handling",
-        tags: ["ai-created", "email"],
-      });
     }
 
     // 3. Fetch full email body from Resend
@@ -358,27 +347,51 @@ app.post("/webhook", async (req, res) => {
     await addConversationMessage(ticketId, "customer", textBody);
     await updateEmailStatus(emailId, "processing", { message: textBody });
 
-    // Detect if customer asks for human escalation or expresses dissatisfaction in follow-up
+    // Comprehensive escalation & dissatisfaction detection keywords (EN, FR, RW, SW)
     const bodyLower = (textBody || "").toLowerCase();
-    const isEscalationRequested =
-      bodyLower.includes("human") ||
-      bodyLower.includes("agent") ||
-      bodyLower.includes("unsatisfied") ||
-      bodyLower.includes("not satisfied") ||
-      bodyLower.includes("escalate") ||
-      bodyLower.includes("talk to someone") ||
-      bodyLower.includes("speak to a person") ||
-      bodyLower.includes("wrong bill") ||
-      bodyLower.includes("bad service");
+    const escalationKeywords = [
+      // English - Human Agent & Person
+      "human", "agent", "customer support", "customer service", "employee", "team member", "staff member", "team lead", "team member", "representative", "operator", "real person", "support team", "helpdesk", "live help", "specialist", "manager", "ceo", "c", "board", "supervisor",
+      // English - Communication Verbs
+      "talk to", "speak to", "talk with", "speak with", "connect me", "contact me", "call me", "reach out", "chat with", "want to talk", "want to speak", "need an agent", "need a person",
+      // English - Escalation & Management
+      "escalate", "escalation", "transfer", "supervisor", "manager", "admin", "executive", "tier 2",
+      // English - Complaints & Dissatisfaction
+      "unsatisfied", "not satisfied", "dissatisfied", "unhappy", "bad service", "terrible service", "horrible service", "poor service", "disappointed",
+      // English - Billing & Disputes
+      "wrong bill", "incorrect invoice", "overcharged", "refund", "cancel subscription", "dispute", "claim", "issue", "problem",
+      // French
+      "humain", "agent", "conseiller", "opérateur", "parler à", "discuter avec", "parler avec", "contactez-moi", "service client", "responsable", "insatisfait", "réclamation",
+      // Kinyarwanda
+      "umukozi", "mumpuze", "kuvugana", "ubufasha", "kuregera", "ikibazo", "regera", "umuntu",
+      // Swahili
+      "mwanadamu", "huduma kwa wateja", "ongea na", "zungumza na", "msaidizi", "wasiliana"
+    ];
 
-    if (isEscalationRequested && existingTicket) {
-      console.log(`⚡ Customer requested human escalation for ticket ${ticketId}. Transferring to human support.`);
-      const escalationMsg = `I understand your request. I have escalated your ticket to our human support team. A representative will follow up with you directly shortly.`;
+    const isEscalationRequested = escalationKeywords.some((kw) => bodyLower.includes(kw));
 
+    if (isEscalationRequested) {
+      console.log(`⚡ Customer requested human escalation for email ${emailId}. Transferring to human support.`);
+      const escalationMsg = `I understand your request. I have escalated your request to our human support team. A representative will follow up with you directly shortly.`;
+
+      // 1. Ensure ticket is created in database with status open for human support
+      await upsertTicket({
+        id: ticketId,
+        email_id: emailId,
+        subject: cleanSubj,
+        contact_name: contactName,
+        contact_email: senderEmail,
+        channel: "email",
+        status: "open",
+        tags: ["human-escalated", "email"],
+      });
+
+      // 2. Log customer message and AI response to ticket conversation
+      await addConversationMessage(ticketId, "customer", textBody);
       await addConversationMessage(ticketId, "ai", escalationMsg);
       await updateEmailStatus(emailId, "human-handling", { message: textBody });
-      await updateTicketStatus(ticketId, "open");
 
+      // 3. Send escalation confirmation email
       try {
         await resend.emails.send({
           from: getFromEmailAddress(recipientEmail),
@@ -420,9 +433,11 @@ app.post("/webhook", async (req, res) => {
         let flowAiLanguage = "auto";
         let flowKnowledgeLink = "";
 
+        let hasTicketBlock = false;
         // Aggregate settings across all nodes in this flow
         for (const node of f.nodes) {
           const d = node.data || {};
+          if (d.kind === "ticket") hasTicketBlock = true;
           if (d.targetEmail) flowTargetEmail = d.targetEmail;
           if (!flowTargetEmail && d.detail && typeof d.detail === "string" && d.detail.toLowerCase().includes("@")) {
             const match = d.detail.match(/[\w.-]+@[\w.-]+/);
@@ -455,6 +470,7 @@ app.post("/webhook", async (req, res) => {
           matchedRule = {
             flowName: f.name,
             flowResources,
+            hasTicketBlock,
             nodeData: {
               targetEmail: flowTargetEmail || recip,
               subjectFilter: flowSubjectFilter,
@@ -468,10 +484,11 @@ app.post("/webhook", async (req, res) => {
         }
 
         // Keep as fallback if flow has general AI rules
-        if (!matchedRule && (flowAiFocusArea || flowAiLanguage !== "auto" || flowKnowledgeLink || flowAiMode)) {
+        if (!matchedRule && (flowAiFocusArea || flowAiLanguage !== "auto" || flowKnowledgeLink || flowAiMode || hasTicketBlock)) {
           matchedRule = {
             flowName: f.name,
             flowResources,
+            hasTicketBlock,
             nodeData: {
               targetEmail: flowTargetEmail,
               subjectFilter: flowSubjectFilter,
@@ -490,6 +507,20 @@ app.post("/webhook", async (req, res) => {
     if (matchedRule) {
       console.log(`🎯 Matched active flow rule "${matchedRule.flowName}" for recipient ${recipientEmail}`);
       const ruleData = matchedRule.nodeData;
+
+      if (ruleData.aiMode === "skip_ai_ticket" || matchedRule.hasTicketBlock) {
+        console.log(`⚡ Flow rule requires ticket creation for ${recipientEmail}. Upserting ticket.`);
+        await upsertTicket({
+          id: ticketId,
+          email_id: emailId,
+          subject: cleanSubj,
+          contact_name: contactName,
+          contact_email: senderEmail,
+          channel: "email",
+          status: ruleData.aiMode === "skip_ai_ticket" ? "open" : "ai-handling",
+          tags: ["email"],
+        });
+      }
 
       if (ruleData.aiMode === "skip_ai_ticket") {
         console.log(`⚡ Flow rule [Skip AI & Create Ticket Directly] matched for ${recipientEmail}. Re-routing to human agent.`);
