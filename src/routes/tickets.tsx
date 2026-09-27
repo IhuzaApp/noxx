@@ -4,7 +4,7 @@ import {
   Mail, MessageSquare, Instagram, Phone, Sparkles, Bot, Send,
   Search, MoreHorizontal, ChevronRight, ArrowUpRight, Tag, Wand2,
   Ticket as TicketIcon, Plus, UserCircle2, CheckCircle2, Clock,
-  RefreshCw, Inbox, XCircle, Loader2,
+  RefreshCw, Inbox, XCircle, Loader2, Flag,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Topbar } from "@/components/Topbar";
@@ -151,7 +151,7 @@ function avatarColor(email: string) {
   return colors[Math.abs(h) % colors.length];
 }
 
-// ─── Hasura fetch ─────────────────────────────────────────────────────────────
+// ─── Hasura fetch & mutations ─────────────────────────────────────────────────
 
 async function fetchTickets(): Promise<Ticket[]> {
   const res = await fetch(HASURA_ENDPOINT, {
@@ -181,15 +181,36 @@ async function fetchTickets(): Promise<Ticket[]> {
       contact_name: name,
       subject: subject,
       channel: t.channel || "email",
+      tags: t.tags || [],
     };
   });
+}
+
+async function mutateTicket(id: string, _set: Record<string, any>) {
+  const mutation = `
+    mutation UpdateTicket($id: String!, $_set: tickets_set_input!) {
+      update_tickets_by_pk(pk_columns: { id: $id }, _set: $_set) {
+        id
+        status
+        priority
+        tags
+      }
+    }
+  `;
+  const res = await fetch(HASURA_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-hasura-admin-secret": HASURA_SECRET },
+    body: JSON.stringify({ query: mutation, variables: { id, _set } }),
+  });
+  const json = await res.json();
+  if (json.errors) console.error("Hasura mutation error:", json.errors);
+  return json?.data?.update_tickets_by_pk;
 }
 
 // ─── Components ───────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.open;
-  const Icon = cfg.icon;
   return (
     <span className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-semibold border", cfg.cls)}>
       <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", cfg.dot)} />
@@ -245,11 +266,19 @@ function TicketsPage() {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
 
+  // Action states for ticket details
+  const [actionLoading, setActionLoading] = useState<{ resolve?: boolean; escalate?: boolean; summarize?: boolean }>({});
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+
   const selected = tickets.find((t) => t.id === selectedId) ?? null;
   const { suggestions, loading: sugLoading, refresh: refreshSuggestions } = useSuggestions(
     selected?.id ?? null,
     selected?.conversations ?? []
   );
+
+  useEffect(() => {
+    setAiSummary(null);
+  }, [selectedId]);
 
   const handleSend = async () => {
     if (!draft.trim() || !selected || sending) return;
@@ -266,12 +295,85 @@ function TicketsPage() {
         throw new Error(err?.error || `Server error ${res.status}`);
       }
       setDraft("");
-      // Reload tickets so the new conversation entry appears
       await load();
     } catch (e: any) {
       setSendError(e.message ?? "Failed to send");
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleMarkResolved = async () => {
+    if (!selected || actionLoading.resolve) return;
+    setActionLoading((prev) => ({ ...prev, resolve: true }));
+    try {
+      const newStatus = selected.status === "resolved" ? "open" : "resolved";
+      await mutateTicket(selected.id, { status: newStatus });
+      await load();
+    } catch (e) {
+      console.error("Failed to update status:", e);
+    } finally {
+      setActionLoading((prev) => ({ ...prev, resolve: false }));
+    }
+  };
+
+  const handleEscalate = async () => {
+    if (!selected || actionLoading.escalate) return;
+    setActionLoading((prev) => ({ ...prev, escalate: true }));
+    try {
+      const isEscalated = selected.priority === "urgent" || selected.tags?.includes("escalated");
+      const currentTags = selected.tags || [];
+      const newTags = isEscalated
+        ? currentTags.filter((t) => t !== "escalated")
+        : Array.from(new Set([...currentTags, "escalated"]));
+      const newPriority = isEscalated ? "normal" : "urgent";
+
+      await mutateTicket(selected.id, { priority: newPriority, tags: newTags });
+      await load();
+    } catch (e) {
+      console.error("Failed to escalate ticket:", e);
+    } finally {
+      setActionLoading((prev) => ({ ...prev, escalate: false }));
+    }
+  };
+
+  const handleAISummarize = async () => {
+    if (!selected || actionLoading.summarize) return;
+    setActionLoading((prev) => ({ ...prev, summarize: true }));
+    setAiSummary(null);
+    try {
+      const conversationText = (selected.conversations || [])
+        .map((m) => `[${m.sender === "customer" ? "Customer" : m.sender === "ai" ? "AI Assistant" : "Support Agent"}]: ${m.message}`)
+        .join("\n\n");
+
+      const prompt = `You are an AI support analyst. Provide a brief, nicely structured 2-3 bullet point summary of this customer ticket outlining:
+• Core issue / Customer request
+• Current progress / Response given
+• Recommended next step for support agent
+
+Subject: ${selected.subject}
+Customer: ${selected.contact_name} (${selected.contact_email})
+Conversation Thread:
+${conversationText || "No message content yet."}`;
+
+      const res = await fetch(GROQ_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${GROQ_KEY}` },
+        body: JSON.stringify({
+          model: "openai/gpt-oss-20b",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 350,
+          temperature: 0.5,
+        }),
+      });
+      const json = await res.json();
+      const summary = json?.choices?.[0]?.message?.content ?? "Could not generate summary.";
+      setAiSummary(summary);
+    } catch (e) {
+      console.error("AI summarize error:", e);
+      setAiSummary("Failed to generate AI summary. Please check connection.");
+    } finally {
+      setActionLoading((prev) => ({ ...prev, summarize: false }));
     }
   };
 
@@ -328,6 +430,8 @@ function TicketsPage() {
   // ── Detail view ──────────────────────────────────────────────────────────────
   if (selected) {
     const cfgSel = STATUS_CONFIG[selected.status] ?? STATUS_CONFIG.open;
+    const isEscalated = selected.priority === "urgent" || selected.tags?.includes("escalated");
+
     return (
       <AppLayout>
         <Topbar
@@ -348,7 +452,14 @@ function TicketsPage() {
             <div className="p-5 border-b border-border space-y-3">
               <div className="font-mono text-[10px] text-muted-foreground">{selected.id.slice(0, 8).toUpperCase()}</div>
               <div className="font-semibold text-foreground leading-snug">{selected.subject}</div>
-              <StatusBadge status={selected.status} />
+              <div className="flex items-center gap-2 flex-wrap">
+                <StatusBadge status={selected.status} />
+                {isEscalated && (
+                  <span className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-bold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30">
+                    <Flag className="h-3 w-3 fill-red-500 text-red-500" /> ESCALATED
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="p-5 space-y-5">
@@ -380,7 +491,8 @@ function TicketsPage() {
                   <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Tags</div>
                   <div className="flex flex-wrap gap-1.5">
                     {selected.tags.map((tag) => (
-                      <span key={tag} className="inline-flex items-center gap-1 rounded-md bg-accent text-accent-foreground px-2 py-0.5 text-[11px] font-medium">
+                      <span key={tag} className={cn("inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium border",
+                        tag === "escalated" ? "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30 font-semibold" : "bg-accent text-accent-foreground border-transparent")}>
                         <Tag className="h-2.5 w-2.5" /> {tag}
                       </span>
                     ))}
@@ -398,18 +510,60 @@ function TicketsPage() {
                 </button>
               </div>
 
-              {/* Quick actions */}
+              {/* Actions */}
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Actions</div>
-                <div className="space-y-1">
-                  <button className="w-full text-left flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs hover:bg-accent/40 transition text-foreground">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Mark resolved
+                <div className="space-y-1.5">
+                  {/* Mark resolved button */}
+                  <button
+                    onClick={handleMarkResolved}
+                    disabled={actionLoading.resolve}
+                    className={cn(
+                      "w-full text-left flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium border transition disabled:opacity-60",
+                      selected.status === "resolved"
+                        ? "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
+                        : "bg-card border-border hover:bg-emerald-500/10 hover:border-emerald-500/30 text-foreground"
+                    )}
+                  >
+                    {actionLoading.resolve ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0 text-emerald-500" />
+                    ) : (
+                      <CheckCircle2 className={cn("h-3.5 w-3.5 shrink-0", selected.status === "resolved" ? "text-amber-500" : "text-emerald-500")} />
+                    )}
+                    {selected.status === "resolved" ? "Reopen ticket" : "Mark resolved"}
                   </button>
-                  <button className="w-full text-left flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs hover:bg-accent/40 transition text-foreground">
-                    <ArrowUpRight className="h-3.5 w-3.5" /> Escalate
+
+                  {/* Escalate button */}
+                  <button
+                    onClick={handleEscalate}
+                    disabled={actionLoading.escalate}
+                    className={cn(
+                      "w-full text-left flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium border transition disabled:opacity-60",
+                      isEscalated
+                        ? "bg-red-500/15 border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500/25"
+                        : "bg-card border-border hover:bg-red-500/10 hover:border-red-500/30 text-foreground"
+                    )}
+                  >
+                    {actionLoading.escalate ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0 text-red-500" />
+                    ) : (
+                      <Flag className={cn("h-3.5 w-3.5 shrink-0 text-red-500", isEscalated && "fill-red-500")} />
+                    )}
+                    {isEscalated ? "De-escalate ticket" : "Escalate ticket"}
                   </button>
-                  <button className="w-full text-left flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs hover:bg-accent/40 transition text-foreground">
-                    <Sparkles className="h-3.5 w-3.5 text-channel-ai" /> AI summarize
+
+                  {/* AI Summarize button */}
+                  <button
+                    onClick={handleAISummarize}
+                    disabled={actionLoading.summarize}
+                    className="w-full text-left flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-2 text-xs font-medium hover:bg-channel-ai/10 hover:border-channel-ai/30 text-foreground transition disabled:opacity-60"
+                  >
+                    {actionLoading.summarize ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0 text-channel-ai" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5 shrink-0 text-channel-ai" />
+                    )}
+                    {actionLoading.summarize ? "Generating summary…" : "AI summarize"}
                   </button>
                 </div>
               </div>
@@ -427,7 +581,14 @@ function TicketsPage() {
                 <ChanIcon className="h-4 w-4" />
               </span>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-foreground">Conversation with {selected.contact_name}</div>
+                <div className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  Conversation with {selected.contact_name}
+                  {isEscalated && (
+                    <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30">
+                      <Flag className="h-3 w-3 fill-red-500 text-red-500" /> ESCALATED
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs text-muted-foreground capitalize">{selected.channel} · {selected.contact_email}</div>
               </div>
               <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded border", cfgSel.cls)}>
@@ -437,6 +598,26 @@ function TicketsPage() {
                 <MoreHorizontal className="h-4 w-4" />
               </button>
             </div>
+
+            {/* AI Summary card display */}
+            {aiSummary && (
+              <div className="mx-5 my-3 p-4 rounded-2xl border border-channel-ai/30 bg-channel-ai/10 text-foreground shadow-soft relative shrink-0">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2 font-bold text-xs text-channel-ai">
+                    <Sparkles className="h-4 w-4" /> AI Ticket Summary
+                  </div>
+                  <button
+                    onClick={() => setAiSummary(null)}
+                    className="h-5 w-5 rounded-full hover:bg-accent flex items-center justify-center text-xs text-muted-foreground hover:text-foreground transition"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="text-xs leading-relaxed whitespace-pre-wrap text-foreground font-sans">
+                  {aiSummary}
+                </div>
+              </div>
+            )}
 
             <ConversationThread messages={selected.conversations ?? []} />
 
@@ -639,6 +820,7 @@ function TicketsPage() {
                 <tbody>
                   {filtered.map((t) => {
                     const TIcon = CHANNEL_ICON[t.channel] ?? Mail;
+                    const isTEscalated = t.priority === "urgent" || t.tags?.includes("escalated");
                     return (
                       <tr
                         key={t.id}
@@ -646,11 +828,16 @@ function TicketsPage() {
                         className="border-b border-border last:border-0 hover:bg-accent/30 cursor-pointer transition-colors"
                       >
                         <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-1.5 mb-0.5">
+                          <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                             <span className="font-mono text-[10px] text-muted-foreground">{t.id.slice(0, 8).toUpperCase()}</span>
                             {t.tags?.includes("ai-created") && (
                               <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] font-semibold bg-channel-ai/15 text-channel-ai border border-channel-ai/20">
                                 <Sparkles className="h-2 w-2" /> AI
+                              </span>
+                            )}
+                            {isTEscalated && (
+                              <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 shrink-0">
+                                <Flag className="h-2.5 w-2.5 fill-red-500 text-red-500" /> ESCALATED
                               </span>
                             )}
                           </div>
