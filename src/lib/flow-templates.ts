@@ -214,4 +214,105 @@ export const flowTemplates: Record<string, FlowTemplate> = {
       ]
     }
   },
+  "ot1": {
+    nodes: [
+      { id: "1", type: "flow", position: { x: 320, y: 20 }, data: { kind: "trigger", label: "OTP Requested", detail: "POST /v1/auth/send_otp" } },
+      { id: "2", type: "flow", position: { x: 320, y: 180 }, data: { kind: "whatsapp", label: "Send OTP via WhatsApp", detail: "Template: whatsapp_otp", fallback: "sms", retryMinutes: 1 } },
+      { id: "3", type: "flow", position: { x: 320, y: 360 }, data: { kind: "condition", label: "Delivered in 30s?", detail: "Check WhatsApp delivery status" } },
+      { id: "4", type: "flow", position: { x: 60, y: 540 }, data: { kind: "delay", label: "Done", detail: "WhatsApp Delivered" } },
+      { id: "5", type: "flow", position: { x: 580, y: 540 }, data: { kind: "sms", label: "Fallback: Send via SMS", detail: "SMS OTP Backup" } },
+    ],
+    edges: [
+      makeEdge("e1-2", "1", "2", "default"),
+      makeEdge("e2-3", "2", "3", "default"),
+      makeEdge("e3-4", "3", "4", "delivered"),
+      makeEdge("e3-5", "3", "5", "fallback"),
+    ],
+    simulation: {
+      path: ["1", "2", "3", "5"],
+      edgePath: ["e1-2", "e2-3", "e3-5"],
+      messages: [
+        { msg: "Trigger: OTP requested by customer", kind: "info" },
+        { msg: "Sent OTP via WhatsApp (Wait 30s)", kind: "info" },
+        { msg: "WhatsApp status: Not delivered in 30s", kind: "warn" },
+        { msg: "Fallback triggered: Sent OTP via SMS", kind: "ok" },
+      ],
+    },
+  },
+  "ot2": {
+    nodes: [
+      { id: "1", type: "flow", position: { x: 320, y: 20 }, data: { kind: "trigger", label: "Order Shipped Event", detail: "Webhook: order_shipped" } },
+      { id: "2", type: "flow", position: { x: 320, y: 180 }, data: { kind: "whatsapp", label: "Send Shipping Update", detail: "WhatsApp tracking template" } },
+      { id: "3", type: "flow", position: { x: 320, y: 360 }, data: { kind: "condition", label: "Delivered in 5 mins?", detail: "Check delivery receipt" } },
+      { id: "4", type: "flow", position: { x: 60, y: 540 }, data: { kind: "delay", label: "End Flow", detail: "Delivered successfully" } },
+      { id: "5", type: "flow", position: { x: 580, y: 540 }, data: { kind: "email", label: "Fallback: Send Rich Email", detail: "Full order details & tracking link" } },
+    ],
+    edges: [
+      makeEdge("e1-2", "1", "2", "default"),
+      makeEdge("e2-3", "2", "3", "default"),
+      makeEdge("e3-4", "3", "4", "delivered"),
+      makeEdge("e3-5", "3", "5", "fallback"),
+    ],
+    simulation: {
+      path: ["1", "2", "3", "4"],
+      edgePath: ["e1-2", "e2-3", "e3-4"],
+      messages: [
+        { msg: "Event: Order #78291 shipped", kind: "info" },
+        { msg: "WhatsApp shipping notification dispatched", kind: "ok" },
+        { msg: "WhatsApp status: Delivered in 1.2s", kind: "ok" },
+        { msg: "Flow completed successfully", kind: "ok" },
+      ],
+    },
+  },
+  "ot3": {
+    nodes: [
+      { id: "1", type: "flow", position: { x: 320, y: 20 }, data: { kind: "trigger", label: "Appointment Created", detail: "Calendar Event (24h before)" } },
+      { id: "2", type: "flow", position: { x: 320, y: 180 }, data: { kind: "email", label: "Send Email Reminder", detail: "24 hours before appointment" } },
+      { id: "3", type: "flow", position: { x: 320, y: 340 }, data: { kind: "delay", label: "Wait until 1h before", detail: "Timer countdown" } },
+      { id: "4", type: "flow", position: { x: 320, y: 500 }, data: { kind: "whatsapp", label: "WhatsApp Nudge", detail: "1 hour before appointment" } },
+      { id: "5", type: "flow", position: { x: 320, y: 660 }, data: { kind: "condition", label: "Customer Replied?", detail: "Check confirmation" } },
+      { id: "6", type: "flow", position: { x: 580, y: 820 }, data: { kind: "sms", label: "SMS Final Reminder", detail: "15 minutes before" } },
+    ],
+    edges: [
+      makeEdge("e1-2", "1", "2", "default"),
+      makeEdge("e2-3", "2", "3", "default"),
+      makeEdge("e3-4", "3", "4", "default"),
+      makeEdge("e4-5", "4", "5", "default"),
+      makeEdge("e5-6", "5", "6", "no-response"),
+    ],
+    simulation: {
+      path: ["1", "2", "3", "4", "5", "6"],
+      edgePath: ["e1-2", "e2-3", "e3-4", "e4-5", "e5-6"],
+      messages: [
+        { msg: "Appointment reminder scheduled", kind: "info" },
+        { msg: "Email reminder sent (24h before)", kind: "ok" },
+        { msg: "WhatsApp nudge sent (1h before)", kind: "ok" },
+        { msg: "No response confirmed → Sending SMS reminder (15m before)", kind: "warn" },
+      ],
+    },
+  },
+  "ot4": {
+    nodes: [
+      { id: "1", type: "flow", position: { x: 320, y: 20 }, data: { kind: "trigger", label: "Customer Message Received", detail: "Inbound Email / WhatsApp" } },
+      { id: "2", type: "flow", position: { x: 320, y: 180 }, data: { kind: "ai", label: "AI Auto-Respond", detail: "GPT-4 Support Agent" } },
+      { id: "3", type: "flow", position: { x: 320, y: 360 }, data: { kind: "condition", label: "Escalation requested?", detail: "Check customer sentiment / request" } },
+      { id: "4", type: "flow", position: { x: 60, y: 540 }, data: { kind: "delay", label: "Resolved by AI", detail: "No human action needed" } },
+      { id: "5", type: "flow", position: { x: 580, y: 540 }, data: { kind: "whatsapp", label: "Escalate to Agent", detail: "Notify live support team" } },
+    ],
+    edges: [
+      makeEdge("e1-2", "1", "2", "default"),
+      makeEdge("e2-3", "2", "3", "default"),
+      makeEdge("e3-4", "3", "4", "no"),
+      makeEdge("e3-5", "3", "5", "yes"),
+    ],
+    simulation: {
+      path: ["1", "2", "3", "5"],
+      edgePath: ["e1-2", "e2-3", "e3-5"],
+      messages: [
+        { msg: "Inbound message: I need to speak to a human manager", kind: "info" },
+        { msg: "AI Agent analyzed intent: Human Handover required", kind: "warn" },
+        { msg: "Escalated ticket to live agent via WhatsApp", kind: "ok" },
+      ],
+    },
+  },
 };

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Phone, Mail, MessageSquare, Sparkles, Plus, Copy, Workflow, ArrowRight,
   Search, Trash2, X, Check, Loader2, Code, Layers, FileText, RefreshCw,
@@ -9,6 +9,10 @@ import { Topbar } from "@/components/Topbar";
 import { Card } from "@/components/Card";
 import { channelMeta, type Channel } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+import { userFlowStore, type UserFlow } from "@/lib/user-flows";
+import { flowTemplates, makeEdge } from "@/lib/flow-templates";
+import type { Node, Edge } from "reactflow";
+import type { FlowNodeData } from "@/components/flow/FlowNode";
 
 export const Route = createFileRoute("/templates")({
   head: () => ({
@@ -98,11 +102,86 @@ const INITIAL_OMNI_TEMPLATES: OmnichannelTemplate[] = [
 const PRESET_VARIABLES = ["{{name}}", "{{code}}", "{{order_id}}", "{{time}}", "{{amount}}", "{{org}}", "{{transcript}}"];
 
 function TemplatesPage() {
+  const navigate = useNavigate();
   const [singleTemplates, setSingleTemplates] = useState<SingleTemplate[]>(INITIAL_SINGLE_TEMPLATES);
   const [omniTemplates, setOmniTemplates] = useState<OmnichannelTemplate[]>(INITIAL_OMNI_TEMPLATES);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [channelFilter, setChannelFilter] = useState<string>("all");
+
+  const handleUseFlow = (t: OmnichannelTemplate) => {
+    const existingFlows = userFlowStore.get();
+    const targetId = t.id.startsWith("fl_") || t.id.startsWith("ot") ? t.id : `fl_${t.id}`;
+    let existing = existingFlows.find((f) => f.id === targetId || f.id === t.id || f.name === t.name);
+
+    if (!existing) {
+      const newFlow: UserFlow = {
+        id: targetId,
+        name: t.name,
+        description: t.description || "Created from omnichannel template",
+        channels: Array.from(new Set(t.steps.map((s) => s.channel))),
+        trigger: "Webhook Event",
+        status: "active",
+        resources: [],
+        createdAt: "Just now",
+      };
+      userFlowStore.set([newFlow, ...existingFlows]);
+      existing = newFlow;
+    }
+
+    if (!flowTemplates[existing.id] && !flowTemplates[t.id]) {
+      const nodes: Node<FlowNodeData>[] = [
+        {
+          id: "1",
+          type: "flow",
+          position: { x: 320, y: 20 },
+          data: { kind: "trigger", label: `${t.name} Event`, detail: "POST /v1/events/trigger" },
+        },
+      ];
+
+      const edges: Edge[] = [];
+      let currentY = 180;
+
+      t.steps.forEach((step, idx) => {
+        const nodeId = `${idx + 2}`;
+        const prevNodeId = `${idx + 1}`;
+        nodes.push({
+          id: nodeId,
+          type: "flow",
+          position: { x: step.kind === "fallback" ? 580 : step.kind === "branch" ? 120 : 320, y: currentY },
+          data: {
+            kind: (step.channel as any) || "whatsapp",
+            label: step.label || `Send ${step.channel}`,
+            detail: `Channel: ${step.channel}`,
+            fallback: step.kind === "fallback" ? "sms" : undefined,
+          },
+        });
+
+        const edgeKind = step.kind === "fallback" ? "fallback" : step.kind === "branch" ? "yes" : "default";
+        edges.push(makeEdge(`e_${prevNodeId}-${nodeId}`, prevNodeId, nodeId, edgeKind as any));
+        currentY += 160;
+      });
+
+      flowTemplates[existing.id] = {
+        nodes,
+        edges,
+        simulation: {
+          path: nodes.map((n) => n.id),
+          edgePath: edges.map((e) => e.id),
+          messages: [
+            { msg: `Triggered: ${t.name}`, kind: "info" },
+            ...t.steps.map((s) => ({
+              msg: `${s.label || s.channel} step executed`,
+              kind: (s.kind === "fallback" ? "warn" : "ok") as "warn" | "ok",
+            })),
+          ],
+        },
+      };
+    }
+
+    const finalId = flowTemplates[t.id] ? t.id : existing.id;
+    navigate({ to: "/flows", search: { id: finalId } });
+  };
 
   // New template modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -351,13 +430,13 @@ function TemplatesPage() {
                         >
                           <Copy className="h-3 w-3" /> Duplicate
                         </button>
-                        <Link
-                          to="/flows"
-                          className="inline-flex items-center gap-1 rounded-lg bg-foreground text-background px-3 py-1.5 font-medium hover:opacity-90 transition shadow-soft"
+                        <button
+                          onClick={() => handleUseFlow(t)}
+                          className="inline-flex items-center gap-1 rounded-lg bg-foreground text-background px-3 py-1.5 font-medium hover:opacity-90 transition shadow-soft cursor-pointer"
                         >
                           Use flow
                           <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
+                        </button>
                       </div>
                     </div>
                   </Card>
