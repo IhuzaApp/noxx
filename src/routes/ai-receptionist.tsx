@@ -78,12 +78,18 @@ function avatarColor(email: string | undefined) {
   return colors[Math.abs(hash) % colors.length];
 }
 
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<string, { icon: any; label: string; className: string; dot: string }> = {
   replied: {
     icon: CheckCircle2,
     label: "AI Replied",
     className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
     dot: "bg-emerald-500",
+  },
+  "human-handling": {
+    icon: User,
+    label: "Human Agent",
+    className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    dot: "bg-blue-500",
   },
   failed: {
     icon: XCircle,
@@ -99,10 +105,55 @@ const STATUS_CONFIG = {
   },
 };
 
-function EmailRow({ email, index }: { email: EmailInteraction; index: number }) {
+type EmailThread = {
+  threadKey: string;
+  subject: string;
+  from: string;
+  to: string;
+  latestCreatedAt: any;
+  status: string;
+  items: EmailInteraction[];
+};
+
+function groupEmailsIntoThreads(emails: EmailInteraction[]): EmailThread[] {
+  const map = new Map<string, EmailInteraction[]>();
+
+  for (const e of emails) {
+    const cleanSubj = (e.subject || "No Subject").replace(/^(re|fwd|fw):\s*/i, "").trim().toLowerCase();
+    const key = `${(e.from || "").toLowerCase()}::${cleanSubj}`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(e);
+  }
+
+  const threads: EmailThread[] = [];
+  for (const [key, items] of map.entries()) {
+    items.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    const latest = items[items.length - 1];
+    const displaySubject = (latest.subject || items[0].subject || "No Subject").replace(/^(re|fwd|fw):\s*/i, "").trim();
+
+    const isHuman = items.some((i) => i.status === "human-handling");
+    const status = isHuman ? "human-handling" : latest.status;
+
+    threads.push({
+      threadKey: key,
+      subject: displaySubject,
+      from: latest.from,
+      to: latest.to,
+      latestCreatedAt: latest.createdAt,
+      status,
+      items,
+    });
+  }
+
+  threads.sort((a, b) => new Date(b.latestCreatedAt).getTime() - new Date(a.latestCreatedAt).getTime());
+  return threads;
+}
+
+function ThreadRow({ thread, index }: { thread: EmailThread; index: number }) {
   const [expanded, setExpanded] = useState(false);
-  const status = STATUS_CONFIG[email.status] ?? STATUS_CONFIG.processing;
+  const status = STATUS_CONFIG[thread.status] ?? STATUS_CONFIG.processing;
   const StatusIcon = status.icon;
+  const latestItem = thread.items[thread.items.length - 1];
 
   return (
     <div
@@ -113,7 +164,7 @@ function EmailRow({ email, index }: { email: EmailInteraction; index: number }) 
       )}
       style={{ animationDelay: `${index * 40}ms` }}
     >
-      {/* Row header — always visible */}
+      {/* Row header */}
       <button
         onClick={() => setExpanded((e) => !e)}
         className="w-full text-left flex items-center gap-4 px-5 py-4 transition-colors hover:bg-accent/30 focus:outline-none"
@@ -122,28 +173,39 @@ function EmailRow({ email, index }: { email: EmailInteraction; index: number }) 
         <div
           className={cn(
             "h-10 w-10 shrink-0 rounded-xl flex items-center justify-center text-white font-semibold text-sm shadow-soft",
-            avatarColor(email.from)
+            avatarColor(thread.from)
           )}
         >
-          {getInitials(email.from)}
+          {getInitials(thread.from)}
         </div>
 
         {/* Sender + subject */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-sm font-semibold text-foreground truncate">{email.from}</span>
-            {email.status === "replied" && (
+            <span className="text-sm font-semibold text-foreground truncate">{thread.from}</span>
+            {thread.items.length > 1 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-muted text-muted-foreground border border-border shrink-0">
+                {thread.items.length} emails
+              </span>
+            )}
+            {thread.status === "replied" && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-channel-ai/10 text-channel-ai border border-channel-ai/20 shrink-0">
                 <Bot className="h-2.5 w-2.5" />
                 AI
               </span>
             )}
+            {thread.status === "human-handling" && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 shrink-0">
+                <User className="h-2.5 w-2.5" />
+                Agent
+              </span>
+            )}
           </div>
           <div className="text-sm text-foreground font-medium truncate">
-            {email.subject || "No Subject"}
+            {thread.subject}
           </div>
           <div className="text-xs text-muted-foreground truncate mt-0.5">
-            {email.message?.slice(0, 100)}…
+            {latestItem?.message?.slice(0, 100)}…
           </div>
         </div>
 
@@ -155,11 +217,11 @@ function EmailRow({ email, index }: { email: EmailInteraction; index: number }) 
               status.className
             )}
           >
-            <StatusIcon className={cn("h-3.5 w-3.5", email.status === "processing" && "animate-spin")} />
+            <StatusIcon className={cn("h-3.5 w-3.5", thread.status === "processing" && "animate-spin")} />
             {status.label}
           </span>
           <span className="text-xs text-muted-foreground whitespace-nowrap">
-            {formatDate(email.createdAt)}
+            {formatDate(thread.latestCreatedAt)}
           </span>
           <div className="h-7 w-7 rounded-lg bg-muted/60 flex items-center justify-center text-muted-foreground group-hover:bg-accent transition-colors">
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -167,21 +229,22 @@ function EmailRow({ email, index }: { email: EmailInteraction; index: number }) 
         </div>
       </button>
 
-      {/* Expanded content */}
+      {/* Expanded content — shows full conversation thread */}
       {expanded && (
-        <div className="border-t border-border">
+        <div className="border-t border-border bg-muted/10 divide-y divide-border/60">
           {/* Customer info bar */}
-          <div className="flex flex-wrap items-center gap-4 px-5 py-3 bg-muted/30 border-b border-border/60">
+          <div className="flex flex-wrap items-center gap-4 px-5 py-3 bg-muted/30">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <User className="h-3.5 w-3.5" />
-              <span className="font-medium text-foreground">{email.from}</span>
+              <span className="font-medium text-foreground">{thread.from}</span>
             </div>
             <ArrowRight className="h-3.5 w-3.5 text-muted-foreground hidden sm:block" />
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Mail className="h-3.5 w-3.5" />
-              <span>{email.to}</span>
+              <span>{thread.to}</span>
             </div>
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-medium">Thread ({thread.items.length})</span>
               <span
                 className={cn(
                   "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border",
@@ -194,49 +257,60 @@ function EmailRow({ email, index }: { email: EmailInteraction; index: number }) 
             </div>
           </div>
 
-          {/* Incoming message */}
-          <div className="p-5 space-y-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <MailOpen className="h-4 w-4 text-channel-email" />
-                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                  Customer Message
-                </span>
-              </div>
-              <div className="rounded-xl border border-border bg-muted/20 p-4 text-sm text-foreground whitespace-pre-wrap leading-relaxed font-mono">
-                {email.message}
-              </div>
-            </div>
+          {/* List of thread messages */}
+          <div className="p-5 space-y-6">
+            {thread.items.map((email, idx) => (
+              <div key={email.id} className="space-y-3 p-4 rounded-2xl border border-border bg-card shadow-soft">
+                <div className="flex items-center justify-between text-xs text-muted-foreground border-b border-border/60 pb-2">
+                  <span className="font-semibold text-foreground">Message #{idx + 1} · {email.subject}</span>
+                  <span>{formatDate(email.createdAt)}</span>
+                </div>
 
-            {/* AI Response */}
-            {email.aiResponse && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="h-5 w-5 rounded-md bg-channel-ai/20 flex items-center justify-center">
-                    <Sparkles className="h-3 w-3 text-channel-ai" />
+                {/* Customer Message */}
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <MailOpen className="h-3.5 w-3.5 text-channel-email" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                      Customer Message
+                    </span>
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-channel-ai">
-                    AI Response
-                  </span>
-                  <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Sent via Resend
-                  </span>
+                  <div className="rounded-xl border border-border bg-muted/20 p-3.5 text-sm text-foreground whitespace-pre-wrap leading-relaxed font-mono">
+                    {email.message}
+                  </div>
                 </div>
-                <div className="rounded-xl border border-channel-ai/20 bg-channel-ai/5 p-4 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                  {email.aiResponse}
-                </div>
-              </div>
-            )}
 
-            {email.status === "processing" && !email.aiResponse && (
-              <div className="flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
-                <Clock className="h-4 w-4 text-amber-500 animate-pulse shrink-0" />
-                <p className="text-sm text-amber-700 dark:text-amber-400">
-                  Gemini is generating a response…
-                </p>
+                {/* Response / Status */}
+                {email.aiResponse ? (
+                  <div>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="h-4 w-4 rounded bg-channel-ai/20 flex items-center justify-center">
+                        <Sparkles className="h-2.5 w-2.5 text-channel-ai" />
+                      </div>
+                      <span className="text-[11px] font-bold uppercase tracking-widest text-channel-ai">
+                        AI Response
+                      </span>
+                      <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        <CheckCircle2 className="h-2.5 w-2.5" />
+                        Sent via Resend
+                      </span>
+                    </div>
+                    <div className="rounded-xl border border-channel-ai/20 bg-channel-ai/5 p-3.5 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                      {email.aiResponse}
+                    </div>
+                  </div>
+                ) : email.status === "human-handling" ? (
+                  <div className="flex items-center gap-2.5 rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 text-xs text-blue-600 dark:text-blue-400">
+                    <User className="h-4 w-4 shrink-0" />
+                    <span>Transferred to Human Support Agent (AI auto-response skipped).</span>
+                  </div>
+                ) : email.status === "processing" ? (
+                  <div className="flex items-center gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-600 dark:text-amber-400">
+                    <Clock className="h-4 w-4 animate-spin shrink-0" />
+                    <span>Processing response…</span>
+                  </div>
+                ) : null}
               </div>
-            )}
+            ))}
           </div>
         </div>
       )}
@@ -247,7 +321,7 @@ function EmailRow({ email, index }: { email: EmailInteraction; index: number }) 
 function EmailsPage() {
   const [emails, setEmails] = useState<EmailInteraction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "replied" | "processing" | "failed">("all");
+  const [filter, setFilter] = useState<"all" | "replied" | "human-handling" | "processing" | "failed">("all");
 
   useEffect(() => {
     let isMounted = true;
@@ -288,7 +362,7 @@ function EmailsPage() {
             subject: row.subject || "No Subject",
             message: row.message,
             aiResponse: row.ai_response,
-            status: row.status as "processing" | "replied" | "failed",
+            status: row.status as any,
             createdAt: row.created_at,
           }));
           setEmails(mapped);
@@ -299,7 +373,6 @@ function EmailsPage() {
       }
     }
 
-    // Initial fetch then poll every 3 seconds for live updates
     fetchFromHasura();
     const interval = setInterval(fetchFromHasura, 3000);
 
@@ -309,18 +382,22 @@ function EmailsPage() {
     };
   }, []);
 
+  const threads = groupEmailsIntoThreads(emails);
+
   const counts = {
-    all: emails.length,
-    replied: emails.filter((e) => e.status === "replied").length,
-    processing: emails.filter((e) => e.status === "processing").length,
-    failed: emails.filter((e) => e.status === "failed").length,
+    all: threads.length,
+    replied: threads.filter((t) => t.status === "replied").length,
+    "human-handling": threads.filter((t) => t.status === "human-handling").length,
+    processing: threads.filter((t) => t.status === "processing").length,
+    failed: threads.filter((t) => t.status === "failed").length,
   };
 
-  const filtered = filter === "all" ? emails : emails.filter((e) => e.status === filter);
+  const filteredThreads = filter === "all" ? threads : threads.filter((t) => t.status === filter);
 
   const FILTERS: { key: typeof filter; label: string }[] = [
-    { key: "all", label: "All" },
+    { key: "all", label: "All Threads" },
     { key: "replied", label: "AI Replied" },
+    { key: "human-handling", label: "Human Agent" },
     { key: "processing", label: "Processing" },
     { key: "failed", label: "Failed" },
   ];
@@ -329,16 +406,17 @@ function EmailsPage() {
     <AppLayout>
       <Topbar
         title="Emails"
-        subtitle="Inbound emails handled by the AI Receptionist"
+        subtitle="Inbound emails & threads handled by AI Receptionist and Support Agents"
       />
       <main className="flex-1 p-4 sm:p-6 overflow-auto">
         <div className="w-full space-y-5">
 
           {/* Stats row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {[
-              { label: "Total", value: counts.all, color: "text-foreground", bg: "bg-card" },
+              { label: "Threads", value: counts.all, color: "text-foreground", bg: "bg-card" },
               { label: "AI Replied", value: counts.replied, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/5" },
+              { label: "Human Agent", value: counts["human-handling"], color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/5" },
               { label: "Processing", value: counts.processing, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/5" },
               { label: "Failed", value: counts.failed, color: "text-red-600 dark:text-red-400", bg: "bg-red-500/5" },
             ].map((s) => (
@@ -358,7 +436,7 @@ function EmailsPage() {
           </div>
 
           {/* Filter tabs */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/60 border border-border w-fit">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/60 border border-border w-fit flex-wrap">
             {FILTERS.map((f) => (
               <button
                 key={f.key}
@@ -385,7 +463,7 @@ function EmailsPage() {
             ))}
           </div>
 
-          {/* Email list */}
+          {/* Thread list */}
           {loading ? (
             <div className="space-y-3">
               {[...Array(4)].map((_, i) => (
@@ -397,27 +475,27 @@ function EmailsPage() {
               ))}
               <div className="flex items-center justify-center gap-2 pt-4 text-sm text-muted-foreground">
                 <RefreshCw className="h-4 w-4 animate-spin" />
-                Loading emails…
+                Loading email threads…
               </div>
             </div>
-          ) : filtered.length === 0 ? (
+          ) : filteredThreads.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-card p-16 text-center flex flex-col items-center gap-4">
               <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center">
                 <Inbox className="h-7 w-7 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-foreground">No emails yet</h3>
+                <h3 className="text-base font-semibold text-foreground">No threads found</h3>
                 <p className="mt-1 text-sm text-muted-foreground max-w-xs">
                   {filter === "all"
                     ? "Send an email to your Resend address to trigger the AI Receptionist."
-                    : `No emails with status "${filter}".`}
+                    : `No threads with status "${filter}".`}
                 </p>
               </div>
             </div>
           ) : (
             <div className="space-y-2">
-              {filtered.map((email, i) => (
-                <EmailRow key={email.id} email={email} index={i} />
+              {filteredThreads.map((thread, i) => (
+                <ThreadRow key={thread.threadKey} thread={thread} index={i} />
               ))}
             </div>
           )}
