@@ -32,7 +32,7 @@ type EmailInteraction = {
   subject: string;
   message: string;
   aiResponse: string;
-  status: "processing" | "replied" | "failed";
+  status: "processing" | "replied" | "failed" | "human-handling";
   createdAt: any;
 };
 
