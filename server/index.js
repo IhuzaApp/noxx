@@ -627,6 +627,69 @@ app.delete("/templates/:id", async (req, res) => {
 
 // ─── Flows API (Hasura Postgres DB) ───────────────────────────────────────────
 
+let hasSeededInitialFlows = false;
+
+const DEFAULT_SEED_FLOWS = [
+  {
+    id: "ot4",
+    name: "AI support with human handoff",
+    description: "AI replies first; if user is unsatisfied, escalate to support over WhatsApp.",
+    channels: ["ai", "whatsapp"],
+    trigger: "Webhook Event",
+    status: "active",
+    nodes: [
+      { id: "1", type: "flow", position: { x: 320, y: 20 }, data: { kind: "trigger", label: "Customer Message Received", detail: "Target: support@agatike.com", targetEmail: "support@agatike.com" } },
+      { id: "2", type: "flow", position: { x: 320, y: 180 }, data: { kind: "agent", label: "AI Support Agent", detail: "Technical Support FAQs", aiMode: "auto_reply", aiFocusArea: "Answer technical support FAQs concisely. If customer requests human help or is frustrated, escalate immediately." } },
+      { id: "3", type: "flow", position: { x: 320, y: 360 }, data: { kind: "condition", label: "Escalation requested?", detail: "Check customer sentiment / request", conditionType: "If user requested human agent", yesLabel: "Escalate to Human Agent", noLabel: "AI Self-Service Resolved" } },
+      { id: "4", type: "flow", position: { x: 60, y: 540 }, data: { kind: "delay", label: "Resolved by AI", detail: "No human action needed" } },
+      { id: "5", type: "flow", position: { x: 580, y: 540 }, data: { kind: "whatsapp", label: "Escalate to Agent", detail: "Notify live support team", ticketDepartment: "Support", ticketPriority: "high" } },
+    ],
+    edges: [
+      { id: "e1-2", source: "1", target: "2", type: "smoothstep", style: { stroke: "var(--border)", strokeWidth: 2 } },
+      { id: "e2-3", source: "2", target: "3", type: "smoothstep", style: { stroke: "var(--border)", strokeWidth: 2 } },
+      { id: "e3-4", source: "3", target: "4", type: "smoothstep", label: "No", style: { stroke: "var(--destructive)", strokeWidth: 2 } },
+      { id: "e3-5", source: "3", target: "5", type: "smoothstep", label: "Yes", style: { stroke: "var(--success)", strokeWidth: 2 } },
+    ],
+    simulation: {
+      resources: [
+        { id: "rs_ot4_1", kind: "email", label: "Support Inbox", value: "support@agatike.com", notes: "Primary inbound support address" },
+        { id: "rs_ot4_2", kind: "phone", label: "WhatsApp Hotline", value: "+1 415 555 0199", notes: "Agent handover mobile line" }
+      ]
+    }
+  },
+  {
+    id: "fl_1a2b3c",
+    name: "API Downtime Alert",
+    description: "Notifies the engineering team via SMS and Voice when Datadog detects an API outage.",
+    channels: ["sms", "voice"],
+    trigger: "Webhook",
+    status: "active",
+    nodes: [],
+    edges: [],
+    simulation: {
+      resources: [
+        { id: "rs_1a", kind: "phone", label: "On-call Pager", value: "+1 415 555 9111" },
+        { id: "rs_1b", kind: "link", label: "Status Page", value: "https://status.acmetech.io" },
+      ]
+    }
+  },
+  {
+    id: "fl_4d5e6f",
+    name: "New Enterprise Lead",
+    description: "AI qualifies new enterprise leads from website form and emails sales team.",
+    channels: ["ai", "email"],
+    trigger: "Form submission",
+    status: "active",
+    nodes: [],
+    edges: [],
+    simulation: {
+      resources: [
+        { id: "rs_2a", kind: "folder", label: "Lead enrichment data", value: "https://s3.aws.com/acme-leads" },
+      ]
+    }
+  },
+];
+
 app.get("/flows", async (_req, res) => {
   try {
     const query = `
@@ -646,8 +709,29 @@ app.get("/flows", async (_req, res) => {
         }
       }
     `;
-    const result = await hasuraQuery(query);
-    res.json({ flows: result?.data?.flows ?? [] });
+    let result = await hasuraQuery(query);
+    let rawFlows = result?.data?.flows ?? [];
+
+    if (rawFlows.length === 0 && !hasSeededInitialFlows) {
+      hasSeededInitialFlows = true;
+      console.log("🌱 Database flows empty. Seeding initial starter flows into Hasura...");
+      for (const f of DEFAULT_SEED_FLOWS) {
+        await hasuraQuery(`
+          mutation SeedFlow($object: flows_insert_input!) {
+            insert_flows_one(object: $object, on_conflict: { constraint: flows_pkey, update_columns: [name, description, simulation] }) { id }
+          }
+        `, { object: f });
+      }
+      result = await hasuraQuery(query);
+      rawFlows = result?.data?.flows ?? [];
+    }
+
+    const flows = rawFlows.map((f) => ({
+      ...f,
+      resources: f.simulation?.resources || f.resources || [],
+    }));
+
+    res.json({ flows });
   } catch (err) {
     console.error("GET /flows error:", err);
     res.status(500).json({ error: "Failed to fetch flows from database" });
@@ -675,8 +759,13 @@ app.get("/flows/:id", async (req, res) => {
       }
     `;
     const result = await hasuraQuery(query, { id });
-    const flow = result?.data?.flows_by_pk;
-    if (!flow) return res.status(404).json({ error: "Flow not found" });
+    const rawFlow = result?.data?.flows_by_pk;
+    if (!rawFlow) return res.status(404).json({ error: "Flow not found" });
+
+    const flow = {
+      ...rawFlow,
+      resources: rawFlow.simulation?.resources || rawFlow.resources || [],
+    };
     res.json({ flow });
   } catch (err) {
     console.error("GET /flows/:id error:", err);
@@ -685,12 +774,14 @@ app.get("/flows/:id", async (req, res) => {
 });
 
 app.post("/flows", async (req, res) => {
-  const { id, name, description, channels, trigger, status, nodes, edges, simulation } = req.body || {};
+  const { id, name, description, channels, trigger, status, nodes, edges, resources, simulation } = req.body || {};
   if (!name?.trim()) {
     return res.status(400).json({ error: "Flow name is required" });
   }
 
   const flowId = id || `fl_${Date.now()}`;
+  const sim = { ...(simulation || {}), resources: resources || [] };
+
   const object = {
     id: flowId,
     name: name.trim(),
@@ -700,7 +791,7 @@ app.post("/flows", async (req, res) => {
     status: status || "active",
     nodes: nodes || [],
     edges: edges || [],
-    simulation: simulation || {},
+    simulation: sim,
   };
 
   try {
@@ -725,8 +816,13 @@ app.post("/flows", async (req, res) => {
     `;
     const result = await hasuraQuery(mutation, { object });
     const upsertedFlow = result?.data?.insert_flows_one;
+    if (upsertedFlow) {
+      upsertedFlow.resources = upsertedFlow.simulation?.resources || [];
+    }
+    console.log(`✅ Flow "${object.name}" (${flowId}) saved to Hasura Postgres DB`);
     return res.json({ success: true, flow: upsertedFlow });
   } catch (err) {
+    console.error("POST /flows error:", err);
     return res.status(500).json({ error: "Failed to save flow to database" });
   }
 });

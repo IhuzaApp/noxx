@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Plus,
@@ -6,11 +6,15 @@ import {
   Phone,
   Link as LinkIcon,
   Folder,
+  Mail,
+  Key,
+  FileText,
   Trash2,
   Play,
   Pause,
   Sparkles,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Topbar } from "@/components/Topbar";
@@ -45,8 +49,11 @@ const channelOptions: Array<{ id: UserFlow["channels"][number]; label: string }>
 
 const resourceMeta: Record<FlowResource["kind"], { label: string; icon: typeof Phone; placeholder: string; hint: string }> = {
   phone: { label: "Phone number", icon: Phone, placeholder: "+1 415 555 0142", hint: "Numbers Noxx can call or text from this flow." },
-  link: { label: "Link / URL", icon: LinkIcon, placeholder: "https://acme.com/checkout", hint: "Links sent inside messages, or webhook URLs." },
-  folder: { label: "Shared folder", icon: Folder, placeholder: "https://drive.google.com/drive/folders/…", hint: "Cloud folder Noxx can read or write to (Drive, S3, Dropbox)." },
+  link: { label: "Link / Webhook URL", icon: LinkIcon, placeholder: "https://acme.com/webhook", hint: "Links sent inside messages, or target webhook endpoints." },
+  folder: { label: "Shared folder / Storage", icon: Folder, placeholder: "https://drive.google.com/drive/folders/…", hint: "Cloud storage folder Noxx can read or write to (Drive, S3, Dropbox)." },
+  email: { label: "Dedicated Email", icon: Mail, placeholder: "support@domain.com", hint: "Inbound email box or target escalation inbox for this flow." },
+  credential: { label: "API Credential / Secret", icon: Key, placeholder: "sk_live_98127391...", hint: "Third-party API key, token, or webhook signing secret." },
+  knowledge: { label: "Knowledge Base / Docs", icon: FileText, placeholder: "https://docs.acme.com/faq", hint: "Documentation URL or FAQ dataset for AI agent context." },
 };
 
 import { API_BASE } from "@/lib/api-config";
@@ -54,6 +61,7 @@ import { API_BASE } from "@/lib/api-config";
 function MyFlowsPage() {
   const storeFlows = useStore(userFlowStore);
   const [dbFlows, setDbFlows] = useState<UserFlow[]>([]);
+  const [dbLoaded, setDbLoaded] = useState(false);
   const [openNew, setOpenNew] = useState(false);
   const [editing, setEditing] = useState<UserFlow | null>(null);
 
@@ -64,6 +72,7 @@ function MyFlowsPage() {
         const json = await res.json();
         if (json.flows && Array.isArray(json.flows)) {
           setDbFlows(json.flows);
+          setDbLoaded(true);
         }
       }
     } catch (e) {
@@ -75,7 +84,30 @@ function MyFlowsPage() {
     loadDbFlows();
   }, [loadDbFlows]);
 
-  const flows = dbFlows.length > 0 ? dbFlows : storeFlows;
+  const flowNames: Record<string, string> = useMemo(
+    () => ({
+      ot1: "OTP with SMS fallback",
+      ot2: "Order notification (WhatsApp + Email backup)",
+      ot3: "Appointment reminder with follow-ups",
+      ot4: "AI support with human handoff",
+      ot5: "Inbound sales assistant",
+      ot6: "Urgent support direct escalation",
+      fl_1a2b3c: "API Downtime Alert",
+      fl_4d5e6f: "New Enterprise Lead",
+      fl_7g8h9i: "Failed Payment Dunning",
+      fl_0j1k2l: "Daily Standup Summary",
+      fl_3m4n5o: "Security Vulnerability Patch",
+      fl_6p7q8r: "Beta Feature Feedback",
+    }),
+    [],
+  );
+
+  const flows = useMemo(() => {
+    return dbFlows.map((f: UserFlow) => {
+      const properName = f.name && f.name !== f.id ? f.name : (flowNames[f.id] || f.name || f.id);
+      return { ...f, name: properName };
+    });
+  }, [dbFlows, flowNames]);
 
   const handleToggleStatus = async (f: UserFlow) => {
     const newStatus = f.status === "active" ? "paused" : "active";
@@ -83,10 +115,18 @@ function MyFlowsPage() {
     setDbFlows((prev) => prev.map((x) => (x.id === f.id ? { ...x, status: newStatus } : x)));
 
     try {
+      // Fetch full details first to ensure nodes/edges/resources are preserved
+      let fullFlow = f;
+      const detailRes = await fetch(`${API_BASE}/flows/${f.id}`);
+      if (detailRes.ok) {
+        const json = await detailRes.json();
+        if (json.flow) fullFlow = json.flow;
+      }
+
       await fetch(`${API_BASE}/flows`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...f, status: newStatus }),
+        body: JSON.stringify({ ...fullFlow, status: newStatus }),
       });
     } catch (e) {
       console.error("Failed to update flow status in database:", e);
@@ -94,11 +134,15 @@ function MyFlowsPage() {
   };
 
   const handleDelete = async (id: string) => {
+    // Instantly remove from store & local state
     userFlowStore.remove((x) => x.id === id);
     setDbFlows((prev) => prev.filter((x) => x.id !== id));
 
     try {
-      await fetch(`${API_BASE}/flows/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/flows/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        console.log(`✅ Permanently deleted flow ${id} from database`);
+      }
     } catch (e) {
       console.error("Failed to delete flow from database:", e);
     }
@@ -108,7 +152,7 @@ function MyFlowsPage() {
     <AppLayout>
       <Topbar
         title="Flows & Automations"
-        subtitle={`${flows.filter((f) => f.status === "active").length} active · ${flows.length} total`}
+        subtitle={`${flows.filter((f: UserFlow) => f.status === "active").length} active · ${flows.length} total`}
         action={
           <div className="flex items-center gap-2">
             <Link
@@ -148,7 +192,7 @@ function MyFlowsPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {flows.map((f) => (
+            {flows.map((f: UserFlow) => (
               <Card key={f.id} className="p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -189,7 +233,7 @@ function MyFlowsPage() {
                   <span className="rounded bg-accent text-accent-foreground px-1.5 py-0.5 font-medium">
                     Trigger: {f.trigger || "Webhook"}
                   </span>
-                  {(f.channels || []).map((c) => (
+                  {(f.channels || []).map((c: string) => (
                     <span key={c} className="rounded border border-border bg-card px-1.5 py-0.5 text-muted-foreground capitalize">
                       {c}
                     </span>
@@ -201,7 +245,7 @@ function MyFlowsPage() {
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                       Connected resources
                     </div>
-                    {f.resources.map((r) => {
+                    {f.resources.map((r: FlowResource) => {
                       const meta = resourceMeta[r?.kind || "link"] || resourceMeta.link;
                       const Icon = meta.icon;
                       return (
@@ -236,7 +280,16 @@ function MyFlowsPage() {
         )}
       </main>
 
-      <NewFlowModal open={openNew} onClose={() => { setOpenNew(false); loadDbFlows(); }} />
+      <NewFlowModal
+        open={openNew}
+        onClose={() => setOpenNew(false)}
+        onSave={(created) => {
+          if (created) {
+            setDbFlows((prev) => [created, ...prev]);
+          }
+          loadDbFlows();
+        }}
+      />
       {editing && (
         <EditResourcesModal flow={editing} onClose={() => setEditing(null)} onSave={loadDbFlows} />
       )}
@@ -244,7 +297,15 @@ function MyFlowsPage() {
   );
 }
 
-function NewFlowModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function NewFlowModal({
+  open,
+  onClose,
+  onSave,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSave?: (newFlow?: UserFlow) => void;
+}) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [trigger, setTrigger] = useState("API request");
@@ -265,6 +326,7 @@ function NewFlowModal({ open, onClose }: { open: boolean; onClose: () => void })
     if (!name.trim() || saving) return;
     setSaving(true);
 
+    const safeResources = (resources || []).filter((r) => r.label || r.value);
     const newId = makeId("fl");
     const initialNodes = [
       {
@@ -281,7 +343,7 @@ function NewFlowModal({ open, onClose }: { open: boolean; onClose: () => void })
       description: description.trim() || "No description.",
       trigger,
       channels,
-      resources,
+      resources: safeResources,
       status: "draft",
       createdAt: new Date().toISOString(),
     };
@@ -298,10 +360,16 @@ function NewFlowModal({ open, onClose }: { open: boolean; onClose: () => void })
           description: description.trim() || "No description.",
           trigger,
           channels,
+          resources: safeResources,
           status: "draft",
           nodes: initialNodes,
           edges: [],
-          simulation: { path: ["1"], edgePath: [], messages: [{ msg: `Triggered: ${name.trim()}`, kind: "info" }] },
+          simulation: {
+            resources: safeResources,
+            path: ["1"],
+            edgePath: [],
+            messages: [{ msg: `Triggered: ${name.trim()}`, kind: "info" }],
+          },
         }),
       });
     } catch (e) {
@@ -309,6 +377,7 @@ function NewFlowModal({ open, onClose }: { open: boolean; onClose: () => void })
     } finally {
       setSaving(false);
       reset();
+      if (onSave) onSave(newFlow);
       onClose();
     }
   };
@@ -406,7 +475,7 @@ function NewFlowModal({ open, onClose }: { open: boolean; onClose: () => void })
           </div>
 
           <div className="flex flex-wrap gap-1.5">
-            {(["phone", "link", "folder"] as const).map((k) => {
+            {(["phone", "link", "folder", "email", "credential", "knowledge"] as const).map((k) => {
               const Icon = resourceMeta[k].icon;
               return (
                 <button
@@ -425,32 +494,44 @@ function NewFlowModal({ open, onClose }: { open: boolean; onClose: () => void })
           {resources.length > 0 && (
             <div className="space-y-2">
               {resources.map((r) => {
-                const Icon = resourceMeta[r.kind].icon;
+                const meta = resourceMeta[r?.kind || "link"] || resourceMeta.link;
+                const Icon = meta.icon;
                 return (
                   <div key={r.id} className="rounded-md border border-border bg-card p-3 space-y-2">
                     <div className="flex items-center gap-2">
-                      <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                      <Icon className="h-3.5 w-3.5 text-primary shrink-0" />
                       <input
-                        value={r.label}
+                        value={r.label || ""}
                         onChange={(e) => updateResource(r.id, { label: e.target.value })}
-                        className="flex-1 bg-transparent text-xs font-semibold text-foreground outline-none"
+                        className="flex-1 bg-transparent text-xs font-semibold text-foreground outline-none border-b border-transparent focus:border-border"
+                        placeholder="Resource Name / Label"
                       />
+                      <span className="text-[10px] font-mono font-medium uppercase px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                        {r.kind}
+                      </span>
                       <button
                         type="button"
                         onClick={() => removeResource(r.id)}
-                        className="text-muted-foreground hover:text-destructive transition"
+                        className="text-muted-foreground hover:text-destructive transition ml-1"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                     <input
-                      required
-                      value={r.value}
+                      value={r.value || ""}
                       onChange={(e) => updateResource(r.id, { value: e.target.value })}
-                      placeholder={resourceMeta[r.kind].placeholder}
+                      placeholder={meta.placeholder}
                       className={inputCls}
                     />
-                    <div className="text-[11px] text-muted-foreground">{resourceMeta[r.kind].hint}</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                      <input
+                        value={r.notes || ""}
+                        onChange={(e) => updateResource(r.id, { notes: e.target.value })}
+                        placeholder="Usage notes / environment (Optional)"
+                        className="text-xs bg-transparent border border-input rounded-md px-2 py-1 outline-none text-muted-foreground focus:text-foreground"
+                      />
+                      <div className="text-[10px] text-muted-foreground flex items-center">{meta.hint}</div>
+                    </div>
                   </div>
                 );
               })}
@@ -471,9 +552,17 @@ function NewFlowModal({ open, onClose }: { open: boolean; onClose: () => void })
           </button>
           <button
             type="submit"
-            className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 transition shadow-soft"
+            disabled={saving}
+            className="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 transition shadow-soft disabled:opacity-50"
           >
-            Create flow
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              "Create flow"
+            )}
           </button>
         </div>
       </form>
@@ -487,16 +576,27 @@ function EditResourcesModal({ flow, onClose, onSave }: { flow: UserFlow; onClose
 
   const save = async () => {
     setSaving(true);
-    const safeResources = resources || [];
+    const safeResources = (resources || []).filter((r) => r.label || r.value);
     userFlowStore.update((x) => x.id === flow.id, { resources: safeResources });
 
     try {
+      let fullFlow = flow;
+      const detailRes = await fetch(`${API_BASE}/flows/${flow.id}`);
+      if (detailRes.ok) {
+        const json = await detailRes.json();
+        if (json.flow) fullFlow = json.flow;
+      }
+
       await fetch(`${API_BASE}/flows`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...flow,
+          ...fullFlow,
           resources: safeResources,
+          simulation: {
+            ...(fullFlow.simulation || {}),
+            resources: safeResources,
+          },
         }),
       });
     } catch (e) {
@@ -520,7 +620,7 @@ function EditResourcesModal({ flow, onClose, onSave }: { flow: UserFlow; onClose
     <Modal open onClose={onClose} title={`Resources for "${flow?.name || "Flow"}"`} size="lg">
       <div className="space-y-3">
         <div className="flex flex-wrap gap-1.5">
-          {(["phone", "link", "folder"] as const).map((k) => {
+          {(["phone", "link", "folder", "email", "credential", "knowledge"] as const).map((k) => {
             const Icon = resourceMeta[k].icon;
             return (
               <button
@@ -538,7 +638,7 @@ function EditResourcesModal({ flow, onClose, onSave }: { flow: UserFlow; onClose
 
         {safeResources.length === 0 ? (
           <div className="rounded-md border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-            No resources yet. Add a phone number, a link, or a shared folder.
+            No resources yet. Add a phone number, a link, an email, an API key, or a documentation link.
           </div>
         ) : (
           safeResources.map((r) => {
@@ -547,16 +647,20 @@ function EditResourcesModal({ flow, onClose, onSave }: { flow: UserFlow; onClose
             return (
               <div key={r.id} className="rounded-md border border-border bg-card p-3 space-y-2">
                 <div className="flex items-center gap-2">
-                  <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Icon className="h-3.5 w-3.5 text-primary shrink-0" />
                   <input
                     value={r.label || ""}
                     onChange={(e) => updateResource(r.id, { label: e.target.value })}
-                    className="flex-1 bg-transparent text-xs font-semibold text-foreground outline-none"
+                    className="flex-1 bg-transparent text-xs font-semibold text-foreground outline-none border-b border-transparent focus:border-border"
+                    placeholder="Resource Name / Label"
                   />
+                  <span className="text-[10px] font-mono font-medium uppercase px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                    {r.kind}
+                  </span>
                   <button
                     type="button"
                     onClick={() => removeResource(r.id)}
-                    className="text-muted-foreground hover:text-destructive transition"
+                    className="text-muted-foreground hover:text-destructive transition ml-1"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -567,7 +671,15 @@ function EditResourcesModal({ flow, onClose, onSave }: { flow: UserFlow; onClose
                   placeholder={meta.placeholder}
                   className={inputCls}
                 />
-                <div className="text-[11px] text-muted-foreground">{meta.hint}</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <input
+                    value={r.notes || ""}
+                    onChange={(e) => updateResource(r.id, { notes: e.target.value })}
+                    placeholder="Usage notes / environment (Optional)"
+                    className="text-xs bg-transparent border border-input rounded-md px-2 py-1 outline-none text-muted-foreground focus:text-foreground"
+                  />
+                  <div className="text-[10px] text-muted-foreground flex items-center">{meta.hint}</div>
+                </div>
               </div>
             );
           })

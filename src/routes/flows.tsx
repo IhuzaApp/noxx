@@ -68,7 +68,8 @@ export const Route = createFileRoute("/flows")({
   component: FlowsPage,
 });
 
-const nodeTypes = { flow: FlowNode };
+const NODE_TYPES = { flow: FlowNode };
+const nodeTypes = NODE_TYPES;
 
 const palette: Array<{ kind: FlowNodeData["kind"]; label: string; icon: typeof Webhook; group: string }> = [
   { kind: "trigger", label: "API trigger", icon: Webhook, group: "Triggers" },
@@ -99,6 +100,7 @@ function FlowsPage() {
   const search = Route.useSearch();
   const storeFlows = useStore(userFlowStore);
   const [dbFlows, setDbFlows] = useState<any[]>([]);
+  const [dbLoaded, setDbLoaded] = useState(false);
   const navigate = useNavigate();
 
   // Load all flows list from Hasura DB
@@ -109,6 +111,7 @@ function FlowsPage() {
       .then((data) => {
         if (activeSignal && data.flows && Array.isArray(data.flows)) {
           setDbFlows(data.flows);
+          setDbLoaded(true);
         }
       })
       .catch((err) => console.error("Error loading flows from DB:", err));
@@ -117,12 +120,46 @@ function FlowsPage() {
     };
   }, []);
 
-  const flows = dbFlows.length > 0 ? dbFlows : storeFlows;
+  const flowNames: Record<string, string> = useMemo(
+    () => ({
+      ot1: "OTP with SMS fallback",
+      ot2: "Order notification (WhatsApp + Email backup)",
+      ot3: "Appointment reminder with follow-ups",
+      ot4: "AI support with human handoff",
+      ot5: "Inbound sales assistant",
+      ot6: "Urgent support direct escalation",
+      fl_1a2b3c: "API Downtime Alert",
+      fl_4d5e6f: "New Enterprise Lead",
+      fl_7g8h9i: "Failed Payment Dunning",
+      fl_0j1k2l: "Daily Standup Summary",
+      fl_3m4n5o: "Security Vulnerability Patch",
+      fl_6p7q8r: "Beta Feature Feedback",
+    }),
+    [],
+  );
+
+  const flows = useMemo(() => {
+    if (dbLoaded && dbFlows.length > 0) {
+      return dbFlows.map((f: any) => {
+        const properName = f.name && f.name !== f.id ? f.name : (flowNames[f.id] || f.name || f.id);
+        return { ...f, name: properName };
+      });
+    }
+
+    const map = new Map<string, any>();
+    storeFlows.forEach((f) => map.set(f.id, f));
+    dbFlows.forEach((f) => {
+      const properName = f.name && f.name !== f.id ? f.name : (flowNames[f.id] || f.name || f.id);
+      map.set(f.id, { ...f, name: properName });
+    });
+    return Array.from(map.values());
+  }, [dbLoaded, storeFlows, dbFlows, flowNames]);
+
   const targetId = search.id || flows[0]?.id || "ot1";
   const flow = flows.find((f: any) => f.id === targetId) || {
     id: targetId,
-    name: targetId === "ot1" ? "OTP with SMS fallback" : targetId,
-    description: "",
+    name: flowNames[targetId] || targetId,
+    description: "Omnichannel flow",
     channels: ["whatsapp", "sms"],
     trigger: "Webhook",
     status: "active",
@@ -227,13 +264,14 @@ function FlowsPage() {
     try {
       const payload = {
         id: targetId,
-        name: flow.name,
-        description: flow.description || "",
+        name: flow.name || flowNames[targetId] || targetId,
+        description: flow.description || "Omnichannel flow",
         channels: flow.channels || ["whatsapp"],
         trigger: flow.trigger || "Webhook",
         status: active ? "active" : "paused",
         nodes,
         edges,
+        resources: flow.resources || [],
         simulation: template.simulation || {},
       };
 
@@ -246,6 +284,14 @@ function FlowsPage() {
       if (res.ok) {
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
+        // Reload DB flows
+        const updatedRes = await fetch(`${API_BASE}/flows`);
+        if (updatedRes.ok) {
+          const json = await updatedRes.json();
+          if (json.flows && Array.isArray(json.flows)) {
+            setDbFlows(json.flows);
+          }
+        }
       }
     } catch (e) {
       console.error("Failed to save flow to database:", e);
@@ -425,17 +471,42 @@ function FlowsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-64">
-              {flows.map((f: any) => (
-                <DropdownMenuItem
-                  key={f.id}
-                  onClick={() => navigate({ to: "/flows", search: { id: f.id } })}
-                  className="flex flex-col items-start gap-1 p-2 cursor-pointer"
-                >
-                  <span className="text-sm font-medium">{f.name}</span>
-                  <span className="text-[10px] text-muted-foreground uppercase">{f.trigger}</span>
-                </DropdownMenuItem>
-              ))}
+            <DropdownMenuContent align="start" className="w-72 max-h-96 overflow-y-auto">
+              <div className="px-2.5 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border mb-1">
+                Database Flows ({flows.length})
+              </div>
+              {flows.length === 0 ? (
+                <div className="p-4 text-center text-xs text-muted-foreground">
+                  No flows found in database
+                </div>
+              ) : (
+                flows.map((f: any) => (
+                  <DropdownMenuItem
+                    key={f.id}
+                    onClick={() => navigate({ to: "/flows", search: { id: f.id } })}
+                    className={cn(
+                      "flex flex-col items-start gap-1 p-2.5 cursor-pointer rounded-md transition",
+                      f.id === targetId ? "bg-accent text-accent-foreground font-semibold" : "hover:bg-muted"
+                    )}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-xs font-semibold text-foreground truncate max-w-[180px]">{f.name}</span>
+                      <span className={cn(
+                        "text-[10px] font-medium px-1.5 py-0.5 rounded border capitalize shrink-0 ml-2",
+                        f.status === "active" ? "bg-success/10 text-success border-success/20" : "bg-muted text-muted-foreground border-border"
+                      )}>
+                        {f.status || "active"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                      <span>Trigger: {f.trigger || "Webhook"}</span>
+                      {f.channels && Array.isArray(f.channels) && f.channels.length > 0 && (
+                        <span>· {f.channels.join(", ")}</span>
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+                ))
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         }
@@ -550,7 +621,7 @@ function FlowsPage() {
             onConnect={onConnect}
             onNodeClick={(_, n) => setSelectedId(n.id)}
             onPaneClick={() => setSelectedId(null)}
-            nodeTypes={nodeTypes}
+            nodeTypes={NODE_TYPES}
             fitView
             proOptions={{ hideAttribution: true }}
           >
