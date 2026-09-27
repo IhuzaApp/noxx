@@ -34,6 +34,32 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
 const HASURA_ENDPOINT = process.env.HASURA_GRAPHQL_ENDPOINT;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET;
 
+function getEscalationMessage(aiLanguage = "auto", recipientEmail = "") {
+  const companyName = getCompanyName(recipientEmail);
+  const lang = (aiLanguage || "auto").toLowerCase();
+
+  if (lang === "rw" || lang === "kinyarwanda") {
+    return `Murakoze ku bw'ubusabe bwawe. Twakiriye icyifuzo cyawe kandi twagishyikirije ikipe yacu y'abakozi ba ${companyName}. Umukozi wacu aragusubiza vuba aha.`;
+  }
+  if (lang === "fr" || lang === "french") {
+    return `Merci pour votre message. J'ai transmis votre demande à notre équipe de support. Un conseiller de ${companyName} vous recontactera directement sous peu.`;
+  }
+  if (lang === "es" || lang === "spanish") {
+    return `Gracias por su mensaje. He escalado su solicitud a nuestro equipo de soporte. Un representante de ${companyName} se pondrá en contacto con usted en breve.`;
+  }
+  if (lang === "sw" || lang === "swahili") {
+    return `Asante kwa ujumbe wako. Nimeelekeza ombi lako kwa timu yetu ya usaidizi wa ${companyName}. Mwakilishi atakujibu hivi karibuni.`;
+  }
+  if (lang === "de" || lang === "german") {
+    return `Vielen Dank für Ihre Nachricht. Ich habe Ihre Anfrage an unser Support-Team von ${companyName} weitergeleitet. Ein Mitarbeiter wird sich in Kürze bei Ihnen melden.`;
+  }
+  if (lang === "ar" || lang === "arabic") {
+    return `شكراً لرسالتك. لقد قمت بتحويل طلبك إلى فريق الدعم في ${companyName}. سيتواصل معك أحد الممثلين قريباً.`;
+  }
+
+  return `Thank you for reaching out. I have escalated your request to our human support team at ${companyName}. A representative will follow up with you directly shortly.`;
+}
+
 function getFromEmailAddress(recipientEmail, matchedRule = null, flowResources = []) {
   let flowEmail = matchedRule?.nodeData?.targetEmail || "";
   if (!flowEmail && Array.isArray(flowResources)) {
@@ -347,64 +373,6 @@ app.post("/webhook", async (req, res) => {
     await addConversationMessage(ticketId, "customer", textBody);
     await updateEmailStatus(emailId, "processing", { message: textBody });
 
-    // Comprehensive escalation & dissatisfaction detection keywords (EN, FR, RW, SW)
-    const bodyLower = (textBody || "").toLowerCase();
-    const escalationKeywords = [
-      // English - Human Agent & Person
-      "human", "agent", "customer support", "customer service", "employee", "team member", "staff member", "team lead", "team member", "representative", "operator", "real person", "support team", "helpdesk", "live help", "specialist", "manager", "ceo", "c", "board", "supervisor",
-      // English - Communication Verbs
-      "talk to", "speak to", "talk with", "speak with", "connect me", "contact me", "call me", "reach out", "chat with", "want to talk", "want to speak", "need an agent", "need a person",
-      // English - Escalation & Management
-      "escalate", "escalation", "transfer", "supervisor", "manager", "admin", "executive", "tier 2",
-      // English - Complaints & Dissatisfaction
-      "unsatisfied", "not satisfied", "dissatisfied", "unhappy", "bad service", "terrible service", "horrible service", "poor service", "disappointed",
-      // English - Billing & Disputes
-      "wrong bill", "incorrect invoice", "overcharged", "refund", "cancel subscription", "dispute", "claim", "issue", "problem",
-      // French
-      "humain", "agent", "conseiller", "opérateur", "parler à", "discuter avec", "parler avec", "contactez-moi", "service client", "responsable", "insatisfait", "réclamation",
-      // Kinyarwanda
-      "umukozi", "mumpuze", "kuvugana", "ubufasha", "kuregera", "ikibazo", "regera", "umuntu",
-      // Swahili
-      "mwanadamu", "huduma kwa wateja", "ongea na", "zungumza na", "msaidizi", "wasiliana"
-    ];
-
-    const isEscalationRequested = escalationKeywords.some((kw) => bodyLower.includes(kw));
-
-    if (isEscalationRequested) {
-      console.log(`⚡ Customer requested human escalation for email ${emailId}. Transferring to human support.`);
-      const escalationMsg = `I understand your request. I have escalated your request to our human support team. A representative will follow up with you directly shortly.`;
-
-      // 1. Ensure ticket is created in database with status open for human support
-      await upsertTicket({
-        id: ticketId,
-        email_id: emailId,
-        subject: cleanSubj,
-        contact_name: contactName,
-        contact_email: senderEmail,
-        channel: "email",
-        status: "open",
-        tags: ["human-escalated", "email"],
-      });
-
-      // 2. Log customer message and AI response to ticket conversation
-      await addConversationMessage(ticketId, "customer", textBody);
-      await addConversationMessage(ticketId, "ai", escalationMsg);
-      await updateEmailStatus(emailId, "human-handling", { message: textBody });
-
-      // 3. Send escalation confirmation email
-      try {
-        await resend.emails.send({
-          from: getFromEmailAddress(recipientEmail),
-          to: [senderEmail],
-          subject: `Re: ${cleanSubj}`,
-          text: escalationMsg,
-        });
-      } catch (e) {
-        console.error("Failed to send escalation email:", e);
-      }
-      return;
-    }
-
     // 5. Query active flows from Hasura DB to match dynamic rules (target email, skip AI, subject filters, prompt instructions)
     let matchedRule = null;
     try {
@@ -502,6 +470,65 @@ app.post("/webhook", async (req, res) => {
       }
     } catch (err) {
       console.error("Error querying active flow rules:", err);
+    }
+
+    // Comprehensive escalation & dissatisfaction detection keywords (EN, FR, RW, SW)
+    const bodyLower = (textBody || "").toLowerCase();
+    const escalationKeywords = [
+      // English - Human Agent & Person
+      "human", "agent", "customer support", "customer service", "employee", "team member", "staff member", "team lead", "team member", "representative", "operator", "real person", "support team", "helpdesk", "live help", "specialist", "manager", "ceo", "c", "board", "supervisor",
+      // English - Communication Verbs
+      "talk to", "speak to", "talk with", "speak with", "connect me", "contact me", "call me", "reach out", "chat with", "want to talk", "want to speak", "need an agent", "need a person",
+      // English - Escalation & Management
+      "escalate", "escalation", "transfer", "supervisor", "manager", "admin", "executive", "tier 2",
+      // English - Complaints & Dissatisfaction
+      "unsatisfied", "not satisfied", "dissatisfied", "unhappy", "bad service", "terrible service", "horrible service", "poor service", "disappointed",
+      // English - Billing & Disputes
+      "wrong bill", "incorrect invoice", "overcharged", "refund", "cancel subscription", "dispute", "claim", "issue", "problem",
+      // French
+      "humain", "agent", "conseiller", "opérateur", "parler à", "discuter avec", "parler avec", "contactez-moi", "service client", "responsable", "insatisfait", "réclamation",
+      // Kinyarwanda
+      "umukozi", "mumpuze", "kuvugana", "ubufasha", "kuregera", "ikibazo", "regera", "umuntu",
+      // Swahili
+      "mwanadamu", "huduma kwa wateja", "ongea na", "zungumza na", "msaidizi", "wasiliana"
+    ];
+
+    const isEscalationRequested = escalationKeywords.some((kw) => bodyLower.includes(kw));
+
+    if (isEscalationRequested) {
+      console.log(`⚡ Customer requested human escalation for email ${emailId}. Transferring to human support.`);
+      const configuredLang = matchedRule?.nodeData?.aiLanguage || "auto";
+      const escalationMsg = getEscalationMessage(configuredLang, recipientEmail);
+
+      // 1. Ensure ticket is created in database with status open for human support
+      await upsertTicket({
+        id: ticketId,
+        email_id: emailId,
+        subject: cleanSubj,
+        contact_name: contactName,
+        contact_email: senderEmail,
+        channel: "email",
+        status: "open",
+        tags: ["human-escalated", "email"],
+      });
+
+      // 2. Log customer message and AI response to ticket conversation
+      await addConversationMessage(ticketId, "customer", textBody);
+      await addConversationMessage(ticketId, "ai", escalationMsg);
+      await updateEmailStatus(emailId, "human-handling", { message: textBody });
+
+      // 3. Send escalation confirmation email
+      try {
+        await resend.emails.send({
+          from: getFromEmailAddress(recipientEmail, matchedRule, matchedRule?.flowResources),
+          to: [senderEmail],
+          subject: `Re: ${cleanSubj}`,
+          text: escalationMsg,
+        });
+      } catch (e) {
+        console.error("Failed to send escalation email:", e);
+      }
+      return;
     }
 
     if (matchedRule) {
