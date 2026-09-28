@@ -11,7 +11,10 @@ export const Route = createFileRoute("/integrations")({
   head: () => ({
     meta: [
       { title: "Integrations — Noxx" },
-      { name: "description", content: "Connect WhatsApp, Instagram, Email, SMS, AI and payment providers in one click." },
+      {
+        name: "description",
+        content: "Connect WhatsApp, Instagram, Email, SMS, AI and payment providers in one click.",
+      },
     ],
   }),
   component: IntegrationsPage,
@@ -23,7 +26,10 @@ type Cat = (typeof cats)[number];
 const statusMeta = {
   connected: { label: "Connected", cls: "bg-success/15 text-success border-success/20" },
   available: { label: "Available", cls: "bg-muted text-muted-foreground border-border" },
-  "needs-attention": { label: "Action needed", cls: "bg-warning/20 text-warning-foreground border-warning/30" },
+  "needs-attention": {
+    label: "Action needed",
+    cls: "bg-warning/20 text-warning-foreground border-warning/30",
+  },
 } as const;
 
 function IntegrationsPage() {
@@ -107,27 +113,44 @@ function IntegrationsPage() {
             return (
               <Card key={i.id} className="p-5 flex flex-col">
                 <div className="flex items-start gap-3">
-                  <div className={cn("h-11 w-11 rounded-lg flex items-center justify-center shrink-0", i.color)}>
+                  <div
+                    className={cn(
+                      "h-11 w-11 rounded-lg flex items-center justify-center shrink-0",
+                      i.color,
+                    )}
+                  >
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <h3 className="font-semibold text-foreground">{i.name}</h3>
-                      <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded border whitespace-nowrap", sm.cls)}>
+                      <span
+                        className={cn(
+                          "text-[10px] font-medium px-1.5 py-0.5 rounded border whitespace-nowrap",
+                          sm.cls,
+                        )}
+                      >
                         {sm.label}
                       </span>
                     </div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">{i.category} · {i.authType}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      {i.category} · {i.authType}
+                    </div>
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-muted-foreground leading-relaxed">{i.description}</p>
+                <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
+                  {i.description}
+                </p>
                 {i.connectedAccount && (
                   <div className="mt-3 rounded-md bg-muted px-2.5 py-1.5 text-[11px] text-foreground font-mono truncate">
                     {i.connectedAccount}
                   </div>
                 )}
                 <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
-                  <a className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1" href="#">
+                  <a
+                    className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                    href="#"
+                  >
                     Docs <ExternalLink className="h-3 w-3" />
                   </a>
                   {i.status === "connected" ? (
@@ -154,14 +177,26 @@ function IntegrationsPage() {
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-foreground/30 backdrop-blur-sm p-4">
           <Card className="max-w-md w-full p-6 shadow-elevated">
             <div className="flex items-start gap-3">
-              <div className={cn("h-11 w-11 rounded-lg flex items-center justify-center shrink-0", connecting.color)}>
+              <div
+                className={cn(
+                  "h-11 w-11 rounded-lg flex items-center justify-center shrink-0",
+                  connecting.color,
+                )}
+              >
                 <connecting.icon className="h-5 w-5" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-semibold text-foreground">Connect {connecting.name}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">{connecting.authType} · {connecting.category}</p>
+                <h3 className="text-base font-semibold text-foreground">
+                  Connect {connecting.name}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {connecting.authType} · {connecting.category}
+                </p>
               </div>
-              <button onClick={() => setConnecting(null)} className="text-muted-foreground hover:text-foreground">
+              <button
+                onClick={() => setConnecting(null)}
+                className="text-muted-foreground hover:text-foreground"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -181,13 +216,21 @@ function IntegrationsPage() {
               </div>
             ) : (
               <div className="mt-5 rounded-lg border border-dashed border-border bg-muted/30 p-4 text-center">
-                <p className="text-sm text-foreground">You'll be redirected to <span className="font-semibold">{connecting.name}</span> to authorize Noxx.</p>
-                <p className="text-xs text-muted-foreground mt-1">We only request the scopes needed to send and receive messages.</p>
+                <p className="text-sm text-foreground">
+                  You'll be redirected to <span className="font-semibold">{connecting.name}</span>{" "}
+                  to authorize Noxx.
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  We only request the scopes needed to send and receive messages.
+                </p>
               </div>
             )}
 
             <div className="mt-6 flex items-center gap-2">
-              <button onClick={() => setConnecting(null)} className="flex-1 rounded-md border border-input bg-card px-3 py-2 text-sm font-medium hover:bg-muted transition">
+              <button
+                onClick={() => setConnecting(null)}
+                className="flex-1 rounded-md border border-input bg-card px-3 py-2 text-sm font-medium hover:bg-muted transition"
+              >
                 Cancel
               </button>
               <button

@@ -79,7 +79,8 @@ function EnvPage() {
               </div>
               <div className="mt-3 text-sm font-medium text-foreground">No variables yet</div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Add a variable for the <span className="font-medium text-foreground">{env}</span> environment.
+                Add a variable for the <span className="font-medium text-foreground">{env}</span>{" "}
+                environment.
               </p>
             </div>
           ) : (
@@ -90,7 +91,9 @@ function EnvPage() {
                   key={v.key}
                   className="grid grid-cols-[1fr_2fr_120px_80px] items-center px-5 py-3 border-b border-border last:border-b-0 hover:bg-muted/30 transition"
                 >
-                  <div className="font-mono text-xs font-medium text-foreground truncate">{v.key}</div>
+                  <div className="font-mono text-xs font-medium text-foreground truncate">
+                    {v.key}
+                  </div>
                   <div className="font-mono text-xs text-muted-foreground truncate flex items-center gap-2">
                     <span className="truncate">
                       {shown ? v.value : "•".repeat(Math.min(v.value.length, 24))}
@@ -100,17 +103,23 @@ function EnvPage() {
                         onClick={() => setRevealed((r) => ({ ...r, [v.key]: !r[v.key] }))}
                         className="text-muted-foreground hover:text-foreground transition shrink-0"
                       >
-                        {shown ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        {shown ? (
+                          <EyeOff className="h-3.5 w-3.5" />
+                        ) : (
+                          <Eye className="h-3.5 w-3.5" />
+                        )}
                       </button>
                     )}
                   </div>
                   <div>
-                    <span className={cn(
-                      "text-[10px] font-medium px-2 py-0.5 rounded-md border",
-                      v.secret
-                        ? "bg-destructive/10 text-destructive border-destructive/20"
-                        : "bg-muted text-muted-foreground border-border",
-                    )}>
+                    <span
+                      className={cn(
+                        "text-[10px] font-medium px-2 py-0.5 rounded-md border",
+                        v.secret
+                          ? "bg-destructive/10 text-destructive border-destructive/20"
+                          : "bg-muted text-muted-foreground border-border",
+                      )}
+                    >
                       {v.secret ? "Secret" : "Plain"}
                     </span>
                   </div>
@@ -136,9 +145,15 @@ function EnvPage() {
         </Card>
 
         <div className="rounded-xl border border-border bg-gradient-subtle p-5 text-xs text-muted-foreground">
-          <div className="text-sm font-medium text-foreground mb-1">Reference variables anywhere</div>
-          Use <code className="px-1.5 py-0.5 rounded bg-muted text-foreground font-mono">{"{{KEY_NAME}}"}</code>{" "}
-          inside flow blocks, templates, and the API Playground. Secrets are never exposed in client logs.
+          <div className="text-sm font-medium text-foreground mb-1">
+            Reference variables anywhere
+          </div>
+          Use{" "}
+          <code className="px-1.5 py-0.5 rounded bg-muted text-foreground font-mono">
+            {"{{KEY_NAME}}"}
+          </code>{" "}
+          inside flow blocks, templates, and the API Playground. Secrets are never exposed in client
+          logs.
         </div>
       </main>
     </AppLayout>

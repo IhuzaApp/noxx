@@ -20,12 +20,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { Topbar } from "@/components/Topbar";
 import { Card } from "@/components/Card";
 import { Modal, Field, inputCls } from "@/components/Modal";
-import {
-  userFlowStore,
-  makeId,
-  type FlowResource,
-  type UserFlow,
-} from "@/lib/user-flows";
+import { userFlowStore, makeId, type FlowResource, type UserFlow } from "@/lib/user-flows";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +28,11 @@ export const Route = createFileRoute("/my-flows")({
   head: () => ({
     meta: [
       { title: "My Flows — Noxx" },
-      { name: "description", content: "Create flows, configure triggers and connect resources like phone numbers, links and shared folders." },
+      {
+        name: "description",
+        content:
+          "Create flows, configure triggers and connect resources like phone numbers, links and shared folders.",
+      },
     ],
   }),
   component: MyFlowsPage,
@@ -47,13 +46,46 @@ const channelOptions: Array<{ id: UserFlow["channels"][number]; label: string }>
   { id: "ai", label: "AI" },
 ];
 
-const resourceMeta: Record<FlowResource["kind"], { label: string; icon: typeof Phone; placeholder: string; hint: string }> = {
-  phone: { label: "Phone number", icon: Phone, placeholder: "+1 415 555 0142", hint: "Numbers Noxx can call or text from this flow." },
-  link: { label: "Link / Webhook URL", icon: LinkIcon, placeholder: "https://acme.com/webhook", hint: "Links sent inside messages, or target webhook endpoints." },
-  folder: { label: "Shared folder / Storage", icon: Folder, placeholder: "https://drive.google.com/drive/folders/…", hint: "Cloud storage folder Noxx can read or write to (Drive, S3, Dropbox)." },
-  email: { label: "Dedicated Email", icon: Mail, placeholder: "support@domain.com", hint: "Inbound email box or target escalation inbox for this flow." },
-  credential: { label: "API Credential / Secret", icon: Key, placeholder: "sk_live_98127391...", hint: "Third-party API key, token, or webhook signing secret." },
-  knowledge: { label: "Knowledge Base / Docs", icon: FileText, placeholder: "https://docs.acme.com/faq", hint: "Documentation URL or FAQ dataset for AI agent context." },
+const resourceMeta: Record<
+  FlowResource["kind"],
+  { label: string; icon: typeof Phone; placeholder: string; hint: string }
+> = {
+  phone: {
+    label: "Phone number",
+    icon: Phone,
+    placeholder: "+1 415 555 0142",
+    hint: "Numbers Noxx can call or text from this flow.",
+  },
+  link: {
+    label: "Link / Webhook URL",
+    icon: LinkIcon,
+    placeholder: "https://acme.com/webhook",
+    hint: "Links sent inside messages, or target webhook endpoints.",
+  },
+  folder: {
+    label: "Shared folder / Storage",
+    icon: Folder,
+    placeholder: "https://drive.google.com/drive/folders/…",
+    hint: "Cloud storage folder Noxx can read or write to (Drive, S3, Dropbox).",
+  },
+  email: {
+    label: "Dedicated Email",
+    icon: Mail,
+    placeholder: "support@domain.com",
+    hint: "Inbound email box or target escalation inbox for this flow.",
+  },
+  credential: {
+    label: "API Credential / Secret",
+    icon: Key,
+    placeholder: "sk_live_98127391...",
+    hint: "Third-party API key, token, or webhook signing secret.",
+  },
+  knowledge: {
+    label: "Knowledge Base / Docs",
+    icon: FileText,
+    placeholder: "https://docs.acme.com/faq",
+    hint: "Documentation URL or FAQ dataset for AI agent context.",
+  },
 };
 
 import { API_BASE } from "@/lib/api-config";
@@ -104,7 +136,7 @@ function MyFlowsPage() {
 
   const flows = useMemo(() => {
     return dbFlows.map((f: UserFlow) => {
-      const properName = f.name && f.name !== f.id ? f.name : (flowNames[f.id] || f.name || f.id);
+      const properName = f.name && f.name !== f.id ? f.name : flowNames[f.id] || f.name || f.id;
       return { ...f, name: properName };
     });
   }, [dbFlows, flowNames]);
@@ -180,8 +212,8 @@ function MyFlowsPage() {
             </div>
             <h3 className="mt-4 text-base font-semibold text-foreground">Create your first flow</h3>
             <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">
-              A flow describes what happens when a trigger fires — which channels to use, which numbers
-              to call, which links to send, and where to store any uploads.
+              A flow describes what happens when a trigger fires — which channels to use, which
+              numbers to call, which links to send, and where to store any uploads.
             </p>
             <button
               onClick={() => setOpenNew(true)}
@@ -202,14 +234,17 @@ function MyFlowsPage() {
                         className={cn(
                           "text-[10px] font-medium px-1.5 py-0.5 rounded border capitalize",
                           f.status === "active" && "bg-success/10 text-success border-success/20",
-                          f.status === "paused" && "bg-warning/15 text-warning-foreground border-warning/30",
+                          f.status === "paused" &&
+                            "bg-warning/15 text-warning-foreground border-warning/30",
                           f.status === "draft" && "bg-muted text-muted-foreground border-border",
                         )}
                       >
                         {f.status}
                       </span>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{f.description}</p>
+                    <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                      {f.description}
+                    </p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <button
@@ -217,7 +252,11 @@ function MyFlowsPage() {
                       className="rounded-md border border-input bg-card p-1.5 text-muted-foreground hover:text-foreground transition"
                       title={f.status === "active" ? "Pause" : "Activate"}
                     >
-                      {f.status === "active" ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                      {f.status === "active" ? (
+                        <Pause className="h-3.5 w-3.5" />
+                      ) : (
+                        <Play className="h-3.5 w-3.5" />
+                      )}
                     </button>
                     <button
                       onClick={() => handleDelete(f.id)}
@@ -234,7 +273,10 @@ function MyFlowsPage() {
                     Trigger: {f.trigger || "Webhook"}
                   </span>
                   {(f.channels || []).map((c: string) => (
-                    <span key={c} className="rounded border border-border bg-card px-1.5 py-0.5 text-muted-foreground capitalize">
+                    <span
+                      key={c}
+                      className="rounded border border-border bg-card px-1.5 py-0.5 text-muted-foreground capitalize"
+                    >
                       {c}
                     </span>
                   ))}
@@ -249,10 +291,17 @@ function MyFlowsPage() {
                       const meta = resourceMeta[r?.kind || "link"] || resourceMeta.link;
                       const Icon = meta.icon;
                       return (
-                        <div key={r.id || Math.random()} className="flex items-center gap-2 text-xs">
+                        <div
+                          key={r.id || Math.random()}
+                          className="flex items-center gap-2 text-xs"
+                        >
                           <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <span className="font-medium text-foreground">{r.label || "Resource"}:</span>
-                          <span className="text-muted-foreground truncate">{r.value || "Not set"}</span>
+                          <span className="font-medium text-foreground">
+                            {r.label || "Resource"}:
+                          </span>
+                          <span className="text-muted-foreground truncate">
+                            {r.value || "Not set"}
+                          </span>
                         </div>
                       );
                     })}
@@ -421,7 +470,11 @@ function NewFlowModal({
             />
           </Field>
           <Field label="Trigger">
-            <select value={trigger} onChange={(e) => setTrigger(e.target.value)} className={inputCls}>
+            <select
+              value={trigger}
+              onChange={(e) => setTrigger(e.target.value)}
+              className={inputCls}
+            >
               <option>API request</option>
               <option>Inbound message</option>
               <option>Webhook</option>
@@ -469,8 +522,8 @@ function NewFlowModal({
           <div>
             <div className="text-xs font-semibold text-foreground">Connected resources</div>
             <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Add phone numbers Noxx should call or text from, links it should send,
-              and any shared folder (Drive, S3, Dropbox) it should read or write to.
+              Add phone numbers Noxx should call or text from, links it should send, and any shared
+              folder (Drive, S3, Dropbox) it should read or write to.
             </p>
           </div>
 
@@ -530,7 +583,9 @@ function NewFlowModal({
                         placeholder="Usage notes / environment (Optional)"
                         className="text-xs bg-transparent border border-input rounded-md px-2 py-1 outline-none text-muted-foreground focus:text-foreground"
                       />
-                      <div className="text-[10px] text-muted-foreground flex items-center">{meta.hint}</div>
+                      <div className="text-[10px] text-muted-foreground flex items-center">
+                        {meta.hint}
+                      </div>
                     </div>
                   </div>
                 );
@@ -570,7 +625,15 @@ function NewFlowModal({
   );
 }
 
-function EditResourcesModal({ flow, onClose, onSave }: { flow: UserFlow; onClose: () => void; onSave?: () => void }) {
+function EditResourcesModal({
+  flow,
+  onClose,
+  onSave,
+}: {
+  flow: UserFlow;
+  onClose: () => void;
+  onSave?: () => void;
+}) {
   const [resources, setResources] = useState<FlowResource[]>(flow?.resources || []);
   const [saving, setSaving] = useState(false);
 
@@ -609,7 +672,10 @@ function EditResourcesModal({ flow, onClose, onSave }: { flow: UserFlow; onClose
   };
 
   const addResource = (kind: FlowResource["kind"]) =>
-    setResources((r) => [...(r || []), { id: makeId("rs"), kind, label: resourceMeta[kind].label, value: "" }]);
+    setResources((r) => [
+      ...(r || []),
+      { id: makeId("rs"), kind, label: resourceMeta[kind].label, value: "" },
+    ]);
   const updateResource = (id: string, patch: Partial<FlowResource>) =>
     setResources((r) => (r || []).map((x) => (x.id === id ? { ...x, ...patch } : x)));
   const removeResource = (id: string) => setResources((r) => (r || []).filter((x) => x.id !== id));
@@ -638,7 +704,8 @@ function EditResourcesModal({ flow, onClose, onSave }: { flow: UserFlow; onClose
 
         {safeResources.length === 0 ? (
           <div className="rounded-md border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-            No resources yet. Add a phone number, a link, an email, an API key, or a documentation link.
+            No resources yet. Add a phone number, a link, an email, an API key, or a documentation
+            link.
           </div>
         ) : (
           safeResources.map((r) => {
@@ -678,7 +745,9 @@ function EditResourcesModal({ flow, onClose, onSave }: { flow: UserFlow; onClose
                     placeholder="Usage notes / environment (Optional)"
                     className="text-xs bg-transparent border border-input rounded-md px-2 py-1 outline-none text-muted-foreground focus:text-foreground"
                   />
-                  <div className="text-[10px] text-muted-foreground flex items-center">{meta.hint}</div>
+                  <div className="text-[10px] text-muted-foreground flex items-center">
+                    {meta.hint}
+                  </div>
                 </div>
               </div>
             );

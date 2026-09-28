@@ -54,9 +54,7 @@ export function StatCard({
           <span
             className={cn(
               "inline-flex items-center rounded-md px-1.5 py-0.5 font-medium",
-              positive
-                ? "bg-success/10 text-success"
-                : "bg-destructive/10 text-destructive",
+              positive ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive",
             )}
           >
             {positive ? "↑" : "↓"} {Math.abs(delta)}%

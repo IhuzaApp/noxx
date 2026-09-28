@@ -48,7 +48,7 @@ async function saveToHasura(object: {
       },
       body: JSON.stringify({ query: mutation, variables: { object } }),
     });
-    const json = await res.json() as any;
+    const json = (await res.json()) as any;
     console.log("Hasura upsert result:", JSON.stringify(json));
   } catch (err) {
     console.error("Hasura save error:", err);
@@ -66,7 +66,10 @@ function getCompanyName(recipientEmail: string = ""): string {
 
   const fromEmail = process.env.RESEND_FROM_EMAIL || "";
   if (fromEmail.includes("<")) {
-    const displayName = fromEmail.split("<")[0].replace(/support/i, "").trim();
+    const displayName = fromEmail
+      .split("<")[0]
+      .replace(/support/i, "")
+      .trim();
     if (displayName) return displayName;
   }
   if (fromEmail.includes("@")) {
@@ -105,10 +108,10 @@ async function callGroq(userMessage: string, recipientEmail: string = ""): Promi
     model: "openai/gpt-oss-20b",
     messages: [
       { role: "system", content: getSystemInstruction(recipientEmail) },
-      { role: "user", content: userMessage }
+      { role: "user", content: userMessage },
     ],
     max_tokens: 512,
-    temperature: 0.7
+    temperature: 0.7,
   };
 
   console.log("Calling Groq API...");
@@ -116,12 +119,12 @@ async function callGroq(userMessage: string, recipientEmail: string = ""): Promi
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${GROQ_API_KEY}`
+      Authorization: `Bearer ${GROQ_API_KEY}`,
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
   });
 
-  const json = await response.json() as any;
+  const json = (await response.json()) as any;
   console.log("Groq API response status:", response.status);
 
   if (!response.ok) {
@@ -130,7 +133,9 @@ async function callGroq(userMessage: string, recipientEmail: string = ""): Promi
 
   const text: string = json?.choices?.[0]?.message?.content ?? "";
   if (!text) {
-    throw new Error(`Groq returned no content. Status: ${response.status}, body: ${JSON.stringify(json)}`);
+    throw new Error(
+      `Groq returned no content. Status: ${response.status}, body: ${JSON.stringify(json)}`,
+    );
   }
   return text;
 }
@@ -190,9 +195,9 @@ export const resendEmailWebhook = functions.https.onRequest(async (req, res) => 
     try {
       console.log("Fetching email body for:", emailId);
       const emailRes = await fetch(`https://api.resend.com/emails/receiving/${emailId}`, {
-        headers: { "Authorization": `Bearer ${RESEND_API_KEY}` }
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}` },
       });
-      const emailData = await emailRes.json() as any;
+      const emailData = (await emailRes.json()) as any;
       console.log("Resend inbound fetch status:", emailRes.status);
       textBody = emailData.text || emailData.html || "No body";
     } catch (e) {
@@ -205,7 +210,10 @@ export const resendEmailWebhook = functions.https.onRequest(async (req, res) => 
     // 2. Generate AI response via Groq
     let aiResponseText = "";
     try {
-      aiResponseText = await callGroq(`Subject: ${subject}\n\nMessage:\n${textBody}`, recipientEmail);
+      aiResponseText = await callGroq(
+        `Subject: ${subject}\n\nMessage:\n${textBody}`,
+        recipientEmail,
+      );
       console.log("Groq AI response received, length:", aiResponseText.length);
     } catch (error: any) {
       console.error("AI Generation error:", error);

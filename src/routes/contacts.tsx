@@ -25,9 +25,16 @@ export const Route = createFileRoute("/contacts")({
   head: () => ({
     meta: [
       { title: "Contacts — Noxx" },
-      { name: "description", content: "Store, organize and export your customer contacts. Import via CSV, segment with tags." },
+      {
+        name: "description",
+        content:
+          "Store, organize and export your customer contacts. Import via CSV, segment with tags.",
+      },
       { property: "og:title", content: "Contacts — Noxx" },
-      { property: "og:description", content: "One source of truth for customer contacts. Import, tag and export to CSV." },
+      {
+        property: "og:description",
+        content: "One source of truth for customer contacts. Import, tag and export to CSV.",
+      },
     ],
   }),
   component: ContactsPage,
@@ -79,7 +86,7 @@ function ContactsPage() {
         }
       }
       fields.push(cur);
-      const get = (k: string) => (idx(k) >= 0 ? fields[idx(k)] ?? "" : "");
+      const get = (k: string) => (idx(k) >= 0 ? (fields[idx(k)] ?? "") : "");
       const name = get("name");
       if (!name) continue;
       contactStore.add({
@@ -175,7 +182,9 @@ function ContactsPage() {
                   <tr key={c.id} className="border-b border-border hover:bg-muted/40">
                     <td className="px-4 py-3">
                       <div className="font-medium text-foreground">{c.name}</div>
-                      {c.company && <div className="text-[11px] text-muted-foreground">{c.company}</div>}
+                      {c.company && (
+                        <div className="text-[11px] text-muted-foreground">{c.company}</div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       <span className="inline-flex items-center gap-1.5">
@@ -218,7 +227,10 @@ function ContactsPage() {
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                    <td
+                      colSpan={5}
+                      className="px-4 py-12 text-center text-sm text-muted-foreground"
+                    >
                       No contacts match your search.
                     </td>
                   </tr>

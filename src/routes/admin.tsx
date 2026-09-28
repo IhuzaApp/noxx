@@ -105,9 +105,7 @@ function AdminPage() {
       <main className="flex-1 overflow-auto bg-muted/10">
         <div className="px-6 py-6 w-full max-w-full">
           {tab === "overview" && <OverviewTab />}
-          {tab === "users" && (
-            <UsersTab query={query} setQuery={setQuery} users={filteredUsers} />
-          )}
+          {tab === "users" && <UsersTab query={query} setQuery={setQuery} users={filteredUsers} />}
           {tab === "projects" && <ProjectsTab />}
           {tab === "system" && <SystemTab />}
           {tab === "billing" && <BillingTab />}
@@ -123,10 +121,30 @@ function OverviewTab() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total users" value={platformStats.totalUsers.toLocaleString()} icon={Users} delta={3.1} />
-        <StatCard label="Active users (30d)" value={platformStats.activeUsers.toLocaleString()} icon={Activity} delta={2.4} />
-        <StatCard label="Platform MRR" value={`$${platformStats.mrr.toLocaleString()}`} icon={DollarSign} delta={100} />
-        <StatCard label="Error rate (24h)" value={`${platformStats.errorRate}%`} icon={AlertTriangle} delta={-0.2} />
+        <StatCard
+          label="Total users"
+          value={platformStats.totalUsers.toLocaleString()}
+          icon={Users}
+          delta={3.1}
+        />
+        <StatCard
+          label="Active users (30d)"
+          value={platformStats.activeUsers.toLocaleString()}
+          icon={Activity}
+          delta={2.4}
+        />
+        <StatCard
+          label="Platform MRR"
+          value={`$${platformStats.mrr.toLocaleString()}`}
+          icon={DollarSign}
+          delta={100}
+        />
+        <StatCard
+          label="Error rate (24h)"
+          value={`${platformStats.errorRate}%`}
+          icon={AlertTriangle}
+          delta={-0.2}
+        />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -134,7 +152,9 @@ function OverviewTab() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-foreground">Revenue (MRR)</h3>
-              <p className="text-xs text-muted-foreground">Monthly recurring revenue across all plans</p>
+              <p className="text-xs text-muted-foreground">
+                Monthly recurring revenue across all plans
+              </p>
             </div>
             <span className="inline-flex items-center gap-1 text-xs font-medium text-channel-ai">
               <TrendingUp className="h-3.5 w-3.5" /> +64% YoY
@@ -150,8 +170,20 @@ function OverviewTab() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="month" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
+                <XAxis
+                  dataKey="month"
+                  stroke="var(--muted-foreground)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="var(--muted-foreground)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v) => `$${v}`}
+                />
                 <Tooltip
                   cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
                   contentStyle={{
@@ -163,7 +195,13 @@ function OverviewTab() {
                   }}
                   formatter={(v) => [`$${Number(v).toLocaleString()}`, "MRR"]}
                 />
-                <Area type="monotone" dataKey="mrr" stroke="var(--primary)" fill="url(#mrrGrad)" strokeWidth={2.5} />
+                <Area
+                  type="monotone"
+                  dataKey="mrr"
+                  stroke="var(--primary)"
+                  fill="url(#mrrGrad)"
+                  strokeWidth={2.5}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -172,10 +210,26 @@ function OverviewTab() {
         <Card className="p-5 flex flex-col">
           <h3 className="text-sm font-semibold text-foreground mb-4">Today's volume</h3>
           <div className="space-y-3">
-            <VolumeRow label="Messages sent" value={platformStats.messagesToday.toLocaleString()} icon={Activity} />
-            <VolumeRow label="API calls" value={platformStats.apiCallsToday.toLocaleString()} icon={Server} />
-            <VolumeRow label="Organizations" value={platformStats.totalOrgs.toLocaleString()} icon={Shield} />
-            <VolumeRow label="Storage used" value={`${platformStats.storageGb} GB`} icon={Database} />
+            <VolumeRow
+              label="Messages sent"
+              value={platformStats.messagesToday.toLocaleString()}
+              icon={Activity}
+            />
+            <VolumeRow
+              label="API calls"
+              value={platformStats.apiCallsToday.toLocaleString()}
+              icon={Server}
+            />
+            <VolumeRow
+              label="Organizations"
+              value={platformStats.totalOrgs.toLocaleString()}
+              icon={Shield}
+            />
+            <VolumeRow
+              label="Storage used"
+              value={`${platformStats.storageGb} GB`}
+              icon={Database}
+            />
           </div>
         </Card>
       </div>
@@ -198,7 +252,15 @@ function OverviewTab() {
   );
 }
 
-function VolumeRow({ label, value, icon: Icon }: { label: string; value: string; icon: typeof Users }) {
+function VolumeRow({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  icon: typeof Users;
+}) {
   return (
     <div className="flex items-center justify-between py-1 border-b border-border last:border-0 last:pb-0">
       <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
@@ -212,7 +274,7 @@ function VolumeRow({ label, value, icon: Icon }: { label: string; value: string;
   );
 }
 
-function ServicePill({ service }: { service: typeof systemServices[number] }) {
+function ServicePill({ service }: { service: (typeof systemServices)[number] }) {
   const dotColor =
     service.status === "operational"
       ? "bg-success"
@@ -226,12 +288,22 @@ function ServicePill({ service }: { service: typeof systemServices[number] }) {
         ? "text-warning"
         : "text-destructive";
   const StatusIcon =
-    service.status === "operational" ? CheckCircle2 : service.status === "degraded" ? AlertTriangle : XCircle;
+    service.status === "operational"
+      ? CheckCircle2
+      : service.status === "degraded"
+        ? AlertTriangle
+        : XCircle;
 
   return (
     <div className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5 hover:border-primary/30 hover:shadow-soft transition">
       <div className="min-w-0 flex items-center gap-2.5">
-        <span className={cn("h-2 w-2 rounded-full shrink-0", dotColor, service.status !== "down" && "animate-pulse")} />
+        <span
+          className={cn(
+            "h-2 w-2 rounded-full shrink-0",
+            dotColor,
+            service.status !== "down" && "animate-pulse",
+          )}
+        />
         <div className="min-w-0">
           <div className="text-xs font-medium text-foreground truncate">{service.name}</div>
           <div className="text-[11px] text-muted-foreground tabular-nums">
@@ -283,19 +355,40 @@ function UsersTab({
     plan: members.find((m) => m.role === "owner")?.plan ?? members[0].plan,
     mrr: members.reduce((s, m) => s + m.mrr, 0),
     joinedAt: members[0].joinedAt,
-    status: members.some((m) => m.status === "active") ? "active" as const : members.some((m) => m.status === "invited") ? "invited" as const : "suspended" as const,
+    status: members.some((m) => m.status === "active")
+      ? ("active" as const)
+      : members.some((m) => m.status === "invited")
+        ? ("invited" as const)
+        : ("suspended" as const),
     projectCount: adminProjects.filter((p) => p.company === name).length,
-    flowCount: adminProjects.filter((p) => p.company === name).reduce((s, p) => s + p.flowsCount, 0),
+    flowCount: adminProjects
+      .filter((p) => p.company === name)
+      .reduce((s, p) => s + p.flowsCount, 0),
   }));
 
   return (
     <div className="space-y-5">
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Organizations" value={companies.length.toString()} icon={Building2} delta={0} />
+        <StatCard
+          label="Organizations"
+          value={companies.length.toString()}
+          icon={Building2}
+          delta={0}
+        />
         <StatCard label="Total users" value={users.length.toString()} icon={Users} delta={0} />
-        <StatCard label="Paying orgs" value={companies.filter((c) => c.mrr > 0).length.toString()} icon={DollarSign} delta={0} />
-        <StatCard label="Combined MRR" value={`$${companies.reduce((s, c) => s + c.mrr, 0).toLocaleString()}`} icon={TrendingUp} delta={0} />
+        <StatCard
+          label="Paying orgs"
+          value={companies.filter((c) => c.mrr > 0).length.toString()}
+          icon={DollarSign}
+          delta={0}
+        />
+        <StatCard
+          label="Combined MRR"
+          value={`$${companies.reduce((s, c) => s + c.mrr, 0).toLocaleString()}`}
+          icon={TrendingUp}
+          delta={0}
+        />
       </div>
 
       <Card className="overflow-hidden">
@@ -303,7 +396,8 @@ function UsersTab({
           <div>
             <h3 className="text-sm font-semibold text-foreground">All organizations</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {companies.length} compan{companies.length === 1 ? "y" : "ies"} · {users.length} users total
+              {companies.length} compan{companies.length === 1 ? "y" : "ies"} · {users.length} users
+              total
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -342,11 +436,18 @@ function UsersTab({
                   <td className="py-3 px-5">
                     <div className="flex items-center gap-2.5">
                       <div className="h-9 w-9 rounded-lg bg-gradient-primary flex items-center justify-center text-primary-foreground text-[11px] font-bold shadow-soft shrink-0">
-                        {c.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                        {c.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .slice(0, 2)
+                          .toUpperCase()}
                       </div>
                       <div className="min-w-0">
                         <div className="font-semibold text-foreground text-xs">{c.name}</div>
-                        <div className="text-[11px] text-muted-foreground truncate">{c.members.find(m => m.role === "owner")?.email ?? c.members[0].email}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">
+                          {c.members.find((m) => m.role === "owner")?.email ?? c.members[0].email}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -369,18 +470,32 @@ function UsersTab({
                     </div>
                   </td>
                   <td className="py-3 px-3">
-                    <span className={cn("inline-flex rounded-md border px-2 py-0.5 text-[10px] font-medium capitalize", planColor[c.plan])}>
+                    <span
+                      className={cn(
+                        "inline-flex rounded-md border px-2 py-0.5 text-[10px] font-medium capitalize",
+                        planColor[c.plan],
+                      )}
+                    >
                       {c.plan}
                     </span>
                   </td>
                   <td className="py-3 px-3">
-                    <span className={cn("inline-flex items-center gap-1.5 text-[11px] font-medium capitalize", statusText[c.status])}>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1.5 text-[11px] font-medium capitalize",
+                        statusText[c.status],
+                      )}
+                    >
                       <span className={cn("h-1.5 w-1.5 rounded-full", statusDot[c.status])} />
                       {c.status}
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-xs tabular-nums text-foreground text-right font-medium">${c.mrr.toLocaleString()}</td>
-                  <td className="py-3 px-3 text-xs text-muted-foreground whitespace-nowrap">{c.joinedAt}</td>
+                  <td className="py-3 px-3 text-xs tabular-nums text-foreground text-right font-medium">
+                    ${c.mrr.toLocaleString()}
+                  </td>
+                  <td className="py-3 px-3 text-xs text-muted-foreground whitespace-nowrap">
+                    {c.joinedAt}
+                  </td>
                   <td className="py-3 px-3">
                     <button className="text-muted-foreground hover:text-foreground rounded p-1 hover:bg-muted transition">
                       <MoreHorizontal className="h-4 w-4" />
@@ -397,24 +512,36 @@ function UsersTab({
           {companies.map((c) => (
             <details key={c.name} className="group/details border-b border-border last:border-0">
               <summary className="flex items-center gap-2.5 px-5 py-3 cursor-pointer hover:bg-accent/20 transition-colors text-xs font-medium text-foreground select-none">
-                <span className="text-[10px] text-muted-foreground group-open/details:rotate-90 transition-transform">▶</span>
+                <span className="text-[10px] text-muted-foreground group-open/details:rotate-90 transition-transform">
+                  ▶
+                </span>
                 <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                 {c.name}
-                <span className="text-muted-foreground font-normal">· {c.members.length} member{c.members.length !== 1 ? "s" : ""}</span>
+                <span className="text-muted-foreground font-normal">
+                  · {c.members.length} member{c.members.length !== 1 ? "s" : ""}
+                </span>
               </summary>
               <div className="px-5 pb-3 pl-12">
                 <div className="space-y-2">
                   {c.members.map((m) => (
                     <div key={m.id} className="flex items-center gap-3 py-1.5">
                       <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[9px] font-semibold text-foreground shrink-0">
-                        {m.name.split(" ").map(n => n[0]).join("")}
+                        {m.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
                       </div>
                       <div className="flex-1 min-w-0">
                         <span className="text-xs font-medium text-foreground">{m.name}</span>
                         <span className="text-[11px] text-muted-foreground ml-2">{m.email}</span>
                       </div>
                       <span className="text-[11px] text-muted-foreground capitalize">{m.role}</span>
-                      <span className={cn("inline-flex items-center gap-1 text-[10px] font-medium capitalize", statusText[m.status])}>
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 text-[10px] font-medium capitalize",
+                          statusText[m.status],
+                        )}
+                      >
                         <span className={cn("h-1 w-1 rounded-full", statusDot[m.status])} />
                         {m.status}
                       </span>
@@ -437,31 +564,61 @@ function SystemTab() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {systemServices.map((s) => {
           const dot =
-            s.status === "operational" ? "bg-success" : s.status === "degraded" ? "bg-warning" : "bg-destructive";
+            s.status === "operational"
+              ? "bg-success"
+              : s.status === "degraded"
+                ? "bg-warning"
+                : "bg-destructive";
           const tone =
-            s.status === "operational" ? "text-success" : s.status === "degraded" ? "text-warning" : "text-destructive";
+            s.status === "operational"
+              ? "text-success"
+              : s.status === "degraded"
+                ? "text-warning"
+                : "text-destructive";
           return (
             <Card key={s.id} className="p-5 hover:shadow-elevated transition-shadow">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", dot, s.status !== "down" && "animate-pulse")} />
+                  <span
+                    className={cn(
+                      "h-2.5 w-2.5 rounded-full shrink-0",
+                      dot,
+                      s.status !== "down" && "animate-pulse",
+                    )}
+                  />
                   <div className="font-semibold text-foreground text-sm truncate">{s.name}</div>
                 </div>
-                <span className={cn("text-[11px] font-medium capitalize px-2 py-0.5 rounded-md border", tone, "border-current/20 bg-current/5")}>
+                <span
+                  className={cn(
+                    "text-[11px] font-medium capitalize px-2 py-0.5 rounded-md border",
+                    tone,
+                    "border-current/20 bg-current/5",
+                  )}
+                >
                   {s.status}
                 </span>
               </div>
               <div className="mt-4 grid grid-cols-3 gap-2 pt-4 border-t border-border">
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Uptime 30d</div>
-                  <div className="text-base font-semibold text-foreground tabular-nums mt-0.5">{s.uptime}%</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Uptime 30d
+                  </div>
+                  <div className="text-base font-semibold text-foreground tabular-nums mt-0.5">
+                    {s.uptime}%
+                  </div>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">p95 Latency</div>
-                  <div className="text-base font-semibold text-foreground tabular-nums mt-0.5">{s.latency}ms</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    p95 Latency
+                  </div>
+                  <div className="text-base font-semibold text-foreground tabular-nums mt-0.5">
+                    {s.latency}ms
+                  </div>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Region</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Region
+                  </div>
                   <div className="text-base font-semibold text-foreground mt-0.5">global</div>
                 </div>
               </div>
@@ -486,17 +643,35 @@ function BillingTab() {
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="MRR" value={`$${total.toLocaleString()}`} icon={DollarSign} delta={100} />
-        <StatCard label="ARR (est.)" value={`$${(total * 12).toLocaleString()}`} icon={TrendingUp} delta={100} />
-        <StatCard label="Paying accounts" value={(plans[1].users + plans[2].users + plans[3].users).toLocaleString()} icon={Users} delta={100} />
+        <StatCard
+          label="ARR (est.)"
+          value={`$${(total * 12).toLocaleString()}`}
+          icon={TrendingUp}
+          delta={100}
+        />
+        <StatCard
+          label="Paying accounts"
+          value={(plans[1].users + plans[2].users + plans[3].users).toLocaleString()}
+          icon={Users}
+          delta={100}
+        />
         <StatCard label="Churn (30d)" value="0%" icon={AlertTriangle} delta={0} />
       </div>
       <Card className="p-5">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="text-sm font-semibold text-foreground">Revenue by plan</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">Distribution across {plans.length} tiers</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Distribution across {plans.length} tiers
+            </p>
           </div>
-          <div className="text-xs text-muted-foreground">Total <span className="font-semibold text-foreground tabular-nums">${total.toLocaleString()}</span>/mo</div>
+          <div className="text-xs text-muted-foreground">
+            Total{" "}
+            <span className="font-semibold text-foreground tabular-nums">
+              ${total.toLocaleString()}
+            </span>
+            /mo
+          </div>
         </div>
         <div className="space-y-4">
           {plans.map((p) => {
@@ -507,7 +682,9 @@ function BillingTab() {
                   <span className="flex items-center gap-2 font-medium text-foreground">
                     <span className={cn("h-2 w-2 rounded-full", p.color)} />
                     {p.name}
-                    <span className="text-muted-foreground font-normal">· {p.users.toLocaleString()} users</span>
+                    <span className="text-muted-foreground font-normal">
+                      · {p.users.toLocaleString()} users
+                    </span>
                   </span>
                   <span className="text-foreground font-semibold tabular-nums">
                     ${p.mrr.toLocaleString()}
@@ -515,7 +692,10 @@ function BillingTab() {
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-muted overflow-hidden">
-                  <div className={cn("h-full rounded-full transition-all", p.color)} style={{ width: `${pct}%` }} />
+                  <div
+                    className={cn("h-full rounded-full transition-all", p.color)}
+                    style={{ width: `${pct}%` }}
+                  />
                 </div>
               </div>
             );
@@ -544,7 +724,9 @@ function FlagsTab({
       <div className="flex items-center justify-between p-5 border-b border-border">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Feature flags</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">Gradually roll out features to a percentage of users</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Gradually roll out features to a percentage of users
+          </p>
         </div>
         <button className="rounded-md bg-foreground text-background px-3 py-1.5 text-xs font-medium hover:opacity-90 shadow-soft transition">
           New flag
@@ -552,11 +734,21 @@ function FlagsTab({
       </div>
       <div className="divide-y divide-border">
         {flags.map((f) => (
-          <div key={f.id} className="px-5 py-4 flex flex-col md:flex-row md:items-center gap-4 hover:bg-accent/20 transition-colors">
+          <div
+            key={f.id}
+            className="px-5 py-4 flex flex-col md:flex-row md:items-center gap-4 hover:bg-accent/20 transition-colors"
+          >
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <code className="text-xs font-mono font-semibold text-foreground bg-muted px-1.5 py-0.5 rounded">{f.key}</code>
-                <span className={cn("inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider", typeColor[f.type])}>
+                <code className="text-xs font-mono font-semibold text-foreground bg-muted px-1.5 py-0.5 rounded">
+                  {f.key}
+                </code>
+                <span
+                  className={cn(
+                    "inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider",
+                    typeColor[f.type],
+                  )}
+                >
                   {f.type}
                 </span>
                 {f.enabled ? (
@@ -572,7 +764,8 @@ function FlagsTab({
               </div>
               <div className="text-xs text-muted-foreground mt-1.5">{f.description}</div>
               <div className="text-[11px] text-muted-foreground/80 mt-1.5 flex items-center gap-1.5">
-                Updated {f.lastUpdated} by <span className="font-medium text-foreground">{f.author}</span>
+                Updated {f.lastUpdated} by{" "}
+                <span className="font-medium text-foreground">{f.author}</span>
               </div>
             </div>
             <div className="flex items-center gap-3 w-full md:w-64 mt-3 md:mt-0">
@@ -582,15 +775,23 @@ function FlagsTab({
                 max={100}
                 value={f.rollout}
                 onChange={(e) =>
-                  setFlags(flags.map((x) => (x.id === f.id ? { ...x, rollout: Number(e.target.value) } : x)))
+                  setFlags(
+                    flags.map((x) =>
+                      x.id === f.id ? { ...x, rollout: Number(e.target.value) } : x,
+                    ),
+                  )
                 }
                 className="flex-1 accent-primary disabled:opacity-40"
                 disabled={!f.enabled}
               />
-              <span className="text-xs tabular-nums font-semibold text-foreground w-10 text-right">{f.rollout}%</span>
+              <span className="text-xs tabular-nums font-semibold text-foreground w-10 text-right">
+                {f.rollout}%
+              </span>
             </div>
             <button
-              onClick={() => setFlags(flags.map((x) => (x.id === f.id ? { ...x, enabled: !x.enabled } : x)))}
+              onClick={() =>
+                setFlags(flags.map((x) => (x.id === f.id ? { ...x, enabled: !x.enabled } : x)))
+              }
               className={cn(
                 "relative h-5 w-9 rounded-full transition-colors shrink-0",
                 f.enabled ? "bg-primary" : "bg-muted border border-border",
@@ -621,7 +822,9 @@ function AuditTab() {
       <div className="flex items-center justify-between p-5 border-b border-border">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Audit log</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">Every security-relevant action across the platform</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Every security-relevant action across the platform
+          </p>
         </div>
         <button className="rounded-md border border-input bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition shadow-soft">
           Export CSV
@@ -642,15 +845,26 @@ function AuditTab() {
           <tbody className="divide-y divide-border">
             {auditEvents.map((e) => (
               <tr key={e.id} className="hover:bg-accent/30 transition-colors">
-                <td className="py-3 px-5 text-xs text-muted-foreground whitespace-nowrap">{e.at}</td>
+                <td className="py-3 px-5 text-xs text-muted-foreground whitespace-nowrap">
+                  {e.at}
+                </td>
                 <td className="py-3 px-3 text-xs font-medium text-foreground">{e.actor}</td>
                 <td className="py-3 px-3 text-xs">
-                  <code className="font-mono text-foreground bg-muted px-1.5 py-0.5 rounded">{e.action}</code>
+                  <code className="font-mono text-foreground bg-muted px-1.5 py-0.5 rounded">
+                    {e.action}
+                  </code>
                 </td>
                 <td className="py-3 px-3 text-xs text-muted-foreground">{e.target}</td>
-                <td className="py-3 px-3 text-xs text-muted-foreground tabular-nums whitespace-nowrap">{e.ip}</td>
+                <td className="py-3 px-3 text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                  {e.ip}
+                </td>
                 <td className="py-3 px-3">
-                  <span className={cn("inline-flex rounded-md border px-2 py-0.5 text-[10px] font-medium capitalize", sevColor[e.severity])}>
+                  <span
+                    className={cn(
+                      "inline-flex rounded-md border px-2 py-0.5 text-[10px] font-medium capitalize",
+                      sevColor[e.severity],
+                    )}
+                  >
                     {e.severity}
                   </span>
                 </td>
@@ -665,7 +879,9 @@ function AuditTab() {
 
 function ProjectsTab() {
   const [query, setQuery] = useState("");
-  const [selectedProject, setSelectedProject] = useState<typeof adminProjects[number] | null>(null);
+  const [selectedProject, setSelectedProject] = useState<(typeof adminProjects)[number] | null>(
+    null,
+  );
 
   const filtered = adminProjects.filter(
     (p) =>
@@ -691,44 +907,152 @@ function ProjectsTab() {
   };
 
   // Mock flows per project
-  const projectFlows: Record<string, Array<{ name: string; status: "active" | "draft" | "paused"; triggers: string; lastRun: string }>> = {
+  const projectFlows: Record<
+    string,
+    Array<{
+      name: string;
+      status: "active" | "draft" | "paused";
+      triggers: string;
+      lastRun: string;
+    }>
+  > = {
     // Officeats — Customer Support (p_support) — 8 flows
     p_support: [
-      { name: "AI Triage & Route", status: "active", triggers: "message.received", lastRun: "2m ago" },
-      { name: "Ticket Auto-Assign", status: "active", triggers: "ticket.created", lastRun: "5m ago" },
-      { name: "SLA Breach Alert", status: "active", triggers: "ticket.sla_warning", lastRun: "1h ago" },
-      { name: "Support Escalation to Human", status: "active", triggers: "ai.low_confidence", lastRun: "15m ago" },
+      {
+        name: "AI Triage & Route",
+        status: "active",
+        triggers: "message.received",
+        lastRun: "2m ago",
+      },
+      {
+        name: "Ticket Auto-Assign",
+        status: "active",
+        triggers: "ticket.created",
+        lastRun: "5m ago",
+      },
+      {
+        name: "SLA Breach Alert",
+        status: "active",
+        triggers: "ticket.sla_warning",
+        lastRun: "1h ago",
+      },
+      {
+        name: "Support Escalation to Human",
+        status: "active",
+        triggers: "ai.low_confidence",
+        lastRun: "15m ago",
+      },
       { name: "CSAT Survey", status: "active", triggers: "ticket.closed", lastRun: "2h ago" },
-      { name: "Off-Hours Auto-Reply", status: "active", triggers: "message.received.off_hours", lastRun: "9h ago" },
-      { name: "Repeat Customer VIP Flow", status: "paused", triggers: "customer.flagged_vip", lastRun: "3d ago" },
+      {
+        name: "Off-Hours Auto-Reply",
+        status: "active",
+        triggers: "message.received.off_hours",
+        lastRun: "9h ago",
+      },
+      {
+        name: "Repeat Customer VIP Flow",
+        status: "paused",
+        triggers: "customer.flagged_vip",
+        lastRun: "3d ago",
+      },
       { name: "Refund Request Handler", status: "draft", triggers: "—", lastRun: "—" },
     ],
     // Officeats — Order Lifecycle (p_orders) — 12 flows
     p_orders: [
-      { name: "Order Confirmed (WhatsApp)", status: "active", triggers: "order.confirmed", lastRun: "2m ago" },
-      { name: "Order Confirmed (Email)", status: "active", triggers: "order.confirmed", lastRun: "2m ago" },
-      { name: "Rider Assigned Notification", status: "active", triggers: "order.rider_assigned", lastRun: "4m ago" },
+      {
+        name: "Order Confirmed (WhatsApp)",
+        status: "active",
+        triggers: "order.confirmed",
+        lastRun: "2m ago",
+      },
+      {
+        name: "Order Confirmed (Email)",
+        status: "active",
+        triggers: "order.confirmed",
+        lastRun: "2m ago",
+      },
+      {
+        name: "Rider Assigned Notification",
+        status: "active",
+        triggers: "order.rider_assigned",
+        lastRun: "4m ago",
+      },
       { name: "ETA Update", status: "active", triggers: "order.eta_updated", lastRun: "8m ago" },
-      { name: "Out for Delivery Alert", status: "active", triggers: "order.out_for_delivery", lastRun: "12m ago" },
-      { name: "Order Delivered", status: "active", triggers: "order.delivered", lastRun: "15m ago" },
-      { name: "Post-Delivery Review Request", status: "active", triggers: "order.delivered +30min", lastRun: "45m ago" },
-      { name: "Order Delay Apology", status: "active", triggers: "order.delayed", lastRun: "1h ago" },
-      { name: "Cancelled Order Refund", status: "active", triggers: "order.cancelled", lastRun: "3h ago" },
+      {
+        name: "Out for Delivery Alert",
+        status: "active",
+        triggers: "order.out_for_delivery",
+        lastRun: "12m ago",
+      },
+      {
+        name: "Order Delivered",
+        status: "active",
+        triggers: "order.delivered",
+        lastRun: "15m ago",
+      },
+      {
+        name: "Post-Delivery Review Request",
+        status: "active",
+        triggers: "order.delivered +30min",
+        lastRun: "45m ago",
+      },
+      {
+        name: "Order Delay Apology",
+        status: "active",
+        triggers: "order.delayed",
+        lastRun: "1h ago",
+      },
+      {
+        name: "Cancelled Order Refund",
+        status: "active",
+        triggers: "order.cancelled",
+        lastRun: "3h ago",
+      },
       { name: "Re-order Reminder", status: "active", triggers: "cron.weekly", lastRun: "6h ago" },
-      { name: "Failed Payment Retry", status: "paused", triggers: "payment.failed", lastRun: "2d ago" },
+      {
+        name: "Failed Payment Retry",
+        status: "paused",
+        triggers: "payment.failed",
+        lastRun: "2d ago",
+      },
       { name: "Loyalty Points Update", status: "draft", triggers: "—", lastRun: "—" },
     ],
     // Officeats — Onboarding Bot (p_onboarding) — 4 flows
     p_onboarding: [
-      { name: "New User Welcome Message", status: "active", triggers: "user.signup", lastRun: "3h ago" },
-      { name: "First Order Nudge", status: "active", triggers: "user.signup +24h", lastRun: "1d ago" },
-      { name: "App Tutorial Sequence", status: "active", triggers: "user.signup", lastRun: "3h ago" },
+      {
+        name: "New User Welcome Message",
+        status: "active",
+        triggers: "user.signup",
+        lastRun: "3h ago",
+      },
+      {
+        name: "First Order Nudge",
+        status: "active",
+        triggers: "user.signup +24h",
+        lastRun: "1d ago",
+      },
+      {
+        name: "App Tutorial Sequence",
+        status: "active",
+        triggers: "user.signup",
+        lastRun: "3h ago",
+      },
       { name: "Inactive User Win-Back", status: "draft", triggers: "—", lastRun: "—" },
     ],
     // Candi Digital — Client CRM Notifications (p_candi_crm) — 2 flows
     p_candi_crm: [
-      { name: "Project Status Update to Client", status: "active", triggers: "crm.project_status_changed", lastRun: "just now" },
-      { name: "Invoice Sent Notification", status: "active", triggers: "billing.invoice_created", lastRun: "2h ago" },
+      {
+        name: "Project Status Update to Client",
+        status: "active",
+        triggers: "crm.project_status_changed",
+        lastRun: "just now",
+      },
+      {
+        name: "Invoice Sent Notification",
+        status: "active",
+        triggers: "billing.invoice_created",
+        lastRun: "2h ago",
+      },
     ],
     // KD Design — Sandbox (p_kd_test) — 0 flows
     p_kd_test: [],
@@ -762,19 +1086,32 @@ function ProjectsTab() {
                 {selectedProject.name.slice(0, 2).toUpperCase()}
               </div>
               <div className="min-w-0">
-                <h2 className="font-semibold text-foreground text-sm leading-tight">{selectedProject.name}</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Project ID: {selectedProject.id}</p>
+                <h2 className="font-semibold text-foreground text-sm leading-tight">
+                  {selectedProject.name}
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Project ID: {selectedProject.id}
+                </p>
               </div>
             </div>
             <div className="space-y-3 pt-3 border-t border-border">
               <InfoRow icon={Building2} label="Company" value={selectedProject.company} />
               <InfoRow icon={Users} label="Owner" value={selectedProject.ownerName} />
-              <InfoRow icon={Workflow} label="Flows" value={`${selectedProject.flowsCount} flows`} />
+              <InfoRow
+                icon={Workflow}
+                label="Flows"
+                value={`${selectedProject.flowsCount} flows`}
+              />
               <InfoRow
                 icon={Globe}
                 label="Environment"
                 value={
-                  <span className={cn("inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium capitalize", envColor[selectedProject.environment])}>
+                  <span
+                    className={cn(
+                      "inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium capitalize",
+                      envColor[selectedProject.environment],
+                    )}
+                  >
                     {selectedProject.environment}
                   </span>
                 }
@@ -783,8 +1120,15 @@ function ProjectsTab() {
                 icon={Activity}
                 label="Status"
                 value={
-                  <span className={cn("inline-flex items-center gap-1.5 text-xs font-medium capitalize", statusText[selectedProject.status])}>
-                    <span className={cn("h-1.5 w-1.5 rounded-full", statusDot[selectedProject.status])} />
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1.5 text-xs font-medium capitalize",
+                      statusText[selectedProject.status],
+                    )}
+                  >
+                    <span
+                      className={cn("h-1.5 w-1.5 rounded-full", statusDot[selectedProject.status])}
+                    />
                     {selectedProject.status}
                   </span>
                 }
@@ -804,7 +1148,9 @@ function ProjectsTab() {
               <div>
                 <h3 className="text-sm font-semibold text-foreground">Flows</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {flows.length === 0 ? "No flows yet in this project" : `${flows.length} flow${flows.length !== 1 ? "s" : ""} in this project`}
+                  {flows.length === 0
+                    ? "No flows yet in this project"
+                    : `${flows.length} flow${flows.length !== 1 ? "s" : ""} in this project`}
                 </p>
               </div>
             </div>
@@ -814,7 +1160,9 @@ function ProjectsTab() {
                   <Workflow className="h-6 w-6 text-muted-foreground" />
                 </div>
                 <p className="text-sm font-medium text-foreground">No flows yet</p>
-                <p className="text-xs text-muted-foreground">This project hasn't created any flows.</p>
+                <p className="text-xs text-muted-foreground">
+                  This project hasn't created any flows.
+                </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -840,15 +1188,33 @@ function ProjectsTab() {
                           </div>
                         </td>
                         <td className="py-3 px-3">
-                          <span className={cn("inline-flex items-center gap-1.5 rounded-md border px-1.5 py-0.5 text-[10px] font-medium capitalize", flowStatusColor[f.status])}>
-                            <span className={cn("h-1.5 w-1.5 rounded-full", f.status === "active" ? "bg-success animate-pulse" : f.status === "paused" ? "bg-warning" : "bg-muted-foreground")} />
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1.5 rounded-md border px-1.5 py-0.5 text-[10px] font-medium capitalize",
+                              flowStatusColor[f.status],
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "h-1.5 w-1.5 rounded-full",
+                                f.status === "active"
+                                  ? "bg-success animate-pulse"
+                                  : f.status === "paused"
+                                    ? "bg-warning"
+                                    : "bg-muted-foreground",
+                              )}
+                            />
                             {f.status}
                           </span>
                         </td>
                         <td className="py-3 px-3">
-                          <code className="text-[11px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{f.triggers}</code>
+                          <code className="text-[11px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                            {f.triggers}
+                          </code>
                         </td>
-                        <td className="py-3 px-3 text-xs text-muted-foreground whitespace-nowrap">{f.lastRun}</td>
+                        <td className="py-3 px-3 text-xs text-muted-foreground whitespace-nowrap">
+                          {f.lastRun}
+                        </td>
                         <td className="py-3 px-3">
                           <button className="text-muted-foreground hover:text-foreground rounded p-1 hover:bg-muted transition">
                             <MoreHorizontal className="h-4 w-4" />
@@ -870,10 +1236,30 @@ function ProjectsTab() {
     <div className="space-y-5">
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total projects" value={adminProjects.length.toString()} icon={FolderKanban} delta={0} />
-        <StatCard label="Active" value={adminProjects.filter(p => p.status === "active").length.toString()} icon={Activity} delta={0} />
-        <StatCard label="Total flows" value={adminProjects.reduce((s, p) => s + p.flowsCount, 0).toString()} icon={Workflow} delta={0} />
-        <StatCard label="Organizations" value={[...new Set(adminProjects.map(p => p.company))].length.toString()} icon={Building2} delta={0} />
+        <StatCard
+          label="Total projects"
+          value={adminProjects.length.toString()}
+          icon={FolderKanban}
+          delta={0}
+        />
+        <StatCard
+          label="Active"
+          value={adminProjects.filter((p) => p.status === "active").length.toString()}
+          icon={Activity}
+          delta={0}
+        />
+        <StatCard
+          label="Total flows"
+          value={adminProjects.reduce((s, p) => s + p.flowsCount, 0).toString()}
+          icon={Workflow}
+          delta={0}
+        />
+        <StatCard
+          label="Organizations"
+          value={[...new Set(adminProjects.map((p) => p.company))].length.toString()}
+          icon={Building2}
+          delta={0}
+        />
       </div>
 
       {/* Project list */}
@@ -881,7 +1267,9 @@ function ProjectsTab() {
         <div className="flex items-center justify-between gap-3 flex-wrap p-5 border-b border-border">
           <div>
             <h3 className="text-sm font-semibold text-foreground">All projects</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">{filtered.length} project{filtered.length !== 1 ? "s" : ""} across all organizations</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {filtered.length} project{filtered.length !== 1 ? "s" : ""} across all organizations
+            </p>
           </div>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -919,7 +1307,9 @@ function ProjectsTab() {
                       <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center text-primary-foreground text-[10px] font-bold shadow-soft shrink-0">
                         {p.name.slice(0, 2).toUpperCase()}
                       </div>
-                      <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">{p.name}</span>
+                      <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                        {p.name}
+                      </span>
                     </div>
                   </td>
                   <td className="py-3 px-3">
@@ -931,13 +1321,21 @@ function ProjectsTab() {
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-1.5">
                       <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center text-[9px] font-semibold text-foreground shrink-0">
-                        {p.ownerName.split(" ").map(n => n[0]).join("")}
+                        {p.ownerName
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
                       </div>
                       <span className="text-xs text-foreground">{p.ownerName}</span>
                     </div>
                   </td>
                   <td className="py-3 px-3">
-                    <span className={cn("inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium capitalize", envColor[p.environment])}>
+                    <span
+                      className={cn(
+                        "inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium capitalize",
+                        envColor[p.environment],
+                      )}
+                    >
                       {p.environment === "production" ? "Prod" : "Sandbox"}
                     </span>
                   </td>
@@ -948,12 +1346,19 @@ function ProjectsTab() {
                     </div>
                   </td>
                   <td className="py-3 px-3">
-                    <span className={cn("inline-flex items-center gap-1.5 text-[11px] font-medium capitalize", statusText[p.status])}>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1.5 text-[11px] font-medium capitalize",
+                        statusText[p.status],
+                      )}
+                    >
                       <span className={cn("h-1.5 w-1.5 rounded-full", statusDot[p.status])} />
                       {p.status}
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-xs text-muted-foreground whitespace-nowrap">{p.createdAt}</td>
+                  <td className="py-3 px-3 text-xs text-muted-foreground whitespace-nowrap">
+                    {p.createdAt}
+                  </td>
                   <td className="py-3 px-3">
                     <button className="text-muted-foreground hover:text-foreground rounded p-1 hover:bg-muted transition">
                       <MoreHorizontal className="h-4 w-4" />
@@ -969,7 +1374,15 @@ function ProjectsTab() {
   );
 }
 
-function InfoRow({ icon: Icon, label, value }: { icon: typeof Users; label: string; value: React.ReactNode }) {
+function InfoRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Users;
+  label: string;
+  value: React.ReactNode;
+}) {
   return (
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">

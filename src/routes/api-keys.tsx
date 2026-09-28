@@ -12,7 +12,10 @@ export const Route = createFileRoute("/api-keys")({
   head: () => ({
     meta: [
       { title: "API Keys — Noxx" },
-      { name: "description", content: "Generate, copy and rotate API keys for your Noxx workspace." },
+      {
+        name: "description",
+        content: "Generate, copy and rotate API keys for your Noxx workspace.",
+      },
     ],
   }),
   component: ApiKeysPage,
@@ -47,7 +50,9 @@ function ApiKeysPage() {
               <KeyRound className="h-5 w-5" />
             </div>
             <div className="flex-1">
-              <div className="text-sm font-semibold text-foreground">Keep your secret keys safe</div>
+              <div className="text-sm font-semibold text-foreground">
+                Keep your secret keys safe
+              </div>
               <p className="text-xs text-muted-foreground mt-1 max-w-xl">
                 Treat live keys like passwords. Don't paste them in client-side code or share in
                 public repos. Rotate immediately if you suspect a leak.
@@ -100,7 +105,11 @@ function ApiKeysPage() {
                             className="text-muted-foreground hover:text-foreground transition"
                             aria-label="Toggle reveal"
                           >
-                            {isRevealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                            {isRevealed ? (
+                              <EyeOff className="h-3.5 w-3.5" />
+                            ) : (
+                              <Eye className="h-3.5 w-3.5" />
+                            )}
                           </button>
                           <button
                             onClick={() => copy(k.id, k.key)}
@@ -124,10 +133,16 @@ function ApiKeysPage() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-end gap-1">
-                          <button className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition" aria-label="Rotate">
+                          <button
+                            className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition"
+                            aria-label="Rotate"
+                          >
                             <RefreshCw className="h-3.5 w-3.5" />
                           </button>
-                          <button className="p-1.5 rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition" aria-label="Revoke">
+                          <button
+                            className="p-1.5 rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition"
+                            aria-label="Revoke"
+                          >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>

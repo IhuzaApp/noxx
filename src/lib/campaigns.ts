@@ -75,6 +75,11 @@ export const segments = [
   { id: "s1", name: "VIP customers", count: 4_812, criteria: "LTV > $500" },
   { id: "s2", name: "Abandoned cart 24h", count: 1_204, criteria: "added to cart, no purchase" },
   { id: "s3", name: "All purchasers (last 90d)", count: 12_408, criteria: "any order in 90 days" },
-  { id: "s4", name: "Mobile users (US/CA)", count: 6_220, criteria: "device = mobile, country IN (US, CA)" },
+  {
+    id: "s4",
+    name: "Mobile users (US/CA)",
+    count: 6_220,
+    criteria: "device = mobile, country IN (US, CA)",
+  },
   { id: "s5", name: "Inactive 60+ days", count: 8_902, criteria: "last_seen > 60 days ago" },
 ];

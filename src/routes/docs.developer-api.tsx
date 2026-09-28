@@ -18,13 +18,23 @@ export const Route = createFileRoute("/docs/developer-api")({
       cta={{ label: "Open Developer API", to: "/dev-api" }}
     >
       <Step n={1} title="Browse endpoints">
-        <p>Open the <strong>Developer API</strong> page to see every endpoint with parameters, responses and a one-click cURL snippet.</p>
+        <p>
+          Open the <strong>Developer API</strong> page to see every endpoint with parameters,
+          responses and a one-click cURL snippet.
+        </p>
       </Step>
       <Step n={2} title="Try in the Playground">
-        <p>The <strong>API Playground</strong> sends real requests against your sandbox or live environment — no client code needed.</p>
+        <p>
+          The <strong>API Playground</strong> sends real requests against your sandbox or live
+          environment — no client code needed.
+        </p>
       </Step>
       <Step n={3} title="Subscribe to webhooks">
-        <p>Add webhook URLs and pick the events you care about: <code>message.delivered</code>, <code>message.failed</code>, <code>ai.decided</code>, <code>payment.succeeded</code>, <code>ticket.created</code>, and more.</p>
+        <p>
+          Add webhook URLs and pick the events you care about: <code>message.delivered</code>,{" "}
+          <code>message.failed</code>, <code>ai.decided</code>, <code>payment.succeeded</code>,{" "}
+          <code>ticket.created</code>, and more.
+        </p>
       </Step>
     </DocPage>
   ),

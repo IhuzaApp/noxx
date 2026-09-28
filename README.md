@@ -52,16 +52,16 @@ Relay unifies the tools businesses normally stitch together from a dozen vendors
 
 ## Tech Stack
 
-| Layer | Technology |
-|------|-----------|
-| Framework | TanStack Start v1 (SSR, file-based routing) |
-| UI | React 19 + shadcn/ui + Radix primitives |
-| Styling | Tailwind CSS v4 (semantic tokens in `src/styles.css`) |
-| Build | Vite 7 |
-| Charts | Recharts |
-| Flow Builder | Custom canvas with `FlowNode` components |
-| Icons | lucide-react |
-| Routing | TanStack Router (auto-generated `routeTree.gen.ts`) |
+| Layer        | Technology                                            |
+| ------------ | ----------------------------------------------------- |
+| Framework    | TanStack Start v1 (SSR, file-based routing)           |
+| UI           | React 19 + shadcn/ui + Radix primitives               |
+| Styling      | Tailwind CSS v4 (semantic tokens in `src/styles.css`) |
+| Build        | Vite 7                                                |
+| Charts       | Recharts                                              |
+| Flow Builder | Custom canvas with `FlowNode` components              |
+| Icons        | lucide-react                                          |
+| Routing      | TanStack Router (auto-generated `routeTree.gen.ts`)   |
 
 ---
 
@@ -115,6 +115,7 @@ src/
 ## Features
 
 ### 1. Multi-Channel Messaging
+
 **Route:** `/messages`
 
 A unified inbox spanning **SMS, Email, WhatsApp, Instagram DMs, and AI chat**. One thread per customer regardless of which channel they used last. Filter by channel, status, or assignee.
@@ -124,6 +125,7 @@ A unified inbox spanning **SMS, Email, WhatsApp, Instagram DMs, and AI chat**. O
 - Reply box auto-detects the active channel
 
 ### 2. Visual Flow Builder
+
 **Route:** `/flows`
 
 Drag-and-drop canvas for designing message automations. Nodes can be triggers (incoming SMS, form submit, schedule), actions (send email, call API, branch), or AI steps (classify intent, generate reply).
@@ -133,6 +135,7 @@ Drag-and-drop canvas for designing message automations. Nodes can be triggers (i
 - Save/load via project context
 
 ### 3. AI Agents & Playground
+
 **Route:** `/playground`
 
 Test AI agents with **mock replies** before deploying them into a flow. Configure system prompt, model, temperature, and tools. The chat UI streams a simulated response so you can iterate on prompts without burning tokens.
@@ -141,6 +144,7 @@ Test AI agents with **mock replies** before deploying them into a flow. Configur
 - Used inside flows via the "AI Agent" node type
 
 ### 4. Voice (PSTN + Realtime)
+
 **Route:** `/voice`
 
 Programmable voice — buy phone numbers, route inbound calls into flows, and stream realtime transcripts. Supports IVR menus and AI voice agents.
@@ -149,6 +153,7 @@ Programmable voice — buy phone numbers, route inbound calls into flows, and st
 - Beta gated by the `voice_realtime` feature flag
 
 ### 5. Support Tickets
+
 **Route:** `/tickets`
 
 The support hub (formerly "Messages"). Every customer issue becomes a **ticket** with status (`open`, `pending`, `solved`, `closed`), priority, assignee, and a full conversation thread you can open inline.
@@ -159,6 +164,7 @@ The support hub (formerly "Messages"). Every customer issue becomes a **ticket**
 - Data: `src/lib/tickets.ts`
 
 ### 6. Automations
+
 **Route:** `/automations`
 
 Pre-built, business-ready automations that simplify common workflows. Pick from a library:
@@ -172,11 +178,13 @@ Pre-built, business-ready automations that simplify common workflows. Pick from 
 Each automation is a configurable template that wires triggers → conditions → actions. Defined in `src/lib/automations.ts`.
 
 ### 7. Campaigns
+
 **Route:** `/campaigns`
 
 Send broadcast messages (SMS, email, WhatsApp) to segmented audiences. Schedule, A/B test, and track delivery + open rates.
 
 ### 8. Payments Gateway
+
 **Route:** `/payments`
 
 Relay's own payment gateway — businesses can:
@@ -189,6 +197,7 @@ Relay's own payment gateway — businesses can:
 Integrates with the Tickets and Automations modules so a paid invoice can auto-close a support ticket or trigger a fulfillment flow.
 
 ### 9. Domain Management
+
 **Route:** `/domains`
 
 Buy, transfer, and manage domains without leaving Relay. **No cPanel** — only domain-level controls:
@@ -202,16 +211,19 @@ Buy, transfer, and manage domains without leaving Relay. **No cPanel** — only 
 Data: `src/lib/domains.ts`. Powered by the `domains_registrar` feature flag.
 
 ### 10. Integrations Marketplace
+
 **Route:** `/integrations`
 
 One-click connectors to Shopify, Stripe, HubSpot, Salesforce, Slack, Google Calendar, Zapier, etc. Each integration exposes triggers and actions to the flow builder.
 
 ### 11. Templates Library
+
 **Route:** `/templates`
 
 Reusable **message templates** (with variable interpolation) and **flow templates** (importable starter automations).
 
 ### 12. Projects & Environments
+
 **Routes:** `/projects`, `/env`
 
 Multi-project workspace — each project has its own messages, flows, keys, and billing. Switch between **production** and **sandbox** environments via the topbar.
@@ -220,23 +232,25 @@ Multi-project workspace — each project has its own messages, flows, keys, and 
 - Env toggle is global and affects which API keys + webhooks are active
 
 ### 13. Developer API & Keys
+
 **Routes:** `/dev-api`, `/api-keys`
 
 REST + webhook reference plus key management. Generate scoped keys (read-only, send-only, full access), rotate them, and view request logs.
 
 ### 14. Admin Console
-**Route:** `/admin` *(separate dashboard — not part of the user shell)*
+
+**Route:** `/admin` _(separate dashboard — not part of the user shell)_
 
 A **standalone super-admin** dashboard with its own layout (`AdminLayout.tsx`), red-accented sidebar, and "Back to app" link. Only accessible to platform operators. Tabs:
 
-| Tab | Purpose |
-|-----|---------|
-| **Overview** | Platform-wide MRR, active users, message volume, error rate, revenue trend chart |
-| **Users** | All accounts across all orgs — role, plan, status, MRR, last active |
-| **System** | Live status of every service (API gateway, SMS, email, WhatsApp bridge, AI inference, payments, voice, webhooks) with uptime + latency |
-| **Billing** | MRR breakdown by plan, top accounts |
-| **Flags** | Feature flag rollout controls (toggle + % rollout slider) |
-| **Audit** | Security-relevant events with severity (info / warning / critical) |
+| Tab          | Purpose                                                                                                                                |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Overview** | Platform-wide MRR, active users, message volume, error rate, revenue trend chart                                                       |
+| **Users**    | All accounts across all orgs — role, plan, status, MRR, last active                                                                    |
+| **System**   | Live status of every service (API gateway, SMS, email, WhatsApp bridge, AI inference, payments, voice, webhooks) with uptime + latency |
+| **Billing**  | MRR breakdown by plan, top accounts                                                                                                    |
+| **Flags**    | Feature flag rollout controls (toggle + % rollout slider)                                                                              |
+| **Audit**    | Security-relevant events with severity (info / warning / critical)                                                                     |
 
 Data: `src/lib/admin.ts`. The admin shell is intentionally visually distinct (red accents, "Super-admin" warning badge) so operators always know they're in privileged context.
 
@@ -246,29 +260,29 @@ Data: `src/lib/admin.ts`. The admin shell is intentionally visually distinct (re
 
 Relay uses **TanStack Router** with file-based routing. Each file in `src/routes/` becomes a route:
 
-| File | Path | Description |
-|------|------|-------------|
-| `index.tsx` | `/` | Marketing landing page |
-| `login.tsx` | `/login` | Sign in |
-| `signup.tsx` | `/signup` | Sign up |
-| `dashboard.tsx` | `/dashboard` | User home (stats overview) |
-| `messages.tsx` | `/messages` | Unified inbox |
-| `tickets.tsx` | `/tickets` | Support tickets |
-| `automations.tsx` | `/automations` | Workflow automations |
-| `flows.tsx` | `/flows` | Visual flow builder |
-| `campaigns.tsx` | `/campaigns` | Broadcast campaigns |
-| `voice.tsx` | `/voice` | Programmable voice |
-| `playground.tsx` | `/playground` | AI agent playground |
-| `payments.tsx` | `/payments` | Payment gateway |
-| `domains.tsx` | `/domains` | Domain management |
-| `integrations.tsx` | `/integrations` | Integration marketplace |
-| `templates.tsx` | `/templates` | Template library |
-| `projects.tsx` | `/projects` | Project switcher |
-| `env.tsx` | `/env` | Environment settings |
-| `dev-api.tsx` | `/dev-api` | API reference |
-| `api-keys.tsx` | `/api-keys` | API key management |
-| `settings.tsx` | `/settings` | Account settings |
-| `admin.tsx` | `/admin` | **Standalone admin console** |
+| File               | Path            | Description                  |
+| ------------------ | --------------- | ---------------------------- |
+| `index.tsx`        | `/`             | Marketing landing page       |
+| `login.tsx`        | `/login`        | Sign in                      |
+| `signup.tsx`       | `/signup`       | Sign up                      |
+| `dashboard.tsx`    | `/dashboard`    | User home (stats overview)   |
+| `messages.tsx`     | `/messages`     | Unified inbox                |
+| `tickets.tsx`      | `/tickets`      | Support tickets              |
+| `automations.tsx`  | `/automations`  | Workflow automations         |
+| `flows.tsx`        | `/flows`        | Visual flow builder          |
+| `campaigns.tsx`    | `/campaigns`    | Broadcast campaigns          |
+| `voice.tsx`        | `/voice`        | Programmable voice           |
+| `playground.tsx`   | `/playground`   | AI agent playground          |
+| `payments.tsx`     | `/payments`     | Payment gateway              |
+| `domains.tsx`      | `/domains`      | Domain management            |
+| `integrations.tsx` | `/integrations` | Integration marketplace      |
+| `templates.tsx`    | `/templates`    | Template library             |
+| `projects.tsx`     | `/projects`     | Project switcher             |
+| `env.tsx`          | `/env`          | Environment settings         |
+| `dev-api.tsx`      | `/dev-api`      | API reference                |
+| `api-keys.tsx`     | `/api-keys`     | API key management           |
+| `settings.tsx`     | `/settings`     | Account settings             |
+| `admin.tsx`        | `/admin`        | **Standalone admin console** |
 
 `routeTree.gen.ts` is auto-generated — do not edit it.
 
@@ -279,6 +293,7 @@ Relay uses **TanStack Router** with file-based routing. Each file in `src/routes
 All colors, gradients, and shadows are defined as **semantic tokens** in `src/styles.css` using `oklch()`. Components reference them via Tailwind utilities (`bg-primary`, `text-muted-foreground`, etc.) — never raw colors.
 
 Core tokens:
+
 - `--background` / `--foreground`
 - `--primary` / `--primary-foreground`
 - `--secondary`, `--muted`, `--accent`, `--destructive`

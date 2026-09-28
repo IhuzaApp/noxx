@@ -10,7 +10,15 @@ import {
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 
-export function Topbar({ title, subtitle, action }: { title: React.ReactNode; subtitle?: string; action?: React.ReactNode }) {
+export function Topbar({
+  title,
+  subtitle,
+  action,
+}: {
+  title: React.ReactNode;
+  subtitle?: string;
+  action?: React.ReactNode;
+}) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -48,7 +56,10 @@ export function Topbar({ title, subtitle, action }: { title: React.ReactNode; su
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="h-8 w-8 rounded-full bg-gradient-primary text-primary-foreground text-xs font-semibold flex items-center justify-center shadow-soft hover:opacity-90 transition-opacity outline-none">
-            {user?.name?.split(" ").map(n => n[0]).join("") || "AM"}
+            {user?.name
+              ?.split(" ")
+              .map((n) => n[0])
+              .join("") || "AM"}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
@@ -64,7 +75,10 @@ export function Topbar({ title, subtitle, action }: { title: React.ReactNode; su
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive flex items-center gap-2">
+          <DropdownMenuItem
+            onClick={handleLogout}
+            className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive flex items-center gap-2"
+          >
             <LogOut className="h-4 w-4" />
             Sign out
           </DropdownMenuItem>

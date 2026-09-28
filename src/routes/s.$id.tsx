@@ -75,7 +75,10 @@ function PublicSurveyPage() {
             <p className="mt-1 text-sm text-muted-foreground">Your response has been recorded.</p>
           </div>
         ) : (
-          <form onSubmit={submit} className="rounded-2xl border border-border bg-card p-8 shadow-elevated space-y-6">
+          <form
+            onSubmit={submit}
+            className="rounded-2xl border border-border bg-card p-8 shadow-elevated space-y-6"
+          >
             <div>
               <h1 className="text-xl font-semibold text-foreground">{survey.title}</h1>
               {survey.description && (
@@ -151,7 +154,10 @@ function QuestionInput({
       {question.type === "single" && (
         <div className="space-y-1.5">
           {(question.options ?? []).map((opt) => (
-            <label key={opt} className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm cursor-pointer hover:bg-muted">
+            <label
+              key={opt}
+              className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm cursor-pointer hover:bg-muted"
+            >
               <input
                 type="radio"
                 name={question.id}
@@ -170,13 +176,14 @@ function QuestionInput({
             const arr = (value as string[]) ?? [];
             const checked = arr.includes(opt);
             return (
-              <label key={opt} className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm cursor-pointer hover:bg-muted">
+              <label
+                key={opt}
+                className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm cursor-pointer hover:bg-muted"
+              >
                 <input
                   type="checkbox"
                   checked={checked}
-                  onChange={() =>
-                    onChange(checked ? arr.filter((x) => x !== opt) : [...arr, opt])
-                  }
+                  onChange={() => onChange(checked ? arr.filter((x) => x !== opt) : [...arr, opt])}
                 />
                 <span>{opt}</span>
               </label>

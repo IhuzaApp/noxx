@@ -20,9 +20,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Raw body for webhook; JSON for /send-reply, /templates, /flows
+// Raw body for webhook; JSON for /send-reply, /send-sms, /templates, /flows
 app.use((req, res, next) => {
-  if (req.path === "/send-reply" || req.path.startsWith("/templates") || req.path.startsWith("/flows")) return express.json()(req, res, next);
+  if (
+    req.path === "/send-reply" ||
+    req.path === "/send-sms" ||
+    req.path.startsWith("/templates") ||
+    req.path.startsWith("/flows")
+  )
+    return express.json()(req, res, next);
   express.raw({ type: "*/*" })(req, res, next);
 });
 
@@ -33,6 +39,43 @@ const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
 const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
 const HASURA_ENDPOINT = process.env.HASURA_GRAPHQL_ENDPOINT;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET;
+const PINDO_API_TOKEN = process.env.PINDO_API_TOKEN || "";
+
+async function sendPindoSMS(to, text, sender = "PindoTest") {
+  if (!PINDO_API_TOKEN) {
+    console.warn("⚠️ PINDO_API_TOKEN not configured in .env");
+    return { success: false, error: "Missing PINDO_API_TOKEN in .env" };
+  }
+
+  try {
+    const formattedTo = to.startsWith("+") ? to : `+${to.replace(/\D/g, "")}`;
+    console.log(`📱 Sending Pindo SMS to ${formattedTo}...`);
+
+    const response = await fetch("https://api.pindo.io/v1/sms/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${PINDO_API_TOKEN}`,
+      },
+      body: JSON.stringify({
+        to: formattedTo,
+        text: text,
+        sender: sender && sender !== "Noxx" ? sender : "PindoTest",
+      }),
+    });
+
+    const json = await response.json();
+    console.log(`📱 Pindo SMS HTTP ${response.status}:`, JSON.stringify(json));
+
+    if (!response.ok) {
+      return { success: false, error: json };
+    }
+    return { success: true, data: json };
+  } catch (err) {
+    console.error("❌ Pindo SMS error:", err);
+    return { success: false, error: err.message };
+  }
+}
 
 function getEscalationMessage(aiLanguage = "auto", recipientEmail = "") {
   const companyName = getCompanyName(recipientEmail);
@@ -63,7 +106,9 @@ function getEscalationMessage(aiLanguage = "auto", recipientEmail = "") {
 function getFromEmailAddress(recipientEmail, matchedRule = null, flowResources = []) {
   let flowEmail = matchedRule?.nodeData?.targetEmail || "";
   if (!flowEmail && Array.isArray(flowResources)) {
-    const emailRes = flowResources.find((r) => r && r.kind === "email" && r.value && r.value.includes("@"));
+    const emailRes = flowResources.find(
+      (r) => r && r.kind === "email" && r.value && r.value.includes("@"),
+    );
     if (emailRes) flowEmail = emailRes.value.trim();
   }
 
@@ -86,7 +131,12 @@ function getCompanyName(recipientEmail) {
   return "Support";
 }
 
-function getSystemInstruction(recipientEmail, aiFocusArea = "", aiLanguage = "auto", knowledgeLink = "") {
+function getSystemInstruction(
+  recipientEmail,
+  aiFocusArea = "",
+  aiLanguage = "auto",
+  knowledgeLink = "",
+) {
   const companyName = getCompanyName(recipientEmail);
   let focusRule = "";
   if (aiFocusArea && aiFocusArea.trim()) {
@@ -194,7 +244,10 @@ async function updateTicketStatus(ticketId, status) {
 
 function normalizeSubject(subject) {
   if (!subject) return "";
-  return subject.replace(/^(re|fwd|fw):\s*/i, "").trim().toLowerCase();
+  return subject
+    .replace(/^(re|fwd|fw):\s*/i, "")
+    .trim()
+    .toLowerCase();
 }
 
 async function findExistingTicket(senderEmail, subject) {
@@ -229,7 +282,13 @@ async function findExistingTicket(senderEmail, subject) {
 
 // ─── Groq helper ─────────────────────────────────────────────────────────────
 
-async function callGroq(userMessage, recipientEmail = "", aiFocusArea = "", aiLanguage = "auto", knowledgeLink = "") {
+async function callGroq(
+  userMessage,
+  recipientEmail = "",
+  aiFocusArea = "",
+  aiLanguage = "auto",
+  knowledgeLink = "",
+) {
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -239,7 +298,10 @@ async function callGroq(userMessage, recipientEmail = "", aiFocusArea = "", aiLa
     body: JSON.stringify({
       model: "openai/gpt-oss-20b",
       messages: [
-        { role: "system", content: getSystemInstruction(recipientEmail, aiFocusArea, aiLanguage, knowledgeLink) },
+        {
+          role: "system",
+          content: getSystemInstruction(recipientEmail, aiFocusArea, aiLanguage, knowledgeLink),
+        },
         { role: "user", content: userMessage },
       ],
       max_tokens: 512,
@@ -249,7 +311,8 @@ async function callGroq(userMessage, recipientEmail = "", aiFocusArea = "", aiLa
 
   const json = await response.json();
   console.log("Groq status:", response.status);
-  if (!response.ok) throw new Error(`Groq error ${response.status}: ${JSON.stringify(json?.error)}`);
+  if (!response.ok)
+    throw new Error(`Groq error ${response.status}: ${JSON.stringify(json?.error)}`);
 
   const text = json?.choices?.[0]?.message?.content ?? "";
   if (!text) throw new Error("Groq returned empty content");
@@ -296,7 +359,10 @@ app.post("/webhook", async (req, res) => {
     const recipientEmail = payload.data.to?.[0];
     const subject = payload.data.subject || "No Subject";
     // Derive a display name from the email address
-    const contactName = senderEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    const contactName = senderEmail
+      .split("@")[0]
+      .replace(/[._-]/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
 
     console.log(`\n📧 Received email ${emailId} from ${senderEmail} — "${subject}"`);
 
@@ -315,19 +381,22 @@ app.post("/webhook", async (req, res) => {
     const existingTicket = await findExistingTicket(senderEmail, subject);
 
     // Check if the ticket is already being handled by a human agent
-    const isHumanHandled = existingTicket && (
-      existingTicket.status === "open" ||
-      existingTicket.status === "pending" ||
-      existingTicket.status === "closed" ||
-      (existingTicket.conversations && existingTicket.conversations.some((m) => m.sender === "agent"))
-    );
+    const isHumanHandled =
+      existingTicket &&
+      (existingTicket.status === "open" ||
+        existingTicket.status === "pending" ||
+        existingTicket.status === "closed" ||
+        (existingTicket.conversations &&
+          existingTicket.conversations.some((m) => m.sender === "agent")));
 
     let ticketId;
     let threadHistory = [];
 
     if (existingTicket && isHumanHandled) {
       ticketId = existingTicket.id;
-      console.log(`👤 Ticket ${ticketId} ("${cleanSubj}") is handled by a human agent. Skipping AI auto-reply.`);
+      console.log(
+        `👤 Ticket ${ticketId} ("${cleanSubj}") is handled by a human agent. Skipping AI auto-reply.`,
+      );
 
       // Fetch full email body from Resend
       let textBody = "No body";
@@ -351,7 +420,9 @@ app.post("/webhook", async (req, res) => {
     if (existingTicket) {
       ticketId = existingTicket.id;
       threadHistory = existingTicket.conversations || [];
-      console.log(`📌 Reusing existing ticket ${ticketId} for thread "${cleanSubj}" from ${senderEmail}`);
+      console.log(
+        `📌 Reusing existing ticket ${ticketId} for thread "${cleanSubj}" from ${senderEmail}`,
+      );
     } else {
       ticketId = emailId;
     }
@@ -407,7 +478,12 @@ app.post("/webhook", async (req, res) => {
           const d = node.data || {};
           if (d.kind === "ticket") hasTicketBlock = true;
           if (d.targetEmail) flowTargetEmail = d.targetEmail;
-          if (!flowTargetEmail && d.detail && typeof d.detail === "string" && d.detail.toLowerCase().includes("@")) {
+          if (
+            !flowTargetEmail &&
+            d.detail &&
+            typeof d.detail === "string" &&
+            d.detail.toLowerCase().includes("@")
+          ) {
             const match = d.detail.match(/[\w.-]+@[\w.-]+/);
             if (match) flowTargetEmail = match[0];
           }
@@ -431,7 +507,13 @@ app.post("/webhook", async (req, res) => {
         const target = (flowTargetEmail || "").trim().toLowerCase();
         const subjFilter = (flowSubjectFilter || "").trim().toLowerCase();
 
-        const emailMatches = (target && (target === recip || target === "*" || recip.includes(target) || target.includes(recip))) || resourceMatch;
+        const emailMatches =
+          (target &&
+            (target === recip ||
+              target === "*" ||
+              recip.includes(target) ||
+              target.includes(recip))) ||
+          resourceMatch;
         const subjectMatches = subjFilter && currentSubj.includes(subjFilter);
 
         if (emailMatches || subjectMatches) {
@@ -452,7 +534,14 @@ app.post("/webhook", async (req, res) => {
         }
 
         // Keep as fallback if flow has general AI rules
-        if (!matchedRule && (flowAiFocusArea || flowAiLanguage !== "auto" || flowKnowledgeLink || flowAiMode || hasTicketBlock)) {
+        if (
+          !matchedRule &&
+          (flowAiFocusArea ||
+            flowAiLanguage !== "auto" ||
+            flowKnowledgeLink ||
+            flowAiMode ||
+            hasTicketBlock)
+        ) {
           matchedRule = {
             flowName: f.name,
             flowResources,
@@ -476,27 +565,107 @@ app.post("/webhook", async (req, res) => {
     const bodyLower = (textBody || "").toLowerCase();
     const escalationKeywords = [
       // English - Human Agent & Person
-      "human", "agent", "customer support", "customer service", "employee", "team member", "staff member", "team lead", "team member", "representative", "operator", "real person", "support team", "helpdesk", "live help", "specialist", "manager", "ceo", "c", "board", "supervisor",
+      "human",
+      "agent",
+      "customer support",
+      "customer service",
+      "employee",
+      "team member",
+      "staff member",
+      "team lead",
+      "team member",
+      "representative",
+      "operator",
+      "real person",
+      "support team",
+      "helpdesk",
+      "live help",
+      "specialist",
+      "manager",
+      "ceo",
+      "c",
+      "board",
+      "supervisor",
       // English - Communication Verbs
-      "talk to", "speak to", "talk with", "speak with", "connect me", "contact me", "call me", "reach out", "chat with", "want to talk", "want to speak", "need an agent", "need a person",
+      "talk to",
+      "speak to",
+      "talk with",
+      "speak with",
+      "connect me",
+      "contact me",
+      "call me",
+      "reach out",
+      "chat with",
+      "want to talk",
+      "want to speak",
+      "need an agent",
+      "need a person",
       // English - Escalation & Management
-      "escalate", "escalation", "transfer", "supervisor", "manager", "admin", "executive", "tier 2",
+      "escalate",
+      "escalation",
+      "transfer",
+      "supervisor",
+      "manager",
+      "admin",
+      "executive",
+      "tier 2",
       // English - Complaints & Dissatisfaction
-      "unsatisfied", "not satisfied", "dissatisfied", "unhappy", "bad service", "terrible service", "horrible service", "poor service", "disappointed",
+      "unsatisfied",
+      "not satisfied",
+      "dissatisfied",
+      "unhappy",
+      "bad service",
+      "terrible service",
+      "horrible service",
+      "poor service",
+      "disappointed",
       // English - Billing & Disputes
-      "wrong bill", "incorrect invoice", "overcharged", "refund", "cancel subscription", "dispute", "claim", "issue", "problem",
+      "wrong bill",
+      "incorrect invoice",
+      "overcharged",
+      "refund",
+      "cancel subscription",
+      "dispute",
+      "claim",
+      "issue",
+      "problem",
       // French
-      "humain", "agent", "conseiller", "opérateur", "parler à", "discuter avec", "parler avec", "contactez-moi", "service client", "responsable", "insatisfait", "réclamation",
+      "humain",
+      "agent",
+      "conseiller",
+      "opérateur",
+      "parler à",
+      "discuter avec",
+      "parler avec",
+      "contactez-moi",
+      "service client",
+      "responsable",
+      "insatisfait",
+      "réclamation",
       // Kinyarwanda
-      "umukozi", "mumpuze", "kuvugana", "ubufasha", "kuregera", "ikibazo", "regera", "umuntu",
+      "umukozi",
+      "mumpuze",
+      "kuvugana",
+      "ubufasha",
+      "kuregera",
+      "ikibazo",
+      "regera",
+      "umuntu",
       // Swahili
-      "mwanadamu", "huduma kwa wateja", "ongea na", "zungumza na", "msaidizi", "wasiliana"
+      "mwanadamu",
+      "huduma kwa wateja",
+      "ongea na",
+      "zungumza na",
+      "msaidizi",
+      "wasiliana",
     ];
 
     const isEscalationRequested = escalationKeywords.some((kw) => bodyLower.includes(kw));
 
     if (isEscalationRequested) {
-      console.log(`⚡ Customer requested human escalation for email ${emailId}. Transferring to human support.`);
+      console.log(
+        `⚡ Customer requested human escalation for email ${emailId}. Transferring to human support.`,
+      );
       const configuredLang = matchedRule?.nodeData?.aiLanguage || "auto";
       const escalationMsg = getEscalationMessage(configuredLang, recipientEmail);
 
@@ -532,11 +701,15 @@ app.post("/webhook", async (req, res) => {
     }
 
     if (matchedRule) {
-      console.log(`🎯 Matched active flow rule "${matchedRule.flowName}" for recipient ${recipientEmail}`);
+      console.log(
+        `🎯 Matched active flow rule "${matchedRule.flowName}" for recipient ${recipientEmail}`,
+      );
       const ruleData = matchedRule.nodeData;
 
       if (ruleData.aiMode === "skip_ai_ticket" || matchedRule.hasTicketBlock) {
-        console.log(`⚡ Flow rule requires ticket creation for ${recipientEmail}. Upserting ticket.`);
+        console.log(
+          `⚡ Flow rule requires ticket creation for ${recipientEmail}. Upserting ticket.`,
+        );
         await upsertTicket({
           id: ticketId,
           email_id: emailId,
@@ -550,7 +723,9 @@ app.post("/webhook", async (req, res) => {
       }
 
       if (ruleData.aiMode === "skip_ai_ticket") {
-        console.log(`⚡ Flow rule [Skip AI & Create Ticket Directly] matched for ${recipientEmail}. Re-routing to human agent.`);
+        console.log(
+          `⚡ Flow rule [Skip AI & Create Ticket Directly] matched for ${recipientEmail}. Re-routing to human agent.`,
+        );
         await updateTicketStatus(ticketId, "open");
         await updateEmailStatus(emailId, "human-handling", { message: textBody });
         return;
@@ -562,7 +737,12 @@ app.post("/webhook", async (req, res) => {
     if (threadHistory.length > 0) {
       contextPrompt += "Previous Conversation Thread:\n";
       threadHistory.forEach((msg) => {
-        const role = msg.sender === "customer" ? "Customer" : msg.sender === "ai" ? "AI Assistant" : "Support Agent";
+        const role =
+          msg.sender === "customer"
+            ? "Customer"
+            : msg.sender === "ai"
+              ? "AI Assistant"
+              : "Support Agent";
         contextPrompt += `[${role}]: ${msg.message}\n\n`;
       });
       contextPrompt += `New Customer Message:\n${textBody}\n\nPlease respond to the customer's latest message, taking into account the previous conversation thread.`;
@@ -576,7 +756,13 @@ app.post("/webhook", async (req, res) => {
     const customKnowledgeLink = matchedRule?.nodeData?.knowledgeLink || "";
     let aiResponseText = "";
     try {
-      aiResponseText = await callGroq(contextPrompt, recipientEmail, customFocusArea, customAiLanguage, customKnowledgeLink);
+      aiResponseText = await callGroq(
+        contextPrompt,
+        recipientEmail,
+        customFocusArea,
+        customAiLanguage,
+        customKnowledgeLink,
+      );
       console.log("AI response preview:", aiResponseText.slice(0, 120));
     } catch (error) {
       console.error("AI Generation error:", error.message);
@@ -624,29 +810,37 @@ app.post("/send-reply", async (req, res) => {
 
   try {
     // Fetch ticket from Hasura
-    const ticketRes = await hasuraQuery(`
+    const ticketRes = await hasuraQuery(
+      `
       query GetTicket($id: String!) {
         tickets_by_pk(id: $id) {
           id subject contact_email contact_name channel
         }
       }
-    `, { id: ticket_id });
+    `,
+      { id: ticket_id },
+    );
 
     const ticket = ticketRes?.data?.tickets_by_pk;
     if (!ticket) return res.status(404).json({ error: "Ticket not found" });
 
     let recipient = ticket.contact_email;
     if (!recipient) {
-      const emailRes = await hasuraQuery(`
+      const emailRes = await hasuraQuery(
+        `
         query GetEmailSender($id: String!) {
           emails_by_pk(id: $id) { from }
         }
-      `, { id: ticket_id });
+      `,
+        { id: ticket_id },
+      );
       recipient = emailRes?.data?.emails_by_pk?.from;
     }
 
     if (!recipient) {
-      return res.status(400).json({ error: "No recipient email address associated with this ticket" });
+      return res
+        .status(400)
+        .json({ error: "No recipient email address associated with this ticket" });
     }
     const subject = ticket.subject ? `Re: ${ticket.subject}` : "Re: Support Request";
 
@@ -666,12 +860,14 @@ app.post("/send-reply", async (req, res) => {
     // Log agent reply in conversations
     await addConversationMessage(ticket_id, "agent", message);
 
-    // Update ticket status → open (human replied, may need follow-up)
-    await hasuraQuery(`
+    await hasuraQuery(
+      `
       mutation UpdateTicket($id: String!) {
         update_tickets_by_pk(pk_columns: { id: $id }, _set: { status: "open", updated_at: "now()" }) { id }
       }
-    `, { id: ticket_id });
+    `,
+      { id: ticket_id },
+    );
 
     console.log(`📤 Agent replied to ticket ${ticket_id} → ${ticket.contact_email}`);
     res.json({ success: true });
@@ -679,6 +875,22 @@ app.post("/send-reply", async (req, res) => {
     console.error("send-reply error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+// ─── Pindo SMS Endpoint ───────────────────────────────────────────────────────
+
+app.post("/send-sms", async (req, res) => {
+  const { to, text, sender } = req.body || {};
+  if (!to || !text) {
+    return res.status(400).json({ error: "'to' phone number and 'text' message are required" });
+  }
+
+  const result = await sendPindoSMS(to, text, sender || "PindoTest");
+  if (!result.success) {
+    return res.status(500).json({ error: "Failed to send Pindo SMS", detail: result.error });
+  }
+
+  return res.json({ success: true, data: result.data });
 });
 
 // ─── Templates API (Hasura Postgres DB) ───────────────────────────────────────
@@ -726,7 +938,9 @@ app.post("/templates", async (req, res) => {
     channel: channel || "email",
     body: body?.trim() || "",
     description: description?.trim() || "",
-    steps: isOmni ? steps || [{ channel: channel || "whatsapp", label: "Primary Step", kind: "primary" }] : [],
+    steps: isOmni
+      ? steps || [{ channel: channel || "whatsapp", label: "Primary Step", kind: "primary" }]
+      : [],
     uses: 0,
     type: isOmni ? "omnichannel" : "single",
   };
@@ -789,29 +1003,118 @@ const DEFAULT_SEED_FLOWS = [
     trigger: "Webhook Event",
     status: "active",
     nodes: [
-      { id: "1", type: "flow", position: { x: 320, y: 20 }, data: { kind: "trigger", label: "Customer Message Received", detail: "Target: support@agatike.com", targetEmail: "support@agatike.com" } },
-      { id: "2", type: "flow", position: { x: 320, y: 180 }, data: { kind: "agent", label: "AI Support Agent", detail: "Technical Support FAQs", aiMode: "auto_reply", aiFocusArea: "Answer technical support FAQs concisely. If customer requests human help or is frustrated, escalate immediately." } },
-      { id: "3", type: "flow", position: { x: 320, y: 360 }, data: { kind: "condition", label: "Escalation requested?", detail: "Check customer sentiment / request", conditionType: "If user requested human agent", yesLabel: "Escalate to Human Agent", noLabel: "AI Self-Service Resolved" } },
-      { id: "4", type: "flow", position: { x: 60, y: 540 }, data: { kind: "delay", label: "Resolved by AI", detail: "No human action needed" } },
-      { id: "5", type: "flow", position: { x: 580, y: 540 }, data: { kind: "whatsapp", label: "Escalate to Agent", detail: "Notify live support team", ticketDepartment: "Support", ticketPriority: "high" } },
+      {
+        id: "1",
+        type: "flow",
+        position: { x: 320, y: 20 },
+        data: {
+          kind: "trigger",
+          label: "Customer Message Received",
+          detail: "Target: support@agatike.com",
+          targetEmail: "support@agatike.com",
+        },
+      },
+      {
+        id: "2",
+        type: "flow",
+        position: { x: 320, y: 180 },
+        data: {
+          kind: "agent",
+          label: "AI Support Agent",
+          detail: "Technical Support FAQs",
+          aiMode: "auto_reply",
+          aiFocusArea:
+            "Answer technical support FAQs concisely. If customer requests human help or is frustrated, escalate immediately.",
+        },
+      },
+      {
+        id: "3",
+        type: "flow",
+        position: { x: 320, y: 360 },
+        data: {
+          kind: "condition",
+          label: "Escalation requested?",
+          detail: "Check customer sentiment / request",
+          conditionType: "If user requested human agent",
+          yesLabel: "Escalate to Human Agent",
+          noLabel: "AI Self-Service Resolved",
+        },
+      },
+      {
+        id: "4",
+        type: "flow",
+        position: { x: 60, y: 540 },
+        data: { kind: "delay", label: "Resolved by AI", detail: "No human action needed" },
+      },
+      {
+        id: "5",
+        type: "flow",
+        position: { x: 580, y: 540 },
+        data: {
+          kind: "whatsapp",
+          label: "Escalate to Agent",
+          detail: "Notify live support team",
+          ticketDepartment: "Support",
+          ticketPriority: "high",
+        },
+      },
     ],
     edges: [
-      { id: "e1-2", source: "1", target: "2", type: "smoothstep", style: { stroke: "var(--border)", strokeWidth: 2 } },
-      { id: "e2-3", source: "2", target: "3", type: "smoothstep", style: { stroke: "var(--border)", strokeWidth: 2 } },
-      { id: "e3-4", source: "3", target: "4", type: "smoothstep", label: "No", style: { stroke: "var(--destructive)", strokeWidth: 2 } },
-      { id: "e3-5", source: "3", target: "5", type: "smoothstep", label: "Yes", style: { stroke: "var(--success)", strokeWidth: 2 } },
+      {
+        id: "e1-2",
+        source: "1",
+        target: "2",
+        type: "smoothstep",
+        style: { stroke: "var(--border)", strokeWidth: 2 },
+      },
+      {
+        id: "e2-3",
+        source: "2",
+        target: "3",
+        type: "smoothstep",
+        style: { stroke: "var(--border)", strokeWidth: 2 },
+      },
+      {
+        id: "e3-4",
+        source: "3",
+        target: "4",
+        type: "smoothstep",
+        label: "No",
+        style: { stroke: "var(--destructive)", strokeWidth: 2 },
+      },
+      {
+        id: "e3-5",
+        source: "3",
+        target: "5",
+        type: "smoothstep",
+        label: "Yes",
+        style: { stroke: "var(--success)", strokeWidth: 2 },
+      },
     ],
     simulation: {
       resources: [
-        { id: "rs_ot4_1", kind: "email", label: "Support Inbox", value: "support@agatike.com", notes: "Primary inbound support address" },
-        { id: "rs_ot4_2", kind: "phone", label: "WhatsApp Hotline", value: "+1 415 555 0199", notes: "Agent handover mobile line" }
-      ]
-    }
+        {
+          id: "rs_ot4_1",
+          kind: "email",
+          label: "Support Inbox",
+          value: "support@agatike.com",
+          notes: "Primary inbound support address",
+        },
+        {
+          id: "rs_ot4_2",
+          kind: "phone",
+          label: "WhatsApp Hotline",
+          value: "+1 415 555 0199",
+          notes: "Agent handover mobile line",
+        },
+      ],
+    },
   },
   {
     id: "fl_1a2b3c",
     name: "API Downtime Alert",
-    description: "Notifies the engineering team via SMS and Voice when Datadog detects an API outage.",
+    description:
+      "Notifies the engineering team via SMS and Voice when Datadog detects an API outage.",
     channels: ["sms", "voice"],
     trigger: "Webhook",
     status: "active",
@@ -821,8 +1124,8 @@ const DEFAULT_SEED_FLOWS = [
       resources: [
         { id: "rs_1a", kind: "phone", label: "On-call Pager", value: "+1 415 555 9111" },
         { id: "rs_1b", kind: "link", label: "Status Page", value: "https://status.acmetech.io" },
-      ]
-    }
+      ],
+    },
   },
   {
     id: "fl_4d5e6f",
@@ -835,9 +1138,14 @@ const DEFAULT_SEED_FLOWS = [
     edges: [],
     simulation: {
       resources: [
-        { id: "rs_2a", kind: "folder", label: "Lead enrichment data", value: "https://s3.aws.com/acme-leads" },
-      ]
-    }
+        {
+          id: "rs_2a",
+          kind: "folder",
+          label: "Lead enrichment data",
+          value: "https://s3.aws.com/acme-leads",
+        },
+      ],
+    },
   },
 ];
 
@@ -867,11 +1175,14 @@ app.get("/flows", async (_req, res) => {
       hasSeededInitialFlows = true;
       console.log("🌱 Database flows empty. Seeding initial starter flows into Hasura...");
       for (const f of DEFAULT_SEED_FLOWS) {
-        await hasuraQuery(`
+        await hasuraQuery(
+          `
           mutation SeedFlow($object: flows_insert_input!) {
             insert_flows_one(object: $object, on_conflict: { constraint: flows_pkey, update_columns: [name, description, simulation] }) { id }
           }
-        `, { object: f });
+        `,
+          { object: f },
+        );
       }
       result = await hasuraQuery(query);
       rawFlows = result?.data?.flows ?? [];
@@ -925,7 +1236,8 @@ app.get("/flows/:id", async (req, res) => {
 });
 
 app.post("/flows", async (req, res) => {
-  const { id, name, description, channels, trigger, status, nodes, edges, resources, simulation } = req.body || {};
+  const { id, name, description, channels, trigger, status, nodes, edges, resources, simulation } =
+    req.body || {};
   if (!name?.trim()) {
     return res.status(400).json({ error: "Flow name is required" });
   }

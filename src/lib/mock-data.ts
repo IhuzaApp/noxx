@@ -1,10 +1,7 @@
 export type Channel = "sms" | "email" | "whatsapp" | "ai" | "voice";
 export type Status = "delivered" | "sent" | "failed" | "pending";
 
-export const channelMeta: Record<
-  Channel,
-  { label: string; color: string; bg: string }
-> = {
+export const channelMeta: Record<Channel, { label: string; color: string; bg: string }> = {
   sms: { label: "SMS", color: "text-channel-sms", bg: "bg-channel-sms/10" },
   email: { label: "Email", color: "text-channel-email", bg: "bg-channel-email/10" },
   whatsapp: { label: "WhatsApp", color: "text-channel-whatsapp", bg: "bg-channel-whatsapp/10" },
@@ -15,8 +12,14 @@ export const channelMeta: Record<
 export const statusMeta: Record<Status, { label: string; className: string }> = {
   delivered: { label: "Delivered", className: "bg-success/15 text-success border-success/20" },
   sent: { label: "Sent", className: "bg-info/15 text-info border-info/20" },
-  failed: { label: "Failed", className: "bg-destructive/15 text-destructive border-destructive/20" },
-  pending: { label: "Pending", className: "bg-warning/15 text-warning-foreground border-warning/30" },
+  failed: {
+    label: "Failed",
+    className: "bg-destructive/15 text-destructive border-destructive/20",
+  },
+  pending: {
+    label: "Pending",
+    className: "bg-warning/15 text-warning-foreground border-warning/30",
+  },
 };
 
 export const overviewStats = [
@@ -73,7 +76,7 @@ export const messageLogs = Array.from({ length: 42 }).map((_, i) => {
   const statuses: Status[] = ["delivered", "delivered", "delivered", "sent", "pending", "failed"];
   const channel = channels[i % channels.length];
   let status = statuses[i % statuses.length];
-  
+
   if (channel === "voice") {
     status = "failed";
   }
@@ -121,10 +124,46 @@ export const apiKeys = [
 ];
 
 export const templates = [
-  { id: "t1", name: "OTP verification", channel: "sms" as Channel, body: "Your code is {{code}}. It expires in 10 minutes.", uses: 18402 },
-  { id: "t2", name: "Order shipped", channel: "email" as Channel, body: "Hi {{name}}, your order {{order_id}} has shipped.", uses: 9201 },
-  { id: "t3", name: "Appointment reminder", channel: "whatsapp" as Channel, body: "Reminder: your appointment is at {{time}}.", uses: 6541 },
-  { id: "t4", name: "AI summary", channel: "ai" as Channel, body: "Summarize the following conversation: {{transcript}}", uses: 2103 },
-  { id: "t5", name: "Welcome email", channel: "email" as Channel, body: "Welcome to {{org}}! Here's how to get started.", uses: 4820 },
-  { id: "t6", name: "Payment receipt", channel: "email" as Channel, body: "Thanks {{name}} — we received your payment of {{amount}}.", uses: 7311 },
+  {
+    id: "t1",
+    name: "OTP verification",
+    channel: "sms" as Channel,
+    body: "Your code is {{code}}. It expires in 10 minutes.",
+    uses: 18402,
+  },
+  {
+    id: "t2",
+    name: "Order shipped",
+    channel: "email" as Channel,
+    body: "Hi {{name}}, your order {{order_id}} has shipped.",
+    uses: 9201,
+  },
+  {
+    id: "t3",
+    name: "Appointment reminder",
+    channel: "whatsapp" as Channel,
+    body: "Reminder: your appointment is at {{time}}.",
+    uses: 6541,
+  },
+  {
+    id: "t4",
+    name: "AI summary",
+    channel: "ai" as Channel,
+    body: "Summarize the following conversation: {{transcript}}",
+    uses: 2103,
+  },
+  {
+    id: "t5",
+    name: "Welcome email",
+    channel: "email" as Channel,
+    body: "Welcome to {{org}}! Here's how to get started.",
+    uses: 4820,
+  },
+  {
+    id: "t6",
+    name: "Payment receipt",
+    channel: "email" as Channel,
+    body: "Thanks {{name}} — we received your payment of {{amount}}.",
+    uses: 7311,
+  },
 ];

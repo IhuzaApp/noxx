@@ -18,7 +18,9 @@ export const Route = createFileRoute("/docs/surveys")({
       cta={{ label: "Open Surveys", to: "/surveys" }}
     >
       <Step n={1} title="Build the survey">
-        <p>Click <strong>New survey</strong>. Add questions of any type:</p>
+        <p>
+          Click <strong>New survey</strong>. Add questions of any type:
+        </p>
         <ul className="list-disc pl-5 space-y-1">
           <li>Short text · Long text · Email</li>
           <li>Single choice · Multiple choice</li>
@@ -26,7 +28,10 @@ export const Route = createFileRoute("/docs/surveys")({
         </ul>
       </Step>
       <Step n={2} title="Publish & share">
-        <p>Hit publish — Noxx generates a public URL like <code>/s/abc123</code>. Share it via Email, SMS, WhatsApp, or paste it anywhere.</p>
+        <p>
+          Hit publish — Noxx generates a public URL like <code>/s/abc123</code>. Share it via Email,
+          SMS, WhatsApp, or paste it anywhere.
+        </p>
         <Callout>The public page is mobile-friendly and respects your brand colors.</Callout>
       </Step>
       <Step n={3} title="See responses live">

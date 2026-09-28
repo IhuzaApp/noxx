@@ -28,7 +28,13 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useProject } from "@/lib/project-context";
 
-const nav: Array<{ to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; section?: string }> = [
+const nav: Array<{
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact?: boolean;
+  section?: string;
+}> = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/flows", label: "Flows", icon: Workflow, section: "Build" },
@@ -77,11 +83,18 @@ export function AppSidebar() {
           onClick={() => setOpen((o) => !o)}
           className="w-full flex items-center gap-2 rounded-md border border-sidebar-border bg-card px-2.5 py-2 text-left hover:bg-accent/40 transition shadow-soft"
         >
-          <div className={cn("h-7 w-7 rounded-md flex items-center justify-center shrink-0", current.color)}>
+          <div
+            className={cn(
+              "h-7 w-7 rounded-md flex items-center justify-center shrink-0",
+              current.color,
+            )}
+          >
             <current.icon className="h-3.5 w-3.5" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Project</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Project
+            </div>
             <div className="text-xs font-semibold text-foreground truncate">{current.name}</div>
           </div>
           <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground" />
@@ -97,10 +110,17 @@ export function AppSidebar() {
                 }}
                 className="w-full flex items-center gap-2 rounded px-2 py-1.5 text-left hover:bg-accent/50 transition"
               >
-                <div className={cn("h-6 w-6 rounded flex items-center justify-center shrink-0", p.color)}>
+                <div
+                  className={cn(
+                    "h-6 w-6 rounded flex items-center justify-center shrink-0",
+                    p.color,
+                  )}
+                >
                   <p.icon className="h-3 w-3" />
                 </div>
-                <span className="flex-1 text-xs font-medium text-foreground truncate">{p.name}</span>
+                <span className="flex-1 text-xs font-medium text-foreground truncate">
+                  {p.name}
+                </span>
                 {p.id === current.id && <Check className="h-3.5 w-3.5 text-primary" />}
               </button>
             ))}

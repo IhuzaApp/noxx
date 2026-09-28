@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-
 export const Route = createFileRoute("/ai-receptionist")({
   component: EmailsPage,
 });
@@ -55,10 +54,12 @@ function getInitials(email: string | undefined) {
   if (!email) return "?";
   const name = email.split("@")[0];
   const parts = name.split(/[._-]/);
-  return parts
-    .slice(0, 2)
-    .map((p: string) => p[0]?.toUpperCase() ?? "")
-    .join("") || "?";
+  return (
+    parts
+      .slice(0, 2)
+      .map((p: string) => p[0]?.toUpperCase() ?? "")
+      .join("") || "?"
+  );
 }
 
 function avatarColor(email: string | undefined) {
@@ -78,32 +79,33 @@ function avatarColor(email: string | undefined) {
   return colors[Math.abs(hash) % colors.length];
 }
 
-const STATUS_CONFIG: Record<string, { icon: any; label: string; className: string; dot: string }> = {
-  replied: {
-    icon: CheckCircle2,
-    label: "AI Replied",
-    className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-    dot: "bg-emerald-500",
-  },
-  "human-handling": {
-    icon: User,
-    label: "Human Agent",
-    className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-    dot: "bg-blue-500",
-  },
-  failed: {
-    icon: XCircle,
-    label: "Failed",
-    className: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
-    dot: "bg-red-500",
-  },
-  processing: {
-    icon: Clock,
-    label: "Processing",
-    className: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-    dot: "bg-amber-500 animate-pulse",
-  },
-};
+const STATUS_CONFIG: Record<string, { icon: any; label: string; className: string; dot: string }> =
+  {
+    replied: {
+      icon: CheckCircle2,
+      label: "AI Replied",
+      className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+      dot: "bg-emerald-500",
+    },
+    "human-handling": {
+      icon: User,
+      label: "Human Agent",
+      className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+      dot: "bg-blue-500",
+    },
+    failed: {
+      icon: XCircle,
+      label: "Failed",
+      className: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+      dot: "bg-red-500",
+    },
+    processing: {
+      icon: Clock,
+      label: "Processing",
+      className: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+      dot: "bg-amber-500 animate-pulse",
+    },
+  };
 
 type EmailThread = {
   threadKey: string;
@@ -119,7 +121,10 @@ function groupEmailsIntoThreads(emails: EmailInteraction[]): EmailThread[] {
   const map = new Map<string, EmailInteraction[]>();
 
   for (const e of emails) {
-    const cleanSubj = (e.subject || "No Subject").replace(/^(re|fwd|fw):\s*/i, "").trim().toLowerCase();
+    const cleanSubj = (e.subject || "No Subject")
+      .replace(/^(re|fwd|fw):\s*/i, "")
+      .trim()
+      .toLowerCase();
     const key = `${(e.from || "").toLowerCase()}::${cleanSubj}`;
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(e);
@@ -129,7 +134,9 @@ function groupEmailsIntoThreads(emails: EmailInteraction[]): EmailThread[] {
   for (const [key, items] of map.entries()) {
     items.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     const latest = items[items.length - 1];
-    const displaySubject = (latest.subject || items[0].subject || "No Subject").replace(/^(re|fwd|fw):\s*/i, "").trim();
+    const displaySubject = (latest.subject || items[0].subject || "No Subject")
+      .replace(/^(re|fwd|fw):\s*/i, "")
+      .trim();
 
     const isHuman = items.some((i) => i.status === "human-handling");
     const status = isHuman ? "human-handling" : latest.status;
@@ -145,7 +152,9 @@ function groupEmailsIntoThreads(emails: EmailInteraction[]): EmailThread[] {
     });
   }
 
-  threads.sort((a, b) => new Date(b.latestCreatedAt).getTime() - new Date(a.latestCreatedAt).getTime());
+  threads.sort(
+    (a, b) => new Date(b.latestCreatedAt).getTime() - new Date(a.latestCreatedAt).getTime(),
+  );
   return threads;
 }
 
@@ -160,7 +169,7 @@ function ThreadRow({ thread, index }: { thread: EmailThread; index: number }) {
       className={cn(
         "group border border-border rounded-2xl bg-card overflow-hidden transition-all duration-300",
         "hover:border-primary/30 hover:shadow-card",
-        expanded && "border-primary/20 shadow-card"
+        expanded && "border-primary/20 shadow-card",
       )}
       style={{ animationDelay: `${index * 40}ms` }}
     >
@@ -173,7 +182,7 @@ function ThreadRow({ thread, index }: { thread: EmailThread; index: number }) {
         <div
           className={cn(
             "h-10 w-10 shrink-0 rounded-xl flex items-center justify-center text-white font-semibold text-sm shadow-soft",
-            avatarColor(thread.from)
+            avatarColor(thread.from),
           )}
         >
           {getInitials(thread.from)}
@@ -201,9 +210,7 @@ function ThreadRow({ thread, index }: { thread: EmailThread; index: number }) {
               </span>
             )}
           </div>
-          <div className="text-sm text-foreground font-medium truncate">
-            {thread.subject}
-          </div>
+          <div className="text-sm text-foreground font-medium truncate">{thread.subject}</div>
           <div className="text-xs text-muted-foreground truncate mt-0.5">
             {latestItem?.message?.slice(0, 100)}…
           </div>
@@ -214,10 +221,12 @@ function ThreadRow({ thread, index }: { thread: EmailThread; index: number }) {
           <span
             className={cn(
               "hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border",
-              status.className
+              status.className,
             )}
           >
-            <StatusIcon className={cn("h-3.5 w-3.5", thread.status === "processing" && "animate-spin")} />
+            <StatusIcon
+              className={cn("h-3.5 w-3.5", thread.status === "processing" && "animate-spin")}
+            />
             {status.label}
           </span>
           <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -244,11 +253,13 @@ function ThreadRow({ thread, index }: { thread: EmailThread; index: number }) {
               <span>{thread.to}</span>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <span className="text-xs text-muted-foreground font-medium">Thread ({thread.items.length})</span>
+              <span className="text-xs text-muted-foreground font-medium">
+                Thread ({thread.items.length})
+              </span>
               <span
                 className={cn(
                   "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border",
-                  status.className
+                  status.className,
                 )}
               >
                 <span className={cn("h-1.5 w-1.5 rounded-full", status.dot)} />
@@ -260,9 +271,14 @@ function ThreadRow({ thread, index }: { thread: EmailThread; index: number }) {
           {/* List of thread messages */}
           <div className="p-5 space-y-6">
             {thread.items.map((email, idx) => (
-              <div key={email.id} className="space-y-3 p-4 rounded-2xl border border-border bg-card shadow-soft">
+              <div
+                key={email.id}
+                className="space-y-3 p-4 rounded-2xl border border-border bg-card shadow-soft"
+              >
                 <div className="flex items-center justify-between text-xs text-muted-foreground border-b border-border/60 pb-2">
-                  <span className="font-semibold text-foreground">Message #{idx + 1} · {email.subject}</span>
+                  <span className="font-semibold text-foreground">
+                    Message #{idx + 1} · {email.subject}
+                  </span>
                   <span>{formatDate(email.createdAt)}</span>
                 </div>
 
@@ -321,7 +337,9 @@ function ThreadRow({ thread, index }: { thread: EmailThread; index: number }) {
 function EmailsPage() {
   const [emails, setEmails] = useState<EmailInteraction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "replied" | "human-handling" | "processing" | "failed">("all");
+  const [filter, setFilter] = useState<
+    "all" | "replied" | "human-handling" | "processing" | "failed"
+  >("all");
 
   useEffect(() => {
     let isMounted = true;
@@ -410,21 +428,40 @@ function EmailsPage() {
       />
       <main className="flex-1 p-4 sm:p-6 overflow-auto">
         <div className="w-full space-y-5">
-
           {/* Stats row */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {[
               { label: "Threads", value: counts.all, color: "text-foreground", bg: "bg-card" },
-              { label: "AI Replied", value: counts.replied, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/5" },
-              { label: "Human Agent", value: counts["human-handling"], color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/5" },
-              { label: "Processing", value: counts.processing, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/5" },
-              { label: "Failed", value: counts.failed, color: "text-red-600 dark:text-red-400", bg: "bg-red-500/5" },
+              {
+                label: "AI Replied",
+                value: counts.replied,
+                color: "text-emerald-600 dark:text-emerald-400",
+                bg: "bg-emerald-500/5",
+              },
+              {
+                label: "Human Agent",
+                value: counts["human-handling"],
+                color: "text-blue-600 dark:text-blue-400",
+                bg: "bg-blue-500/5",
+              },
+              {
+                label: "Processing",
+                value: counts.processing,
+                color: "text-amber-600 dark:text-amber-400",
+                bg: "bg-amber-500/5",
+              },
+              {
+                label: "Failed",
+                value: counts.failed,
+                color: "text-red-600 dark:text-red-400",
+                bg: "bg-red-500/5",
+              },
             ].map((s) => (
               <div
                 key={s.label}
                 className={cn(
                   "rounded-2xl border border-border p-4 shadow-soft flex flex-col gap-1",
-                  s.bg
+                  s.bg,
                 )}
               >
                 <span className="text-xs text-muted-foreground font-medium">{s.label}</span>
@@ -445,7 +482,7 @@ function EmailsPage() {
                   "px-4 py-1.5 rounded-lg text-sm font-medium transition-all",
                   filter === f.key
                     ? "bg-card text-foreground shadow-soft border border-border"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {f.label}
@@ -453,7 +490,9 @@ function EmailsPage() {
                   <span
                     className={cn(
                       "ml-1.5 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-bold",
-                      filter === f.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                      filter === f.key
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground",
                     )}
                   >
                     {counts[f.key]}

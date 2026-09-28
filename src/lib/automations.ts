@@ -1,4 +1,15 @@
-import { Zap, Tag, UserPlus, AlertTriangle, Repeat, Clock, Bot, Ticket, CreditCard, Megaphone } from "lucide-react";
+import {
+  Zap,
+  Tag,
+  UserPlus,
+  AlertTriangle,
+  Repeat,
+  Clock,
+  Bot,
+  Ticket,
+  CreditCard,
+  Megaphone,
+} from "lucide-react";
 
 export type Automation = {
   id: string;
@@ -89,10 +100,46 @@ export const automations: Automation[] = [
 ];
 
 export const automationTemplates = [
-  { id: "tpl-1", name: "AI triage for support", icon: Bot, uses: "Support", description: "Classify, tag, route, and auto-reply to simple questions." },
-  { id: "tpl-2", name: "Abandoned checkout (3-step)", icon: Repeat, uses: "Sales", description: "WhatsApp → Email → SMS with escalating incentives." },
-  { id: "tpl-3", name: "Appointment reminder", icon: Clock, uses: "Ops", description: "Send 24h + 1h reminders with reschedule link." },
-  { id: "tpl-4", name: "NPS + follow-up", icon: Megaphone, uses: "Marketing", description: "Send NPS 7 days post-order, escalate detractors." },
-  { id: "tpl-5", name: "Fraud alert routing", icon: AlertTriangle, uses: "Ops", description: "Flag suspicious payments and notify finance." },
-  { id: "tpl-6", name: "New lead welcome", icon: UserPlus, uses: "Sales", description: "Instant welcome + schedule intro call." },
+  {
+    id: "tpl-1",
+    name: "AI triage for support",
+    icon: Bot,
+    uses: "Support",
+    description: "Classify, tag, route, and auto-reply to simple questions.",
+  },
+  {
+    id: "tpl-2",
+    name: "Abandoned checkout (3-step)",
+    icon: Repeat,
+    uses: "Sales",
+    description: "WhatsApp → Email → SMS with escalating incentives.",
+  },
+  {
+    id: "tpl-3",
+    name: "Appointment reminder",
+    icon: Clock,
+    uses: "Ops",
+    description: "Send 24h + 1h reminders with reschedule link.",
+  },
+  {
+    id: "tpl-4",
+    name: "NPS + follow-up",
+    icon: Megaphone,
+    uses: "Marketing",
+    description: "Send NPS 7 days post-order, escalate detractors.",
+  },
+  {
+    id: "tpl-5",
+    name: "Fraud alert routing",
+    icon: AlertTriangle,
+    uses: "Ops",
+    description: "Flag suspicious payments and notify finance.",
+  },
+  {
+    id: "tpl-6",
+    name: "New lead welcome",
+    icon: UserPlus,
+    uses: "Sales",
+    description: "Instant welcome + schedule intro call.",
+  },
 ];

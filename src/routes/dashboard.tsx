@@ -43,7 +43,11 @@ export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — Noxx" },
-      { name: "description", content: "Send SMS, Email, WhatsApp and AI messages and build automation flows from one unified API." },
+      {
+        name: "description",
+        content:
+          "Send SMS, Email, WhatsApp and AI messages and build automation flows from one unified API.",
+      },
     ],
   }),
   component: Dashboard,
@@ -62,10 +66,7 @@ function Dashboard() {
 
   return (
     <AppLayout>
-      <Topbar
-        title="Dashboard"
-        subtitle="An overview of your communication activity"
-      />
+      <Topbar title="Dashboard" subtitle="An overview of your communication activity" />
       <main className="flex-1 p-6 space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
@@ -128,8 +129,17 @@ function Dashboard() {
                     ))}
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-                  <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                  />
                   <Tooltip
                     contentStyle={{
                       background: "var(--popover)",
@@ -158,10 +168,22 @@ function Dashboard() {
             <div className="text-xs text-muted-foreground mb-4">Sent vs delivered</div>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={usageByChannel} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <BarChart
+                  data={usageByChannel}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="channel" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-                  <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+                  <XAxis
+                    dataKey="channel"
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                  />
                   <Tooltip
                     contentStyle={{
                       background: "var(--popover)",
@@ -186,9 +208,13 @@ function Dashboard() {
             <div className="flex items-center justify-between p-5 border-b border-border">
               <div>
                 <div className="text-sm font-medium text-foreground">Recent activity</div>
-                <div className="text-xs text-muted-foreground">Latest messages across all channels</div>
+                <div className="text-xs text-muted-foreground">
+                  Latest messages across all channels
+                </div>
               </div>
-              <Link to="/messages" className="text-xs font-medium text-primary hover:underline">View all →</Link>
+              <Link to="/messages" className="text-xs font-medium text-primary hover:underline">
+                View all →
+              </Link>
             </div>
             <div className="divide-y divide-border">
               {recent.map((m) => {
@@ -197,14 +223,27 @@ function Dashboard() {
                 const status = statusMeta[m.status];
                 return (
                   <div key={m.id} className="flex items-center gap-4 px-5 py-3">
-                    <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center", meta.bg, meta.color)}>
+                    <div
+                      className={cn(
+                        "h-9 w-9 rounded-lg flex items-center justify-center",
+                        meta.bg,
+                        meta.color,
+                      )}
+                    >
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-foreground truncate">{m.preview}</div>
+                      <div className="text-sm font-medium text-foreground truncate">
+                        {m.preview}
+                      </div>
                       <div className="text-xs text-muted-foreground truncate">to {m.recipient}</div>
                     </div>
-                    <span className={cn("text-xs font-medium px-2 py-0.5 rounded-md border", status.className)}>
+                    <span
+                      className={cn(
+                        "text-xs font-medium px-2 py-0.5 rounded-md border",
+                        status.className,
+                      )}
+                    >
                       {status.label}
                     </span>
                     <div className="text-xs text-muted-foreground w-20 text-right shrink-0">
@@ -234,10 +273,15 @@ function Dashboard() {
                         <Icon className="h-3.5 w-3.5" />
                         {row.label}
                       </div>
-                      <div className="text-muted-foreground">{row.value.toLocaleString()} ({pct.toFixed(1)}%)</div>
+                      <div className="text-muted-foreground">
+                        {row.value.toLocaleString()} ({pct.toFixed(1)}%)
+                      </div>
                     </div>
                     <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                      <div className={cn("h-full rounded-full", row.color)} style={{ width: `${pct}%` }} />
+                      <div
+                        className={cn("h-full rounded-full", row.color)}
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
                   </div>
                 );
@@ -278,8 +322,12 @@ function OmnichannelInsights() {
     <Card className="overflow-hidden">
       <div className="p-5 border-b border-border flex items-center justify-between gap-3">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-primary">Omnichannel</div>
-          <div className="mt-0.5 text-sm font-medium text-foreground">Cross-channel performance</div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-primary">
+            Omnichannel
+          </div>
+          <div className="mt-0.5 text-sm font-medium text-foreground">
+            Cross-channel performance
+          </div>
         </div>
         <Link to="/messages" className="text-xs font-medium text-primary hover:underline">
           Open conversations →
@@ -321,14 +369,23 @@ function OmnichannelInsights() {
         <div className="text-xs font-medium text-foreground mb-3">Channel comparison</div>
         <div className="space-y-3">
           {omnichannelStats.channelComparison.map((c) => (
-            <div key={c.channel} className="grid grid-cols-[80px_1fr_60px_60px] items-center gap-3 text-xs">
+            <div
+              key={c.channel}
+              className="grid grid-cols-[80px_1fr_60px_60px] items-center gap-3 text-xs"
+            >
               <div className="font-medium text-foreground">{c.channel}</div>
               <div className="space-y-1">
                 <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                  <div className="h-full rounded-full bg-success" style={{ width: `${c.delivery}%` }} />
+                  <div
+                    className="h-full rounded-full bg-success"
+                    style={{ width: `${c.delivery}%` }}
+                  />
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                  <div className="h-full rounded-full bg-info" style={{ width: `${c.engagement}%` }} />
+                  <div
+                    className="h-full rounded-full bg-info"
+                    style={{ width: `${c.engagement}%` }}
+                  />
                 </div>
               </div>
               <div className="text-right text-success font-medium">{c.delivery}%</div>

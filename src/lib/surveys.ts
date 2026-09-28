@@ -35,7 +35,13 @@ const demo: Survey = {
   createdAt: new Date().toISOString(),
   questions: [
     { id: "q1", type: "rating", prompt: "How happy are you with your order?", required: true },
-    { id: "q2", type: "single", prompt: "Which channel do you prefer?", required: true, options: ["Email", "SMS", "WhatsApp", "Voice"] },
+    {
+      id: "q2",
+      type: "single",
+      prompt: "Which channel do you prefer?",
+      required: true,
+      options: ["Email", "SMS", "WhatsApp", "Voice"],
+    },
     { id: "q3", type: "long", prompt: "Anything we could do better?", required: false },
   ],
 };

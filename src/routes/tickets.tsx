@@ -1,10 +1,30 @@
 import { useState, useEffect, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  Mail, MessageSquare, Instagram, Phone, Sparkles, Bot, Send,
-  Search, MoreHorizontal, ChevronRight, ArrowUpRight, Tag, Wand2,
-  Ticket as TicketIcon, Plus, UserCircle2, CheckCircle2, Clock,
-  RefreshCw, Inbox, XCircle, Loader2, Flag, ArrowLeft,
+  Mail,
+  MessageSquare,
+  Instagram,
+  Phone,
+  Sparkles,
+  Bot,
+  Send,
+  Search,
+  MoreHorizontal,
+  ChevronRight,
+  ArrowUpRight,
+  Tag,
+  Wand2,
+  Ticket as TicketIcon,
+  Plus,
+  UserCircle2,
+  CheckCircle2,
+  Clock,
+  RefreshCw,
+  Inbox,
+  XCircle,
+  Loader2,
+  Flag,
+  ArrowLeft,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Topbar } from "@/components/Topbar";
@@ -16,7 +36,10 @@ export const Route = createFileRoute("/tickets")({
   head: () => ({
     meta: [
       { title: "Support Tickets — Noxx" },
-      { name: "description", content: "AI-handled support tickets from all channels, monitored in real time." },
+      {
+        name: "description",
+        content: "AI-handled support tickets from all channels, monitored in real time.",
+      },
     ],
   }),
   component: TicketsPage,
@@ -104,16 +127,50 @@ function useSuggestions(ticketId: string | null, conversations: ConversationMsg[
 }
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; dot: string; icon: any }> = {
-  "ai-handling": { label: "AI Handling", cls: "bg-channel-ai/10 text-channel-ai border-channel-ai/20", dot: "bg-channel-ai animate-pulse", icon: Bot },
-  open: { label: "Open", cls: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20", dot: "bg-amber-500", icon: ArrowUpRight },
-  new: { label: "New", cls: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20", dot: "bg-blue-500", icon: TicketIcon },
-  pending: { label: "Pending", cls: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20", dot: "bg-sky-500", icon: Clock },
-  resolved: { label: "Resolved", cls: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20", dot: "bg-emerald-500", icon: CheckCircle2 },
-  closed: { label: "Closed", cls: "bg-muted text-muted-foreground border-border", dot: "bg-muted-foreground", icon: XCircle },
+  "ai-handling": {
+    label: "AI Handling",
+    cls: "bg-channel-ai/10 text-channel-ai border-channel-ai/20",
+    dot: "bg-channel-ai animate-pulse",
+    icon: Bot,
+  },
+  open: {
+    label: "Open",
+    cls: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    dot: "bg-amber-500",
+    icon: ArrowUpRight,
+  },
+  new: {
+    label: "New",
+    cls: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    dot: "bg-blue-500",
+    icon: TicketIcon,
+  },
+  pending: {
+    label: "Pending",
+    cls: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20",
+    dot: "bg-sky-500",
+    icon: Clock,
+  },
+  resolved: {
+    label: "Resolved",
+    cls: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+    dot: "bg-emerald-500",
+    icon: CheckCircle2,
+  },
+  closed: {
+    label: "Closed",
+    cls: "bg-muted text-muted-foreground border-border",
+    dot: "bg-muted-foreground",
+    icon: XCircle,
+  },
 };
 
 const CHANNEL_ICON: Record<string, any> = {
-  email: Mail, sms: Phone, whatsapp: MessageSquare, instagram: Instagram, ai: Sparkles,
+  email: Mail,
+  sms: Phone,
+  whatsapp: MessageSquare,
+  instagram: Instagram,
+  ai: Sparkles,
 };
 
 const CHANNEL_TINT: Record<string, string> = {
@@ -146,9 +203,18 @@ function avatarInitials(name: string) {
 }
 
 function avatarColor(email: string) {
-  const colors = ["bg-blue-500", "bg-violet-500", "bg-emerald-500", "bg-orange-500", "bg-pink-500", "bg-cyan-500", "bg-indigo-500", "bg-teal-500"];
+  const colors = [
+    "bg-blue-500",
+    "bg-violet-500",
+    "bg-emerald-500",
+    "bg-orange-500",
+    "bg-pink-500",
+    "bg-cyan-500",
+    "bg-indigo-500",
+    "bg-teal-500",
+  ];
   let h = 0;
-  for (let i = 0; i < (email || "").length; i++) h = (email.charCodeAt(i) + ((h << 5) - h));
+  for (let i = 0; i < (email || "").length; i++) h = email.charCodeAt(i) + ((h << 5) - h);
   return colors[Math.abs(h) % colors.length];
 }
 
@@ -174,7 +240,12 @@ async function fetchTickets(): Promise<Ticket[]> {
   const rawTickets: Ticket[] = json?.data?.tickets ?? [];
   return rawTickets.map((t) => {
     const email = t.contact_email;
-    const name = t.contact_name || email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    const name =
+      t.contact_name ||
+      email
+        .split("@")[0]
+        .replace(/[._-]/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
     const subject = t.subject || "Support Request";
     return {
       ...t,
@@ -213,7 +284,12 @@ async function mutateTicket(id: string, _set: Record<string, any>) {
 function StatusBadge({ status }: { status: string }) {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.open;
   return (
-    <span className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-semibold border", cfg.cls)}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-semibold border",
+        cfg.cls,
+      )}
+    >
       <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", cfg.dot)} />
       {cfg.label}
     </span>
@@ -230,19 +306,31 @@ function ConversationThread({ messages }: { messages: ConversationMsg[] }) {
         const isAI = msg.sender === "ai";
         return (
           <div key={msg.id} className={cn("flex", isCustomer ? "justify-start" : "justify-end")}>
-            <div className={cn(
-              "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-soft",
-              isCustomer && "bg-card border border-border text-foreground rounded-bl-sm",
-              isAI && "bg-channel-ai/10 border border-channel-ai/20 text-foreground rounded-br-sm",
-              !isCustomer && !isAI && "bg-foreground text-background rounded-br-sm",
-            )}>
+            <div
+              className={cn(
+                "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-soft",
+                isCustomer && "bg-card border border-border text-foreground rounded-bl-sm",
+                isAI &&
+                  "bg-channel-ai/10 border border-channel-ai/20 text-foreground rounded-br-sm",
+                !isCustomer && !isAI && "bg-foreground text-background rounded-br-sm",
+              )}
+            >
               {isAI && (
                 <div className="flex items-center gap-1 text-[10px] font-semibold text-channel-ai mb-1">
                   <Bot className="h-2.5 w-2.5" /> AI Agent
                 </div>
               )}
               <p className="whitespace-pre-wrap leading-relaxed">{msg.message}</p>
-              <div className={cn("mt-1 text-[10px]", isCustomer ? "text-muted-foreground" : isAI ? "text-channel-ai/70" : "text-background/60")}>
+              <div
+                className={cn(
+                  "mt-1 text-[10px]",
+                  isCustomer
+                    ? "text-muted-foreground"
+                    : isAI
+                      ? "text-channel-ai/70"
+                      : "text-background/60",
+                )}
+              >
                 {timeAgo(msg.created_at)}
               </div>
             </div>
@@ -268,14 +356,19 @@ function TicketsPage() {
   const [sendError, setSendError] = useState<string | null>(null);
 
   // Action states for ticket details
-  const [actionLoading, setActionLoading] = useState<{ resolve?: boolean; escalate?: boolean; summarize?: boolean }>({});
+  const [actionLoading, setActionLoading] = useState<{
+    resolve?: boolean;
+    escalate?: boolean;
+    summarize?: boolean;
+  }>({});
   const [aiSummary, setAiSummary] = useState<string | null>(null);
 
   const selected = tickets.find((t) => t.id === selectedId) ?? null;
-  const { suggestions, loading: sugLoading, refresh: refreshSuggestions } = useSuggestions(
-    selected?.id ?? null,
-    selected?.conversations ?? []
-  );
+  const {
+    suggestions,
+    loading: sugLoading,
+    refresh: refreshSuggestions,
+  } = useSuggestions(selected?.id ?? null, selected?.conversations ?? []);
 
   useEffect(() => {
     setAiSummary(null);
@@ -344,7 +437,10 @@ function TicketsPage() {
     setAiSummary(null);
     try {
       const conversationText = (selected.conversations || [])
-        .map((m) => `[${m.sender === "customer" ? "Customer" : m.sender === "ai" ? "AI Assistant" : "Support Agent"}]: ${m.message}`)
+        .map(
+          (m) =>
+            `[${m.sender === "customer" ? "Customer" : m.sender === "ai" ? "AI Assistant" : "Support Agent"}]: ${m.message}`,
+        )
         .join("\n\n");
 
       const prompt = `You are an AI support analyst. Provide a brief, nicely structured 2-3 bullet point summary of this customer ticket outlining:
@@ -451,7 +547,9 @@ ${conversationText || "No message content yet."}`;
           {/* Left sidebar — ticket info */}
           <aside className="col-span-12 lg:col-span-3 border-r border-border bg-card/40 flex flex-col overflow-auto">
             <div className="p-5 border-b border-border space-y-3">
-              <div className="font-mono text-[10px] text-muted-foreground">{selected.id.slice(0, 8).toUpperCase()}</div>
+              <div className="font-mono text-[10px] text-muted-foreground">
+                {selected.id.slice(0, 8).toUpperCase()}
+              </div>
               <div className="font-semibold text-foreground leading-snug">{selected.subject}</div>
               <div className="flex items-center gap-2 flex-wrap">
                 <StatusBadge status={selected.status} />
@@ -466,22 +564,41 @@ ${conversationText || "No message content yet."}`;
             <div className="p-5 space-y-5">
               {/* Customer */}
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Customer</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                  Customer
+                </div>
                 <div className="flex items-center gap-3">
-                  <div className={cn("h-10 w-10 rounded-xl text-white text-xs font-bold flex items-center justify-center shrink-0", avatarColor(selected.contact_email))}>
+                  <div
+                    className={cn(
+                      "h-10 w-10 rounded-xl text-white text-xs font-bold flex items-center justify-center shrink-0",
+                      avatarColor(selected.contact_email),
+                    )}
+                  >
                     {avatarInitials(selected.contact_name)}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold text-foreground truncate">{selected.contact_name}</div>
-                    <div className="text-xs text-muted-foreground truncate">{selected.contact_email}</div>
+                    <div className="text-sm font-semibold text-foreground truncate">
+                      {selected.contact_name}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {selected.contact_email}
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Channel */}
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Channel</div>
-                <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs capitalize border", CHANNEL_TINT[selected.channel] || "bg-muted text-muted-foreground border-border")}>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                  Channel
+                </div>
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs capitalize border",
+                    CHANNEL_TINT[selected.channel] ||
+                      "bg-muted text-muted-foreground border-border",
+                  )}
+                >
                   <ChanIcon className="h-3.5 w-3.5" /> {selected.channel}
                 </span>
               </div>
@@ -489,11 +606,20 @@ ${conversationText || "No message content yet."}`;
               {/* Tags */}
               {selected.tags?.length > 0 && (
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Tags</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                    Tags
+                  </div>
                   <div className="flex flex-wrap gap-1.5">
                     {selected.tags.map((tag) => (
-                      <span key={tag} className={cn("inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium border",
-                        tag === "escalated" ? "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30 font-semibold" : "bg-accent text-accent-foreground border-transparent")}>
+                      <span
+                        key={tag}
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium border",
+                          tag === "escalated"
+                            ? "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30 font-semibold"
+                            : "bg-accent text-accent-foreground border-transparent",
+                        )}
+                      >
                         <Tag className="h-2.5 w-2.5" /> {tag}
                       </span>
                     ))}
@@ -503,7 +629,9 @@ ${conversationText || "No message content yet."}`;
 
               {/* Assignee */}
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Assignee</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                  Assignee
+                </div>
                 <button className="w-full flex items-center gap-2 rounded-md border border-input bg-card px-2.5 py-1.5 text-xs text-foreground hover:bg-accent/40 transition">
                   <UserCircle2 className="h-3.5 w-3.5" />
                   {selected.assignee ?? "Unassigned"}
@@ -513,7 +641,9 @@ ${conversationText || "No message content yet."}`;
 
               {/* Actions */}
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Actions</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                  Actions
+                </div>
                 <div className="space-y-1.5">
                   {/* Mark resolved button */}
                   <button
@@ -523,13 +653,18 @@ ${conversationText || "No message content yet."}`;
                       "w-full text-left flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium border transition disabled:opacity-60",
                       selected.status === "resolved"
                         ? "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
-                        : "bg-card border-border hover:bg-emerald-500/10 hover:border-emerald-500/30 text-foreground"
+                        : "bg-card border-border hover:bg-emerald-500/10 hover:border-emerald-500/30 text-foreground",
                     )}
                   >
                     {actionLoading.resolve ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0 text-emerald-500" />
                     ) : (
-                      <CheckCircle2 className={cn("h-3.5 w-3.5 shrink-0", selected.status === "resolved" ? "text-amber-500" : "text-emerald-500")} />
+                      <CheckCircle2
+                        className={cn(
+                          "h-3.5 w-3.5 shrink-0",
+                          selected.status === "resolved" ? "text-amber-500" : "text-emerald-500",
+                        )}
+                      />
                     )}
                     {selected.status === "resolved" ? "Reopen ticket" : "Mark resolved"}
                   </button>
@@ -542,13 +677,18 @@ ${conversationText || "No message content yet."}`;
                       "w-full text-left flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium border transition disabled:opacity-60",
                       isEscalated
                         ? "bg-red-500/15 border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500/25"
-                        : "bg-card border-border hover:bg-red-500/10 hover:border-red-500/30 text-foreground"
+                        : "bg-card border-border hover:bg-red-500/10 hover:border-red-500/30 text-foreground",
                     )}
                   >
                     {actionLoading.escalate ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0 text-red-500" />
                     ) : (
-                      <Flag className={cn("h-3.5 w-3.5 shrink-0 text-red-500", isEscalated && "fill-red-500")} />
+                      <Flag
+                        className={cn(
+                          "h-3.5 w-3.5 shrink-0 text-red-500",
+                          isEscalated && "fill-red-500",
+                        )}
+                      />
                     )}
                     {isEscalated ? "De-escalate ticket" : "Escalate ticket"}
                   </button>
@@ -584,7 +724,12 @@ ${conversationText || "No message content yet."}`;
               >
                 <ArrowLeft className="h-3.5 w-3.5" /> Back
               </button>
-              <span className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0", CHANNEL_TINT[selected.channel] || "bg-muted text-muted-foreground")}>
+              <span
+                className={cn(
+                  "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
+                  CHANNEL_TINT[selected.channel] || "bg-muted text-muted-foreground",
+                )}
+              >
                 <ChanIcon className="h-4 w-4" />
               </span>
               <div className="flex-1 min-w-0">
@@ -596,9 +741,13 @@ ${conversationText || "No message content yet."}`;
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground capitalize">{selected.channel} · {selected.contact_email}</div>
+                <div className="text-xs text-muted-foreground capitalize">
+                  {selected.channel} · {selected.contact_email}
+                </div>
               </div>
-              <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded border", cfgSel.cls)}>
+              <span
+                className={cn("text-[10px] font-semibold px-2 py-0.5 rounded border", cfgSel.cls)}
+              >
                 {cfgSel.label}
               </span>
               <button className="rounded-md border border-input bg-card p-1.5 text-muted-foreground hover:text-foreground transition">
@@ -634,7 +783,9 @@ ${conversationText || "No message content yet."}`;
                 <div className="h-5 w-5 rounded-md bg-channel-ai/20 flex items-center justify-center shrink-0">
                   <Wand2 className="h-3 w-3 text-channel-ai" />
                 </div>
-                <span className="text-[11px] font-semibold text-foreground">AI reply suggestions</span>
+                <span className="text-[11px] font-semibold text-foreground">
+                  AI reply suggestions
+                </span>
                 <span className="text-[10px] text-muted-foreground">· tap to insert</span>
                 <button
                   onClick={refreshSuggestions}
@@ -667,7 +818,12 @@ ${conversationText || "No message content yet."}`;
                 {!sugLoading && suggestions.length === 0 && (
                   <p className="text-xs text-muted-foreground italic px-1">
                     No suggestions yet —
-                    <button onClick={refreshSuggestions} className="underline ml-1 hover:text-foreground transition">generate now</button>
+                    <button
+                      onClick={refreshSuggestions}
+                      className="underline ml-1 hover:text-foreground transition"
+                    >
+                      generate now
+                    </button>
                   </p>
                 )}
               </div>
@@ -679,14 +835,21 @@ ${conversationText || "No message content yet."}`;
                 <div className="mb-2 flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-600 dark:text-red-400">
                   <XCircle className="h-3.5 w-3.5 shrink-0" />
                   {sendError}
-                  <button onClick={() => setSendError(null)} className="ml-auto underline hover:no-underline">Dismiss</button>
+                  <button
+                    onClick={() => setSendError(null)}
+                    className="ml-auto underline hover:no-underline"
+                  >
+                    Dismiss
+                  </button>
                 </div>
               )}
               <div className="rounded-xl border border-input bg-card p-2 shadow-soft">
                 <textarea
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSend(); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSend();
+                  }}
                   rows={2}
                   placeholder={`Reply to ${selected.contact_email}… (⌘↵ to send)`}
                   disabled={sending}
@@ -703,9 +866,13 @@ ${conversationText || "No message content yet."}`;
                     className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background hover:opacity-90 transition disabled:opacity-40"
                   >
                     {sending ? (
-                      <><Loader2 className="h-3 w-3 animate-spin" /> Sending…</>
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" /> Sending…
+                      </>
                     ) : (
-                      <><Send className="h-3 w-3" /> Send reply</>
+                      <>
+                        <Send className="h-3 w-3" /> Send reply
+                      </>
                     )}
                   </button>
                 </div>
@@ -734,17 +901,55 @@ ${conversationText || "No message content yet."}`;
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { label: "Total", value: counts.all, bg: "bg-card", icon: TicketIcon, color: "text-foreground" },
-            { label: "AI Handling", value: counts["ai-handling"], bg: "bg-channel-ai/5", icon: Bot, color: "text-channel-ai" },
-            { label: "Open", value: counts.open, bg: "bg-amber-500/5", icon: ArrowUpRight, color: "text-amber-600 dark:text-amber-400" },
-            { label: "Pending", value: counts.pending, bg: "bg-sky-500/5", icon: Clock, color: "text-sky-600 dark:text-sky-400" },
-            { label: "Resolved", value: counts.resolved, bg: "bg-emerald-500/5", icon: CheckCircle2, color: "text-emerald-600 dark:text-emerald-400" },
-            { label: "Closed", value: counts.closed, bg: "bg-muted/50", icon: XCircle, color: "text-muted-foreground" },
+            {
+              label: "Total",
+              value: counts.all,
+              bg: "bg-card",
+              icon: TicketIcon,
+              color: "text-foreground",
+            },
+            {
+              label: "AI Handling",
+              value: counts["ai-handling"],
+              bg: "bg-channel-ai/5",
+              icon: Bot,
+              color: "text-channel-ai",
+            },
+            {
+              label: "Open",
+              value: counts.open,
+              bg: "bg-amber-500/5",
+              icon: ArrowUpRight,
+              color: "text-amber-600 dark:text-amber-400",
+            },
+            {
+              label: "Pending",
+              value: counts.pending,
+              bg: "bg-sky-500/5",
+              icon: Clock,
+              color: "text-sky-600 dark:text-sky-400",
+            },
+            {
+              label: "Resolved",
+              value: counts.resolved,
+              bg: "bg-emerald-500/5",
+              icon: CheckCircle2,
+              color: "text-emerald-600 dark:text-emerald-400",
+            },
+            {
+              label: "Closed",
+              value: counts.closed,
+              bg: "bg-muted/50",
+              icon: XCircle,
+              color: "text-muted-foreground",
+            },
           ].map(({ label, value, bg, icon: Icon, color }) => (
             <Card key={label} className={cn("p-4", bg)}>
               <div className="flex items-center gap-2 mb-1">
                 <Icon className={cn("h-3.5 w-3.5", color)} />
-                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
+                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  {label}
+                </span>
               </div>
               <div className={cn("text-2xl font-bold tabular-nums", color)}>
                 {loading ? "—" : value}
@@ -773,13 +978,19 @@ ${conversationText || "No message content yet."}`;
                   "px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
                   filter === f.key
                     ? "bg-card text-foreground shadow-soft border border-border"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {f.label}
                 {counts[f.key] > 0 && (
-                  <span className={cn("ml-1 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-bold",
-                    filter === f.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+                  <span
+                    className={cn(
+                      "ml-1 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-bold",
+                      filter === f.key
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground",
+                    )}
+                  >
                     {counts[f.key]}
                   </span>
                 )}
@@ -792,7 +1003,11 @@ ${conversationText || "No message content yet."}`;
         {loading ? (
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 rounded-2xl border border-border bg-card animate-pulse" style={{ opacity: 1 - i * 0.15 }} />
+              <div
+                key={i}
+                className="h-16 rounded-2xl border border-border bg-card animate-pulse"
+                style={{ opacity: 1 - i * 0.15 }}
+              />
             ))}
             <div className="flex items-center justify-center gap-2 pt-4 text-sm text-muted-foreground">
               <RefreshCw className="h-4 w-4 animate-spin" /> Loading tickets…
@@ -806,7 +1021,9 @@ ${conversationText || "No message content yet."}`;
             <div>
               <h3 className="text-base font-semibold text-foreground">No tickets yet</h3>
               <p className="mt-1 text-sm text-muted-foreground max-w-xs">
-                {filter === "all" ? "Tickets are created automatically when emails arrive." : `No tickets with status "${filter}".`}
+                {filter === "all"
+                  ? "Tickets are created automatically when emails arrive."
+                  : `No tickets with status "${filter}".`}
               </p>
             </div>
           </div>
@@ -836,7 +1053,9 @@ ${conversationText || "No message content yet."}`;
                       >
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                            <span className="font-mono text-[10px] text-muted-foreground">{t.id.slice(0, 8).toUpperCase()}</span>
+                            <span className="font-mono text-[10px] text-muted-foreground">
+                              {t.id.slice(0, 8).toUpperCase()}
+                            </span>
                             {t.tags?.includes("ai-created") && (
                               <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] font-semibold bg-channel-ai/15 text-channel-ai border border-channel-ai/20">
                                 <Sparkles className="h-2 w-2" /> AI
@@ -848,21 +1067,38 @@ ${conversationText || "No message content yet."}`;
                               </span>
                             )}
                           </div>
-                          <div className="font-medium text-foreground truncate max-w-xs">{t.subject}</div>
+                          <div className="font-medium text-foreground truncate max-w-xs">
+                            {t.subject}
+                          </div>
                         </td>
                         <td className="px-3 py-3.5">
                           <div className="flex items-center gap-2.5">
-                            <div className={cn("h-7 w-7 rounded-lg text-white text-[10px] font-bold flex items-center justify-center shrink-0", avatarColor(t.contact_email))}>
+                            <div
+                              className={cn(
+                                "h-7 w-7 rounded-lg text-white text-[10px] font-bold flex items-center justify-center shrink-0",
+                                avatarColor(t.contact_email),
+                              )}
+                            >
                               {avatarInitials(t.contact_name)}
                             </div>
                             <div className="min-w-0">
-                              <div className="text-sm font-medium text-foreground truncate">{t.contact_name}</div>
-                              <div className="text-[11px] text-muted-foreground truncate">{t.contact_email}</div>
+                              <div className="text-sm font-medium text-foreground truncate">
+                                {t.contact_name}
+                              </div>
+                              <div className="text-[11px] text-muted-foreground truncate">
+                                {t.contact_email}
+                              </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-3 py-3.5">
-                          <span className={cn("inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] capitalize border", CHANNEL_TINT[t.channel] || "bg-muted text-muted-foreground border-border")}>
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] capitalize border",
+                              CHANNEL_TINT[t.channel] ||
+                                "bg-muted text-muted-foreground border-border",
+                            )}
+                          >
                             <TIcon className="h-3 w-3" /> {t.channel}
                           </span>
                         </td>

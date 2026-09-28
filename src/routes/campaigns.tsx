@@ -1,6 +1,17 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Mail, MessageSquare, Phone, Calendar, Users, MousePointerClick, Send, Eye, X } from "lucide-react";
+import {
+  Plus,
+  Mail,
+  MessageSquare,
+  Phone,
+  Calendar,
+  Users,
+  MousePointerClick,
+  Send,
+  Eye,
+  X,
+} from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Topbar } from "@/components/Topbar";
 import { Card, StatCard } from "@/components/Card";
@@ -11,7 +22,11 @@ export const Route = createFileRoute("/campaigns")({
   head: () => ({
     meta: [
       { title: "Campaigns — Noxx" },
-      { name: "description", content: "Bulk email, SMS and WhatsApp campaigns with segmentation, scheduling and tracking." },
+      {
+        name: "description",
+        content:
+          "Bulk email, SMS and WhatsApp campaigns with segmentation, scheduling and tracking.",
+      },
     ],
   }),
   component: CampaignsPage,
@@ -37,7 +52,7 @@ function CampaignsPage() {
     <AppLayout>
       <Topbar
         title="Campaigns"
-        subtitle={`${campaigns.length} campaigns · ${campaigns.filter(c => c.status === "scheduled").length} scheduled`}
+        subtitle={`${campaigns.length} campaigns · ${campaigns.filter((c) => c.status === "scheduled").length} scheduled`}
         action={
           <button
             onClick={() => setOpen(true)}
@@ -49,10 +64,36 @@ function CampaignsPage() {
       />
       <main className="flex-1 p-6 space-y-6 overflow-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Total recipients" value={33_546} delta={8.2} icon={Users} accent="bg-primary/10 text-primary" />
-          <StatCard label="Avg open rate" value="42.6" suffix="%" delta={3.1} icon={Eye} accent="bg-channel-email/10 text-channel-email" />
-          <StatCard label="Avg click rate" value="11.4" suffix="%" delta={-0.6} icon={MousePointerClick} accent="bg-info/10 text-info" />
-          <StatCard label="Sent this month" value={28_920} delta={14.3} icon={Send} accent="bg-success/15 text-success" />
+          <StatCard
+            label="Total recipients"
+            value={33_546}
+            delta={8.2}
+            icon={Users}
+            accent="bg-primary/10 text-primary"
+          />
+          <StatCard
+            label="Avg open rate"
+            value="42.6"
+            suffix="%"
+            delta={3.1}
+            icon={Eye}
+            accent="bg-channel-email/10 text-channel-email"
+          />
+          <StatCard
+            label="Avg click rate"
+            value="11.4"
+            suffix="%"
+            delta={-0.6}
+            icon={MousePointerClick}
+            accent="bg-info/10 text-info"
+          />
+          <StatCard
+            label="Sent this month"
+            value={28_920}
+            delta={14.3}
+            icon={Send}
+            accent="bg-success/15 text-success"
+          />
         </div>
 
         <Card className="overflow-hidden">
@@ -77,29 +118,58 @@ function CampaignsPage() {
                 {campaigns.map((c) => {
                   const Icon = channelIcon[c.channel];
                   return (
-                    <tr key={c.id} className="border-b border-border last:border-0 hover:bg-accent/20 transition">
+                    <tr
+                      key={c.id}
+                      className="border-b border-border last:border-0 hover:bg-accent/20 transition"
+                    >
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2.5">
-                          <span className={cn("h-7 w-7 rounded-md flex items-center justify-center shrink-0", channelColor[c.channel])}>
+                          <span
+                            className={cn(
+                              "h-7 w-7 rounded-md flex items-center justify-center shrink-0",
+                              channelColor[c.channel],
+                            )}
+                          >
                             <Icon className="h-3.5 w-3.5" />
                           </span>
                           <span className="font-medium text-foreground">{c.name}</span>
                         </div>
                       </td>
                       <td className="px-3 py-3">
-                        <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded border capitalize", statusCls[c.status])}>
+                        <span
+                          className={cn(
+                            "text-[10px] font-medium px-1.5 py-0.5 rounded border capitalize",
+                            statusCls[c.status],
+                          )}
+                        >
                           {c.status}
                         </span>
                       </td>
                       <td className="px-3 py-3 text-muted-foreground">{c.segment}</td>
-                      <td className="px-3 py-3 text-right tabular-nums">{c.audience.toLocaleString()}</td>
-                      <td className="px-3 py-3 text-right tabular-nums text-muted-foreground">{c.deliveryRate ? `${c.deliveryRate}%` : "—"}</td>
-                      <td className="px-3 py-3 text-right tabular-nums text-muted-foreground">{c.openRate ? `${c.openRate}%` : "—"}</td>
-                      <td className="px-3 py-3 text-right tabular-nums text-muted-foreground">{c.clickRate ? `${c.clickRate}%` : "—"}</td>
+                      <td className="px-3 py-3 text-right tabular-nums">
+                        {c.audience.toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3 text-right tabular-nums text-muted-foreground">
+                        {c.deliveryRate ? `${c.deliveryRate}%` : "—"}
+                      </td>
+                      <td className="px-3 py-3 text-right tabular-nums text-muted-foreground">
+                        {c.openRate ? `${c.openRate}%` : "—"}
+                      </td>
+                      <td className="px-3 py-3 text-right tabular-nums text-muted-foreground">
+                        {c.clickRate ? `${c.clickRate}%` : "—"}
+                      </td>
                       <td className="px-5 py-3 text-muted-foreground text-xs">
                         {c.sentAt && `Sent ${c.sentAt.toLocaleDateString()}`}
                         {c.scheduledFor && (
-                          <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" /> {c.scheduledFor.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+                          <span className="inline-flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />{" "}
+                            {c.scheduledFor.toLocaleString([], {
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })}
+                          </span>
                         )}
                         {!c.sentAt && !c.scheduledFor && "—"}
                       </td>
@@ -114,15 +184,24 @@ function CampaignsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="p-5">
             <h3 className="font-semibold text-foreground">Audience segments</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">Filter customers by behavior, tags or purchase history.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Filter customers by behavior, tags or purchase history.
+            </p>
             <div className="mt-4 space-y-2">
               {segments.map((s) => (
-                <div key={s.id} className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2.5">
+                <div
+                  key={s.id}
+                  className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2.5"
+                >
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-foreground">{s.name}</div>
-                    <div className="text-[11px] text-muted-foreground font-mono truncate">{s.criteria}</div>
+                    <div className="text-[11px] text-muted-foreground font-mono truncate">
+                      {s.criteria}
+                    </div>
                   </div>
-                  <div className="text-sm font-semibold text-foreground tabular-nums">{s.count.toLocaleString()}</div>
+                  <div className="text-sm font-semibold text-foreground tabular-nums">
+                    {s.count.toLocaleString()}
+                  </div>
                 </div>
               ))}
             </div>
@@ -130,7 +209,9 @@ function CampaignsPage() {
 
           <Card className="p-5">
             <h3 className="font-semibold text-foreground">Tracking & deliverability</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">Combined performance across all email campaigns this month.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Combined performance across all email campaigns this month.
+            </p>
             <div className="mt-5 space-y-4">
               {[
                 { label: "Delivered", value: 99.1, color: "var(--success)" },
@@ -144,7 +225,10 @@ function CampaignsPage() {
                     <span className="font-semibold text-foreground tabular-nums">{m.value}%</span>
                   </div>
                   <div className="mt-1 h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${Math.min(100, m.value)}%`, background: m.color }} />
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${Math.min(100, m.value)}%`, background: m.color }}
+                    />
                   </div>
                 </div>
               ))}
@@ -181,7 +265,10 @@ function NewCampaignModal({ onClose }: { onClose: () => void }) {
             <>
               <label className="block">
                 <span className="text-xs font-medium text-foreground">Campaign name</span>
-                <input className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" defaultValue="Untitled campaign" />
+                <input
+                  className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  defaultValue="Untitled campaign"
+                />
               </label>
               <div>
                 <span className="text-xs font-medium text-foreground">Channel</span>
@@ -192,8 +279,12 @@ function NewCampaignModal({ onClose }: { onClose: () => void }) {
                       <button
                         key={c}
                         onClick={() => setChannel(c)}
-                        className={cn("rounded-md border p-3 flex flex-col items-center gap-1.5 text-xs font-medium transition capitalize",
-                          channel === c ? "border-primary bg-primary/5 text-foreground" : "border-border bg-card text-muted-foreground hover:text-foreground")}
+                        className={cn(
+                          "rounded-md border p-3 flex flex-col items-center gap-1.5 text-xs font-medium transition capitalize",
+                          channel === c
+                            ? "border-primary bg-primary/5 text-foreground"
+                            : "border-border bg-card text-muted-foreground hover:text-foreground",
+                        )}
                       >
                         <Icon className="h-4 w-4" />
                         {c}
@@ -212,12 +303,18 @@ function NewCampaignModal({ onClose }: { onClose: () => void }) {
                   <button
                     key={s.id}
                     onClick={() => setSegment(s.id)}
-                    className={cn("w-full rounded-md border px-3 py-2 text-left transition",
-                      segment === s.id ? "border-primary bg-primary/5" : "border-border hover:bg-accent/30")}
+                    className={cn(
+                      "w-full rounded-md border px-3 py-2 text-left transition",
+                      segment === s.id
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:bg-accent/30",
+                    )}
                   >
                     <div className="flex justify-between text-sm">
                       <span className="font-medium text-foreground">{s.name}</span>
-                      <span className="text-foreground font-semibold tabular-nums">{s.count.toLocaleString()}</span>
+                      <span className="text-foreground font-semibold tabular-nums">
+                        {s.count.toLocaleString()}
+                      </span>
                     </div>
                     <div className="text-[11px] text-muted-foreground font-mono">{s.criteria}</div>
                   </button>
@@ -229,13 +326,20 @@ function NewCampaignModal({ onClose }: { onClose: () => void }) {
             <>
               <label className="block">
                 <span className="text-xs font-medium text-foreground">Subject / Preview</span>
-                <input className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="✨ Early access starts now" />
+                <input
+                  className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  placeholder="✨ Early access starts now"
+                />
               </label>
               <div>
                 <span className="text-xs font-medium text-foreground">Schedule</span>
                 <div className="mt-1.5 grid grid-cols-2 gap-2">
-                  <button className="rounded-md border border-primary bg-primary/5 px-3 py-2 text-xs font-medium">Send now</button>
-                  <button className="rounded-md border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition">Schedule…</button>
+                  <button className="rounded-md border border-primary bg-primary/5 px-3 py-2 text-xs font-medium">
+                    Send now
+                  </button>
+                  <button className="rounded-md border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition">
+                    Schedule…
+                  </button>
                 </div>
               </div>
             </>

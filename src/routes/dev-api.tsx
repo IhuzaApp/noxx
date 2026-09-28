@@ -10,7 +10,11 @@ export const Route = createFileRoute("/dev-api")({
   head: () => ({
     meta: [
       { title: "Developer API — Noxx" },
-      { name: "description", content: "REST API reference, webhook subscriptions and SDK snippets for the Noxx platform." },
+      {
+        name: "description",
+        content:
+          "REST API reference, webhook subscriptions and SDK snippets for the Noxx platform.",
+      },
     ],
   }),
   component: DevApiPage,
@@ -61,7 +65,10 @@ function DevApiPage() {
         title="Developer API"
         subtitle="REST endpoints, webhooks and SDKs to build on top of Noxx"
         action={
-          <a href="#" className="inline-flex items-center gap-2 rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background hover:opacity-90 transition shadow-soft">
+          <a
+            href="#"
+            className="inline-flex items-center gap-2 rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background hover:opacity-90 transition shadow-soft"
+          >
             <BookOpen className="h-4 w-4" /> Full reference
           </a>
         }
@@ -85,16 +92,26 @@ function DevApiPage() {
                 {copied ? "Copied" : "Copy"}
               </button>
             </div>
-            <pre className="p-5 text-[12px] leading-relaxed font-mono text-foreground overflow-x-auto">{sample}</pre>
+            <pre className="p-5 text-[12px] leading-relaxed font-mono text-foreground overflow-x-auto">
+              {sample}
+            </pre>
           </Card>
 
           <Card className="p-5">
             <h3 className="font-semibold text-foreground">Authentication</h3>
-            <p className="text-xs text-muted-foreground mt-1">Pass your API key in the <code className="text-[10px] bg-muted px-1 py-0.5 rounded">Authorization</code> header.</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Pass your API key in the{" "}
+              <code className="text-[10px] bg-muted px-1 py-0.5 rounded">Authorization</code>{" "}
+              header.
+            </p>
             <div className="mt-3 rounded-md bg-foreground text-background text-[11px] p-3 font-mono">
               Authorization: Bearer sk_live_•••••
             </div>
-            <p className="mt-3 text-xs text-muted-foreground">Test keys start with <code className="text-[10px] bg-muted px-1 py-0.5 rounded">sk_test_</code> and run in sandbox mode (no real messages sent).</p>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Test keys start with{" "}
+              <code className="text-[10px] bg-muted px-1 py-0.5 rounded">sk_test_</code> and run in
+              sandbox mode (no real messages sent).
+            </p>
           </Card>
         </div>
 
@@ -104,8 +121,16 @@ function DevApiPage() {
           </div>
           <ul className="divide-y divide-border">
             {endpoints.map((e) => (
-              <li key={e.path} className="flex items-center gap-3 px-5 py-3 hover:bg-accent/20 transition">
-                <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded border w-12 text-center", methodCls[e.method])}>
+              <li
+                key={e.path}
+                className="flex items-center gap-3 px-5 py-3 hover:bg-accent/20 transition"
+              >
+                <span
+                  className={cn(
+                    "text-[10px] font-semibold px-1.5 py-0.5 rounded border w-12 text-center",
+                    methodCls[e.method],
+                  )}
+                >
                   {e.method}
                 </span>
                 <code className="text-sm font-mono text-foreground">{e.path}</code>
@@ -118,8 +143,12 @@ function DevApiPage() {
         <Card className="overflow-hidden">
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-foreground flex items-center gap-2"><Webhook className="h-4 w-4" /> Webhooks</h3>
-              <p className="text-xs text-muted-foreground">Receive real-time events about messages, flows and payments.</p>
+              <h3 className="font-semibold text-foreground flex items-center gap-2">
+                <Webhook className="h-4 w-4" /> Webhooks
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Receive real-time events about messages, flows and payments.
+              </p>
             </div>
             <button className="rounded-md border border-input bg-card px-3 py-1.5 text-xs font-medium hover:bg-muted transition">
               Add endpoint
@@ -136,11 +165,21 @@ function DevApiPage() {
             <tbody>
               {webhooks.map((w) => (
                 <tr key={w.event} className="border-b border-border last:border-0">
-                  <td className="px-5 py-3"><code className="text-xs font-mono text-foreground">{w.event}</code></td>
-                  <td className="px-3 py-3 font-mono text-xs text-muted-foreground truncate">{w.url}</td>
+                  <td className="px-5 py-3">
+                    <code className="text-xs font-mono text-foreground">{w.event}</code>
+                  </td>
+                  <td className="px-3 py-3 font-mono text-xs text-muted-foreground truncate">
+                    {w.url}
+                  </td>
                   <td className="px-5 py-3 text-right">
-                    <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded border",
-                      w.active ? "bg-success/15 text-success border-success/20" : "bg-muted text-muted-foreground border-border")}>
+                    <span
+                      className={cn(
+                        "text-[10px] font-medium px-1.5 py-0.5 rounded border",
+                        w.active
+                          ? "bg-success/15 text-success border-success/20"
+                          : "bg-muted text-muted-foreground border-border",
+                      )}
+                    >
                       {w.active ? "Active" : "Disabled"}
                     </span>
                   </td>

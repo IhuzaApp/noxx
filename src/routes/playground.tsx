@@ -1,14 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import {
-  Send,
-  Save,
-  Plus,
-  Trash2,
-  Copy,
-  Check,
-  ChevronDown,
-} from "lucide-react";
+import { Send, Save, Plus, Trash2, Copy, Check, ChevronDown } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Topbar } from "@/components/Topbar";
 import { useProject } from "@/lib/project-context";
@@ -158,7 +150,9 @@ function PlaygroundPage() {
                   )}
                 >
                   {(["GET", "POST", "PUT", "PATCH", "DELETE"] as Method[]).map((m) => (
-                    <option key={m} value={m}>{m}</option>
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
                   ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -200,7 +194,9 @@ function PlaygroundPage() {
 
             <div className="mt-3">
               {tab === "params" && <KVEditor rows={params} setRows={setParams} keyLabel="Param" />}
-              {tab === "headers" && <KVEditor rows={headers} setRows={setHeaders} keyLabel="Header" />}
+              {tab === "headers" && (
+                <KVEditor rows={headers} setRows={setHeaders} keyLabel="Header" />
+              )}
               {tab === "body" && (
                 <textarea
                   value={body}
@@ -218,7 +214,8 @@ function PlaygroundPage() {
                     className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono outline-none focus:ring-2 focus:ring-primary/30"
                   />
                   <p className="mt-2 text-muted-foreground">
-                    Use <code className="text-foreground">{"{{VAR}}"}</code> to reference env variables from this project.
+                    Use <code className="text-foreground">{"{{VAR}}"}</code> to reference env
+                    variables from this project.
                   </p>
                 </div>
               )}
@@ -233,12 +230,14 @@ function PlaygroundPage() {
                   <span className="text-muted-foreground">Response</span>
                   {response && (
                     <>
-                      <span className={cn(
-                        "px-2 py-0.5 rounded-md font-medium border",
-                        response.status < 300
-                          ? "bg-success/10 text-success border-success/20"
-                          : "bg-destructive/10 text-destructive border-destructive/20",
-                      )}>
+                      <span
+                        className={cn(
+                          "px-2 py-0.5 rounded-md font-medium border",
+                          response.status < 300
+                            ? "bg-success/10 text-success border-success/20"
+                            : "bg-destructive/10 text-destructive border-destructive/20",
+                        )}
+                      >
                         {response.status} OK
                       </span>
                       <span className="text-muted-foreground">{response.time} ms</span>
@@ -251,7 +250,11 @@ function PlaygroundPage() {
                     onClick={copy}
                     className="inline-flex items-center gap-1.5 rounded-md border border-input bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted transition"
                   >
-                    {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copied ? (
+                      <Check className="h-3.5 w-3.5 text-success" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
                     {copied ? "Copied" : "Copy"}
                   </button>
                 )}
@@ -297,7 +300,10 @@ function KVEditor({
         <div></div>
       </div>
       {rows.map((r) => (
-        <div key={r.id} className="grid grid-cols-[28px_1fr_1fr_28px] items-center px-3 py-1 border-b border-border last:border-b-0">
+        <div
+          key={r.id}
+          className="grid grid-cols-[28px_1fr_1fr_28px] items-center px-3 py-1 border-b border-border last:border-b-0"
+        >
           <input
             type="checkbox"
             checked={r.on}

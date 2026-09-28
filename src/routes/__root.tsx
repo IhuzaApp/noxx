@@ -1,4 +1,12 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts, useRouterState, useNavigate } from "@tanstack/react-router";
+import {
+  Outlet,
+  Link,
+  createRootRoute,
+  HeadContent,
+  Scripts,
+  useRouterState,
+  useNavigate,
+} from "@tanstack/react-router";
 import { useEffect } from "react";
 import { ProjectProvider } from "@/lib/project-context";
 import { ThemeProvider } from "@/lib/theme-context";
@@ -34,10 +42,18 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Noxx — Unified Communication API" },
-      { name: "description", content: "Send SMS, Email, WhatsApp and AI messages and design automation flows from one unified API platform." },
+      {
+        name: "description",
+        content:
+          "Send SMS, Email, WhatsApp and AI messages and design automation flows from one unified API platform.",
+      },
       { name: "author", content: "Noxx" },
       { property: "og:title", content: "Noxx — Unified Communication API" },
-      { property: "og:description", content: "Send SMS, Email, WhatsApp and AI messages and design automation flows from one unified API platform." },
+      {
+        property: "og:description",
+        content:
+          "Send SMS, Email, WhatsApp and AI messages and design automation flows from one unified API platform.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Noxx" },
@@ -87,13 +103,16 @@ function AuthRouter() {
   const { user } = useAuth();
 
   useEffect(() => {
-    const publicPaths = ['/', '/login', '/signup'];
+    const publicPaths = ["/", "/login", "/signup"];
     const isPublicPath = publicPaths.includes(routerState.location.pathname);
 
     if (!user && !isPublicPath) {
-      navigate({ to: '/login', replace: true });
-    } else if (user && (routerState.location.pathname === '/login' || routerState.location.pathname === '/signup')) {
-      navigate({ to: '/dashboard', replace: true });
+      navigate({ to: "/login", replace: true });
+    } else if (
+      user &&
+      (routerState.location.pathname === "/login" || routerState.location.pathname === "/signup")
+    ) {
+      navigate({ to: "/dashboard", replace: true });
     }
   }, [routerState.location.pathname, navigate, user]);
 

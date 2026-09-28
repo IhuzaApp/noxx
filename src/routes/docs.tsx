@@ -6,7 +6,11 @@ export const Route = createFileRoute("/docs")({
   head: () => ({
     meta: [
       { title: "Docs — Noxx" },
-      { name: "description", content: "Learn how to set up and use every Noxx feature: projects, flows, automations, contacts, surveys, payments and more." },
+      {
+        name: "description",
+        content:
+          "Learn how to set up and use every Noxx feature: projects, flows, automations, contacts, surveys, payments and more.",
+      },
       { property: "og:title", content: "Docs — Noxx" },
       { property: "og:description", content: "Step-by-step guides for every Noxx feature." },
     ],
@@ -29,7 +33,10 @@ function DocsLayout() {
             <span className="text-xs text-muted-foreground">· Docs</span>
           </Link>
           <div className="flex-1" />
-          <Link to="/dashboard" className="text-sm font-medium text-foreground hover:text-primary transition">
+          <Link
+            to="/dashboard"
+            className="text-sm font-medium text-foreground hover:text-primary transition"
+          >
             Open dashboard
           </Link>
         </div>
@@ -44,8 +51,14 @@ function DocsLayout() {
             <Link
               to="/docs"
               activeOptions={{ exact: true }}
-              activeProps={{ className: "block rounded-md px-2.5 py-1.5 bg-accent text-accent-foreground font-medium" }}
-              inactiveProps={{ className: "block rounded-md px-2.5 py-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition" }}
+              activeProps={{
+                className:
+                  "block rounded-md px-2.5 py-1.5 bg-accent text-accent-foreground font-medium",
+              }}
+              inactiveProps={{
+                className:
+                  "block rounded-md px-2.5 py-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition",
+              }}
             >
               Overview
             </Link>
@@ -53,8 +66,14 @@ function DocsLayout() {
               <Link
                 key={s.slug}
                 to={s.path}
-                activeProps={{ className: "block rounded-md px-2.5 py-1.5 bg-accent text-accent-foreground font-medium" }}
-                inactiveProps={{ className: "block rounded-md px-2.5 py-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition" }}
+                activeProps={{
+                  className:
+                    "block rounded-md px-2.5 py-1.5 bg-accent text-accent-foreground font-medium",
+                }}
+                inactiveProps={{
+                  className:
+                    "block rounded-md px-2.5 py-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition",
+                }}
               >
                 {s.title}
               </Link>
@@ -62,9 +81,7 @@ function DocsLayout() {
           </nav>
         </aside>
 
-        <article className="min-w-0">
-          {isIndex ? <DocsIndex /> : <Outlet />}
-        </article>
+        <article className="min-w-0">{isIndex ? <DocsIndex /> : <Outlet />}</article>
       </div>
     </div>
   );
@@ -76,7 +93,8 @@ function DocsIndex() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">Documentation</h1>
         <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
-          Everything you need to set up Noxx for your business. Pick a topic to get a focused, step-by-step guide.
+          Everything you need to set up Noxx for your business. Pick a topic to get a focused,
+          step-by-step guide.
         </p>
       </div>
       <div className="grid sm:grid-cols-2 gap-3">

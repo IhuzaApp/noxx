@@ -1,4 +1,13 @@
-import { MessageSquare, Phone, Mail, Instagram, Sparkles, CreditCard, Webhook, type LucideIcon } from "lucide-react";
+import {
+  MessageSquare,
+  Phone,
+  Mail,
+  Instagram,
+  Sparkles,
+  CreditCard,
+  Webhook,
+  type LucideIcon,
+} from "lucide-react";
 
 export type IntegrationStatus = "connected" | "available" | "needs-attention";
 

@@ -1,8 +1,23 @@
 import { useState, useEffect, useCallback } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
-  Phone, Mail, MessageSquare, Sparkles, Plus, Copy, Workflow, ArrowRight,
-  Search, Trash2, X, Check, Loader2, Code, Layers, FileText, RefreshCw,
+  Phone,
+  Mail,
+  MessageSquare,
+  Sparkles,
+  Plus,
+  Copy,
+  Workflow,
+  ArrowRight,
+  Search,
+  Trash2,
+  X,
+  Check,
+  Loader2,
+  Code,
+  Layers,
+  FileText,
+  RefreshCw,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Topbar } from "@/components/Topbar";
@@ -18,19 +33,32 @@ export const Route = createFileRoute("/templates")({
   head: () => ({
     meta: [
       { title: "Templates — Noxx" },
-      { name: "description", content: "Reusable single-channel templates and prebuilt omnichannel flow templates." },
+      {
+        name: "description",
+        content: "Reusable single-channel templates and prebuilt omnichannel flow templates.",
+      },
     ],
   }),
   component: TemplatesPage,
 });
 
-const channelIcons = { sms: Phone, email: Mail, whatsapp: MessageSquare, ai: Sparkles, voice: Phone };
+const channelIcons = {
+  sms: Phone,
+  email: Mail,
+  whatsapp: MessageSquare,
+  ai: Sparkles,
+  voice: Phone,
+};
 
 type OmnichannelTemplate = {
   id: string;
   name: string;
   description: string;
-  steps: Array<{ channel: Channel; label: string; kind?: "primary" | "fallback" | "wait" | "branch" }>;
+  steps: Array<{
+    channel: Channel;
+    label: string;
+    kind?: "primary" | "fallback" | "wait" | "branch";
+  }>;
   uses: number;
   type?: string;
   created_at?: string;
@@ -47,19 +75,56 @@ type SingleTemplate = {
 };
 
 const INITIAL_SINGLE_TEMPLATES: SingleTemplate[] = [
-  { id: "t1", name: "OTP verification", channel: "sms", body: "Your code is {{code}}. It expires in 10 minutes.", uses: 18402 },
-  { id: "t2", name: "Order shipped", channel: "email", body: "Hi {{name}}, your order {{order_id}} has shipped.", uses: 9201 },
-  { id: "t3", name: "Appointment reminder", channel: "whatsapp", body: "Reminder: your appointment is at {{time}}.", uses: 6541 },
-  { id: "t4", name: "AI summary", channel: "ai", body: "Summarize the following conversation: {{transcript}}", uses: 2103 },
-  { id: "t5", name: "Welcome email", channel: "email", body: "Welcome to {{org}}! Here's how to get started.", uses: 4820 },
-  { id: "t6", name: "Payment receipt", channel: "email", body: "Thanks {{name}} — we received your payment of {{amount}}.", uses: 7311 },
+  {
+    id: "t1",
+    name: "OTP verification",
+    channel: "sms",
+    body: "Your code is {{code}}. It expires in 10 minutes.",
+    uses: 18402,
+  },
+  {
+    id: "t2",
+    name: "Order shipped",
+    channel: "email",
+    body: "Hi {{name}}, your order {{order_id}} has shipped.",
+    uses: 9201,
+  },
+  {
+    id: "t3",
+    name: "Appointment reminder",
+    channel: "whatsapp",
+    body: "Reminder: your appointment is at {{time}}.",
+    uses: 6541,
+  },
+  {
+    id: "t4",
+    name: "AI summary",
+    channel: "ai",
+    body: "Summarize the following conversation: {{transcript}}",
+    uses: 2103,
+  },
+  {
+    id: "t5",
+    name: "Welcome email",
+    channel: "email",
+    body: "Welcome to {{org}}! Here's how to get started.",
+    uses: 4820,
+  },
+  {
+    id: "t6",
+    name: "Payment receipt",
+    channel: "email",
+    body: "Thanks {{name}} — we received your payment of {{amount}}.",
+    uses: 7311,
+  },
 ];
 
 const INITIAL_OMNI_TEMPLATES: OmnichannelTemplate[] = [
   {
     id: "ot1",
     name: "OTP with SMS fallback",
-    description: "Send a one-time code over WhatsApp, fall back to SMS if not delivered in 30 seconds.",
+    description:
+      "Send a one-time code over WhatsApp, fall back to SMS if not delivered in 30 seconds.",
     steps: [
       { channel: "whatsapp", label: "Send OTP via WhatsApp", kind: "primary" },
       { channel: "sms", label: "Fallback: Send via SMS", kind: "fallback" },
@@ -69,7 +134,8 @@ const INITIAL_OMNI_TEMPLATES: OmnichannelTemplate[] = [
   {
     id: "ot2",
     name: "Order notification (WhatsApp + Email backup)",
-    description: "Notify shipping over WhatsApp; if not delivered in 5 minutes, send a richer Email backup.",
+    description:
+      "Notify shipping over WhatsApp; if not delivered in 5 minutes, send a richer Email backup.",
     steps: [
       { channel: "whatsapp", label: "Send shipping update", kind: "primary" },
       { channel: "email", label: "Fallback: Email with tracking link", kind: "fallback" },
@@ -100,7 +166,8 @@ const INITIAL_OMNI_TEMPLATES: OmnichannelTemplate[] = [
   {
     id: "ot5",
     name: "Sales Inquiry & Demo Routing (Target: sales@domain.com)",
-    description: "Routes sales@ emails to AI Sales Rep with Enterprise pricing focus & demo calendar booking.",
+    description:
+      "Routes sales@ emails to AI Sales Rep with Enterprise pricing focus & demo calendar booking.",
     steps: [
       { channel: "ai", label: "AI Sales Representative (sales@agatike.com)", kind: "primary" },
       { channel: "email", label: "Send Demo Link or Product Specs PDF", kind: "branch" },
@@ -110,7 +177,8 @@ const INITIAL_OMNI_TEMPLATES: OmnichannelTemplate[] = [
   {
     id: "ot6",
     name: "Urgent Support Bypass (Skip AI → Direct Human Ticket)",
-    description: "Filters subject for 'URGENT'; bypasses AI auto-reply and creates open ticket for human agents.",
+    description:
+      "Filters subject for 'URGENT'; bypasses AI auto-reply and creates open ticket for human agents.",
     steps: [
       { channel: "email", label: "Filter Subject: URGENT (support@agatike.com)", kind: "primary" },
       { channel: "email", label: "⚡ Skip AI → Create Open Ticket directly", kind: "fallback" },
@@ -121,11 +189,20 @@ const INITIAL_OMNI_TEMPLATES: OmnichannelTemplate[] = [
 
 import { API_BASE } from "@/lib/api-config";
 
-const PRESET_VARIABLES = ["{{name}}", "{{code}}", "{{order_id}}", "{{time}}", "{{amount}}", "{{org}}", "{{transcript}}"];
+const PRESET_VARIABLES = [
+  "{{name}}",
+  "{{code}}",
+  "{{order_id}}",
+  "{{time}}",
+  "{{amount}}",
+  "{{org}}",
+  "{{transcript}}",
+];
 
 function TemplatesPage() {
   const navigate = useNavigate();
-  const [singleTemplates, setSingleTemplates] = useState<SingleTemplate[]>(INITIAL_SINGLE_TEMPLATES);
+  const [singleTemplates, setSingleTemplates] =
+    useState<SingleTemplate[]>(INITIAL_SINGLE_TEMPLATES);
   const [omniTemplates, setOmniTemplates] = useState<OmnichannelTemplate[]>(INITIAL_OMNI_TEMPLATES);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -134,7 +211,9 @@ function TemplatesPage() {
   const handleUseFlow = async (t: OmnichannelTemplate) => {
     const existingFlows = userFlowStore.get();
     const targetId = t.id.startsWith("fl_") || t.id.startsWith("ot") ? t.id : `fl_${t.id}`;
-    let existing = existingFlows.find((f) => f.id === targetId || f.id === t.id || f.name === t.name);
+    let existing = existingFlows.find(
+      (f) => f.id === targetId || f.id === t.id || f.name === t.name,
+    );
 
     if (!existing) {
       const newFlow: UserFlow = {
@@ -174,7 +253,10 @@ function TemplatesPage() {
         nodes.push({
           id: nodeId,
           type: "flow",
-          position: { x: step.kind === "fallback" ? 580 : step.kind === "branch" ? 120 : 320, y: currentY },
+          position: {
+            x: step.kind === "fallback" ? 580 : step.kind === "branch" ? 120 : 320,
+            y: currentY,
+          },
           data: {
             kind: (step.channel as any) || "whatsapp",
             label: step.label || `Send ${step.channel}`,
@@ -183,7 +265,8 @@ function TemplatesPage() {
           },
         });
 
-        const edgeKind = step.kind === "fallback" ? "fallback" : step.kind === "branch" ? "yes" : "default";
+        const edgeKind =
+          step.kind === "fallback" ? "fallback" : step.kind === "branch" ? "yes" : "default";
         edges.push(makeEdge(`e_${prevNodeId}-${nodeId}`, prevNodeId, nodeId, edgeKind as any));
         currentY += 160;
       });
@@ -242,7 +325,9 @@ function TemplatesPage() {
   const [channel, setChannel] = useState<Channel>("sms");
   const [body, setBody] = useState("");
   const [description, setDescription] = useState("");
-  const [steps, setSteps] = useState<Array<{ channel: Channel; label: string; kind?: "primary" | "fallback" | "wait" | "branch" }>>([
+  const [steps, setSteps] = useState<
+    Array<{ channel: Channel; label: string; kind?: "primary" | "fallback" | "wait" | "branch" }>
+  >([
     { channel: "whatsapp", label: "Primary Step", kind: "primary" },
     { channel: "sms", label: "Fallback Step", kind: "fallback" },
   ]);
@@ -312,8 +397,18 @@ function TemplatesPage() {
   const handleDuplicate = async (t: SingleTemplate | OmnichannelTemplate, isOmni: boolean) => {
     try {
       const payload = isOmni
-        ? { name: `${t.name} (Copy)`, description: (t as OmnichannelTemplate).description, steps: (t as OmnichannelTemplate).steps, type: "omnichannel" }
-        : { name: `${t.name} (Copy)`, channel: (t as SingleTemplate).channel, body: (t as SingleTemplate).body, type: "single" };
+        ? {
+            name: `${t.name} (Copy)`,
+            description: (t as OmnichannelTemplate).description,
+            steps: (t as OmnichannelTemplate).steps,
+            type: "omnichannel",
+          }
+        : {
+            name: `${t.name} (Copy)`,
+            channel: (t as SingleTemplate).channel,
+            body: (t as SingleTemplate).body,
+            type: "single",
+          };
 
       const res = await fetch(`${API_BASE}/templates`, {
         method: "POST",
@@ -351,14 +446,23 @@ function TemplatesPage() {
 
   // Filter templates
   const filteredSingle = singleTemplates.filter((t) => {
-    const matchesSearch = !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.body.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch =
+      !search ||
+      t.name.toLowerCase().includes(search.toLowerCase()) ||
+      t.body.toLowerCase().includes(search.toLowerCase());
     const matchesChannel = channelFilter === "all" || t.channel === channelFilter;
     return matchesSearch && matchesChannel;
   });
 
   const filteredOmni = omniTemplates.filter((t) => {
-    const matchesSearch = !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.description.toLowerCase().includes(search.toLowerCase());
-    const matchesChannel = channelFilter === "all" || channelFilter === "omnichannel" || t.steps.some((s) => s.channel === channelFilter);
+    const matchesSearch =
+      !search ||
+      t.name.toLowerCase().includes(search.toLowerCase()) ||
+      t.description.toLowerCase().includes(search.toLowerCase());
+    const matchesChannel =
+      channelFilter === "all" ||
+      channelFilter === "omnichannel" ||
+      t.steps.some((s) => s.channel === channelFilter);
     return matchesSearch && matchesChannel;
   });
 
@@ -400,7 +504,7 @@ function TemplatesPage() {
                   "px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all whitespace-nowrap cursor-pointer",
                   channelFilter === ch
                     ? "bg-card text-foreground shadow-soft border border-border"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {ch}
@@ -410,18 +514,28 @@ function TemplatesPage() {
         </div>
 
         {/* Omnichannel flow templates section */}
-        {(channelFilter === "all" || channelFilter === "omnichannel" || filteredOmni.length > 0) && (
+        {(channelFilter === "all" ||
+          channelFilter === "omnichannel" ||
+          filteredOmni.length > 0) && (
           <section>
             <div className="flex items-end justify-between mb-4">
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-primary">Omnichannel flows</div>
-                <h2 className="mt-1 text-base font-bold text-foreground">Prebuilt flow templates</h2>
-                <p className="text-xs text-muted-foreground">Recipes that combine multiple messaging channels with fallback triggers.</p>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                  Omnichannel flows
+                </div>
+                <h2 className="mt-1 text-base font-bold text-foreground">
+                  Prebuilt flow templates
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Recipes that combine multiple messaging channels with fallback triggers.
+                </p>
               </div>
             </div>
 
             {filteredOmni.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic py-4">No flow templates matching your filter.</p>
+              <p className="text-xs text-muted-foreground italic py-4">
+                No flow templates matching your filter.
+              </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredOmni.map((t) => (
@@ -429,7 +543,9 @@ function TemplatesPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-sm font-semibold text-foreground">{t.name}</div>
-                        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{t.description}</p>
+                        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                          {t.description}
+                        </p>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
@@ -448,7 +564,11 @@ function TemplatesPage() {
                     <div className="mt-4 flex flex-wrap items-center gap-1.5">
                       {t.steps.map((s, i) => {
                         const Icon = channelIcons[s.channel] || Phone;
-                        const meta = channelMeta[s.channel] || { bg: "bg-muted", color: "text-foreground", label: s.channel };
+                        const meta = channelMeta[s.channel] || {
+                          bg: "bg-muted",
+                          color: "text-foreground",
+                          label: s.channel,
+                        };
                         return (
                           <span key={i} className="inline-flex items-center gap-1.5">
                             <span
@@ -456,7 +576,9 @@ function TemplatesPage() {
                                 "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-medium",
                                 meta.bg,
                                 meta.color,
-                                s.kind === "fallback" ? "border-amber-500/40 border-dashed" : "border-border",
+                                s.kind === "fallback"
+                                  ? "border-amber-500/40 border-dashed"
+                                  : "border-border",
                               )}
                             >
                               <Icon className="h-3 w-3" />
@@ -467,7 +589,9 @@ function TemplatesPage() {
                                 </span>
                               )}
                             </span>
-                            {i < t.steps.length - 1 && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
+                            {i < t.steps.length - 1 && (
+                              <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                            )}
                           </span>
                         );
                       })}
@@ -501,38 +625,67 @@ function TemplatesPage() {
         {/* Single-channel templates section */}
         <section>
           <div className="mb-4">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Single-channel</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Single-channel
+            </div>
             <h2 className="mt-1 text-base font-bold text-foreground">Message templates</h2>
-            <p className="text-xs text-muted-foreground">Reusable, variable-driven message templates saved in your database.</p>
+            <p className="text-xs text-muted-foreground">
+              Reusable, variable-driven message templates saved in your database.
+            </p>
           </div>
 
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-44 rounded-2xl border border-border bg-card animate-pulse" />
+                <div
+                  key={i}
+                  className="h-44 rounded-2xl border border-border bg-card animate-pulse"
+                />
               ))}
             </div>
           ) : filteredSingle.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center">
               <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
               <h3 className="text-sm font-semibold text-foreground">No message templates found</h3>
-              <p className="text-xs text-muted-foreground mt-1">Create your first template using the button above.</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Create your first template using the button above.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredSingle.map((t) => {
                 const Icon = channelIcons[t.channel] || Mail;
-                const meta = channelMeta[t.channel] || { bg: "bg-muted", color: "text-foreground", label: t.channel };
+                const meta = channelMeta[t.channel] || {
+                  bg: "bg-muted",
+                  color: "text-foreground",
+                  label: t.channel,
+                };
                 const isCopied = copiedId === t.id;
                 return (
-                  <Card key={t.id} className="p-5 hover:shadow-elevated transition group relative flex flex-col justify-between">
+                  <Card
+                    key={t.id}
+                    className="p-5 hover:shadow-elevated transition group relative flex flex-col justify-between"
+                  >
                     <div>
                       <div className="flex items-start justify-between">
-                        <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shrink-0", meta.bg, meta.color)}>
+                        <div
+                          className={cn(
+                            "h-10 w-10 rounded-xl flex items-center justify-center shrink-0",
+                            meta.bg,
+                            meta.color,
+                          )}
+                        >
                           <Icon className="h-5 w-5" />
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border", meta.bg, meta.color, "border-border/40")}>
+                          <span
+                            className={cn(
+                              "text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border",
+                              meta.bg,
+                              meta.color,
+                              "border-border/40",
+                            )}
+                          >
                             {meta.label}
                           </span>
                           <button
@@ -558,7 +711,11 @@ function TemplatesPage() {
                           onClick={() => copyToClipboard(t.id, t.body)}
                           className="inline-flex items-center gap-1 text-xs text-foreground font-medium hover:text-primary transition cursor-pointer"
                         >
-                          {isCopied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+                          {isCopied ? (
+                            <Check className="h-3 w-3 text-emerald-500" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
                           {isCopied ? "Copied" : "Copy"}
                         </button>
                         <button
@@ -584,7 +741,9 @@ function TemplatesPage() {
             <div className="flex items-center justify-between border-b border-border pb-4">
               <div>
                 <h3 className="text-base font-bold text-foreground">Create New Template</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Templates are saved permanently to your database.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Templates are saved permanently to your database.
+                </p>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -603,14 +762,18 @@ function TemplatesPage() {
             <form onSubmit={handleSaveTemplate} className="space-y-4">
               {/* Type Switcher */}
               <div>
-                <label className="text-xs font-semibold text-foreground block mb-1.5">Template Type</label>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">
+                  Template Type
+                </label>
                 <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-muted/60 border border-border">
                   <button
                     type="button"
                     onClick={() => setModalType("single")}
                     className={cn(
                       "py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer",
-                      modalType === "single" ? "bg-card text-foreground shadow-soft border border-border" : "text-muted-foreground hover:text-foreground"
+                      modalType === "single"
+                        ? "bg-card text-foreground shadow-soft border border-border"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   >
                     <FileText className="h-3.5 w-3.5" /> Single Message
@@ -620,7 +783,9 @@ function TemplatesPage() {
                     onClick={() => setModalType("omnichannel")}
                     className={cn(
                       "py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer",
-                      modalType === "omnichannel" ? "bg-card text-foreground shadow-soft border border-border" : "text-muted-foreground hover:text-foreground"
+                      modalType === "omnichannel"
+                        ? "bg-card text-foreground shadow-soft border border-border"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   >
                     <Workflow className="h-3.5 w-3.5" /> Omnichannel Flow
@@ -630,7 +795,9 @@ function TemplatesPage() {
 
               {/* Template Name */}
               <div>
-                <label className="text-xs font-semibold text-foreground block mb-1.5">Template Name</label>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">
+                  Template Name
+                </label>
                 <input
                   type="text"
                   required
@@ -645,7 +812,9 @@ function TemplatesPage() {
                 <>
                   {/* Channel Select */}
                   <div>
-                    <label className="text-xs font-semibold text-foreground block mb-1.5">Channel</label>
+                    <label className="text-xs font-semibold text-foreground block mb-1.5">
+                      Channel
+                    </label>
                     <div className="grid grid-cols-5 gap-2">
                       {(["sms", "email", "whatsapp", "ai", "voice"] as Channel[]).map((ch) => {
                         const Icon = channelIcons[ch];
@@ -659,7 +828,7 @@ function TemplatesPage() {
                               "flex flex-col items-center gap-1.5 p-2.5 rounded-xl border text-xs font-medium transition cursor-pointer",
                               channel === ch
                                 ? `${meta.bg} ${meta.color} border-primary font-bold shadow-soft`
-                                : "bg-card border-border text-muted-foreground hover:text-foreground"
+                                : "bg-card border-border text-muted-foreground hover:text-foreground",
                             )}
                           >
                             <Icon className="h-4 w-4" />
@@ -673,8 +842,12 @@ function TemplatesPage() {
                   {/* Body & Variables */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-xs font-semibold text-foreground">Message Content</label>
-                      <span className="text-[10px] text-muted-foreground">Tap tag to insert variable</span>
+                      <label className="text-xs font-semibold text-foreground">
+                        Message Content
+                      </label>
+                      <span className="text-[10px] text-muted-foreground">
+                        Tap tag to insert variable
+                      </span>
                     </div>
 
                     {/* Variable Pills */}
@@ -705,7 +878,9 @@ function TemplatesPage() {
                 <>
                   {/* Omnichannel Description */}
                   <div>
-                    <label className="text-xs font-semibold text-foreground block mb-1.5">Flow Description</label>
+                    <label className="text-xs font-semibold text-foreground block mb-1.5">
+                      Flow Description
+                    </label>
                     <textarea
                       rows={2}
                       value={description}
@@ -721,7 +896,12 @@ function TemplatesPage() {
                       <label className="text-xs font-semibold text-foreground">Flow Steps</label>
                       <button
                         type="button"
-                        onClick={() => setSteps([...steps, { channel: "sms", label: "New Step", kind: "fallback" }])}
+                        onClick={() =>
+                          setSteps([
+                            ...steps,
+                            { channel: "sms", label: "New Step", kind: "fallback" },
+                          ])
+                        }
                         className="text-xs text-primary hover:underline flex items-center gap-1 font-semibold cursor-pointer"
                       >
                         <Plus className="h-3 w-3" /> Add Step
@@ -730,7 +910,10 @@ function TemplatesPage() {
 
                     <div className="space-y-2 max-h-48 overflow-auto pr-1">
                       {steps.map((s, idx) => (
-                        <div key={idx} className="flex items-center gap-2 p-2.5 rounded-xl border border-border bg-muted/30">
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 p-2.5 rounded-xl border border-border bg-muted/30"
+                        >
                           <select
                             value={s.channel}
                             onChange={(e) => {

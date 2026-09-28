@@ -17,8 +17,20 @@ export const Route = createFileRoute("/settings")({
 
 const integrations = [
   { name: "Twilio (SMS)", icon: Phone, channel: "sms", connected: true, account: "AC•••3914" },
-  { name: "SendGrid (Email)", icon: Mail, channel: "email", connected: true, account: "noreply@noxx.dev" },
-  { name: "WhatsApp Business", icon: MessageSquare, channel: "whatsapp", connected: false, account: "Not connected" },
+  {
+    name: "SendGrid (Email)",
+    icon: Mail,
+    channel: "email",
+    connected: true,
+    account: "noreply@noxx.dev",
+  },
+  {
+    name: "WhatsApp Business",
+    icon: MessageSquare,
+    channel: "whatsapp",
+    connected: false,
+    account: "Not connected",
+  },
   { name: "OpenAI", icon: Sparkles, channel: "ai", connected: true, account: "org-•••721" },
 ] as const;
 
@@ -44,10 +56,12 @@ function SettingsPage() {
               const Icon = i.icon;
               return (
                 <div key={i.name} className="flex items-center gap-4 p-4">
-                  <div className={cn(
-                    "h-10 w-10 rounded-lg flex items-center justify-center",
-                    `bg-channel-${i.channel}/10 text-channel-${i.channel}`,
-                  )}>
+                  <div
+                    className={cn(
+                      "h-10 w-10 rounded-lg flex items-center justify-center",
+                      `bg-channel-${i.channel}/10 text-channel-${i.channel}`,
+                    )}
+                  >
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -60,12 +74,14 @@ function SettingsPage() {
                       Connected
                     </span>
                   ) : null}
-                  <button className={cn(
-                    "rounded-md px-3 py-1.5 text-xs font-medium transition",
-                    i.connected
-                      ? "border border-input bg-card text-foreground hover:bg-muted"
-                      : "bg-foreground text-background hover:opacity-90",
-                  )}>
+                  <button
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-xs font-medium transition",
+                      i.connected
+                        ? "border border-input bg-card text-foreground hover:bg-muted"
+                        : "bg-foreground text-background hover:opacity-90",
+                    )}
+                  >
                     {i.connected ? "Manage" : "Connect"}
                   </button>
                 </div>

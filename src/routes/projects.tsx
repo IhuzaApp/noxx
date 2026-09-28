@@ -86,7 +86,8 @@ function ProjectsPage() {
                       className={cn(
                         "text-[11px] font-medium px-2 py-0.5 rounded-md border capitalize",
                         p.env === "production" && "bg-success/10 text-success border-success/20",
-                        p.env === "staging" && "bg-warning/15 text-warning-foreground border-warning/30",
+                        p.env === "staging" &&
+                          "bg-warning/15 text-warning-foreground border-warning/30",
                         p.env === "development" && "bg-muted text-muted-foreground border-border",
                       )}
                     >
@@ -125,16 +126,25 @@ function ProjectsPage() {
               const Icon = p.icon;
               const active = current.id === p.id;
               return (
-                <Card key={p.id} className={cn("p-5 flex flex-col", active && "ring-2 ring-primary/30")}>
+                <Card
+                  key={p.id}
+                  className={cn("p-5 flex flex-col", active && "ring-2 ring-primary/30")}
+                >
                   <div className="flex items-start justify-between">
-                    <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center", p.color)}>
+                    <div
+                      className={cn(
+                        "h-11 w-11 rounded-xl flex items-center justify-center",
+                        p.color,
+                      )}
+                    >
                       <Icon className="h-5 w-5" />
                     </div>
                     <span
                       className={cn(
                         "text-[11px] font-medium px-2 py-0.5 rounded-md border",
                         p.env === "production" && "bg-success/10 text-success border-success/20",
-                        p.env === "staging" && "bg-warning/15 text-warning-foreground border-warning/30",
+                        p.env === "staging" &&
+                          "bg-warning/15 text-warning-foreground border-warning/30",
                         p.env === "development" && "bg-muted text-muted-foreground border-border",
                       )}
                     >
@@ -233,7 +243,9 @@ function ProjectsPage() {
           <Field label="Environment">
             <select
               value={form.env}
-              onChange={(e) => setForm((f) => ({ ...f, env: e.target.value as UserProject["env"] }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, env: e.target.value as UserProject["env"] }))
+              }
               className={inputCls}
             >
               <option value="development">Development</option>

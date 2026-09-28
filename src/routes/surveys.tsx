@@ -29,9 +29,16 @@ export const Route = createFileRoute("/surveys")({
   head: () => ({
     meta: [
       { title: "Surveys — Noxx" },
-      { name: "description", content: "Build and send surveys to your customers. Get a shareable link, collect responses, export results." },
+      {
+        name: "description",
+        content:
+          "Build and send surveys to your customers. Get a shareable link, collect responses, export results.",
+      },
       { property: "og:title", content: "Surveys — Noxx" },
-      { property: "og:description", content: "Create surveys, share a link, collect answers — no code required." },
+      {
+        property: "og:description",
+        content: "Create surveys, share a link, collect answers — no code required.",
+      },
     ],
   }),
   component: SurveysPage,
@@ -128,7 +135,11 @@ function SurveysPage() {
                     onClick={() => copyLink(s.id)}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-input bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition"
                   >
-                    {copied === s.id ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copied === s.id ? (
+                      <Check className="h-3.5 w-3.5 text-success" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
                     {copied === s.id ? "Copied!" : "Copy share link"}
                   </button>
                   <Link
@@ -147,7 +158,9 @@ function SurveysPage() {
           })}
           {surveys.length === 0 && (
             <Card className="p-10 text-center col-span-full">
-              <div className="text-sm text-muted-foreground">No surveys yet — create your first one.</div>
+              <div className="text-sm text-muted-foreground">
+                No surveys yet — create your first one.
+              </div>
             </Card>
           )}
         </div>
@@ -158,7 +171,13 @@ function SurveysPage() {
   );
 }
 
-function SurveyResponses({ surveyId, questions }: { surveyId: string; questions: SurveyQuestion[] }) {
+function SurveyResponses({
+  surveyId,
+  questions,
+}: {
+  surveyId: string;
+  questions: SurveyQuestion[];
+}) {
   const responses = useStore(surveyResponseStore).filter((r) => r.surveyId === surveyId);
   if (responses.length === 0) return null;
   const recent = responses.slice(0, 3);
@@ -169,7 +188,10 @@ function SurveyResponses({ surveyId, questions }: { surveyId: string; questions:
       </summary>
       <div className="mt-2 space-y-2 max-h-60 overflow-auto">
         {recent.map((r) => (
-          <div key={r.id} className="rounded-md border border-border bg-muted/30 p-2.5 text-[11px] space-y-1">
+          <div
+            key={r.id}
+            className="rounded-md border border-border bg-muted/30 p-2.5 text-[11px] space-y-1"
+          >
             <div className="text-muted-foreground">{new Date(r.submittedAt).toLocaleString()}</div>
             {questions.map((q) => {
               const a = r.answers[q.id];
@@ -177,7 +199,9 @@ function SurveyResponses({ surveyId, questions }: { surveyId: string; questions:
               return (
                 <div key={q.id}>
                   <span className="font-medium text-foreground">{q.prompt}: </span>
-                  <span className="text-muted-foreground">{Array.isArray(a) ? a.join(", ") : String(a)}</span>
+                  <span className="text-muted-foreground">
+                    {Array.isArray(a) ? a.join(", ") : String(a)}
+                  </span>
                 </div>
               );
             })}
@@ -281,7 +305,9 @@ function NewSurveyModal({ open, onClose }: { open: boolean; onClose: () => void 
                 <GripVertical className="h-4 w-4 text-muted-foreground mt-2.5 shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-muted-foreground w-6">Q{i + 1}</span>
+                    <span className="text-[11px] font-semibold text-muted-foreground w-6">
+                      Q{i + 1}
+                    </span>
                     <input
                       required
                       value={q.prompt}
@@ -291,7 +317,9 @@ function NewSurveyModal({ open, onClose }: { open: boolean; onClose: () => void 
                     />
                     <select
                       value={q.type}
-                      onChange={(e) => updateQ(q.id, { type: e.target.value as SurveyQuestionType })}
+                      onChange={(e) =>
+                        updateQ(q.id, { type: e.target.value as SurveyQuestionType })
+                      }
                       className={cn(inputCls, "w-40")}
                     >
                       {typeOptions.map((t) => (

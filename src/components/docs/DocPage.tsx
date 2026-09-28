@@ -19,7 +19,9 @@ export function DocPage({ slug, icon: Icon, title, intro, children, cta }: Props
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Link to="/docs" className="hover:text-foreground transition">Docs</Link>
+        <Link to="/docs" className="hover:text-foreground transition">
+          Docs
+        </Link>
         <span>/</span>
         <span className="text-foreground">{title}</span>
       </div>
@@ -34,9 +36,7 @@ export function DocPage({ slug, icon: Icon, title, intro, children, cta }: Props
         </div>
       </div>
 
-      <div className="prose-doc space-y-6 text-sm text-foreground leading-relaxed">
-        {children}
-      </div>
+      <div className="prose-doc space-y-6 text-sm text-foreground leading-relaxed">{children}</div>
 
       {cta && (
         <Link
@@ -50,17 +50,35 @@ export function DocPage({ slug, icon: Icon, title, intro, children, cta }: Props
 
       <div className="grid sm:grid-cols-2 gap-3 pt-6 border-t border-border">
         {prev ? (
-          <Link to={prev.path} className="group rounded-lg border border-border bg-card p-4 hover:border-primary/40 transition">
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><ArrowLeft className="h-3 w-3" /> Previous</div>
-            <div className="mt-1 text-sm font-semibold text-foreground group-hover:text-primary transition">{prev.title}</div>
+          <Link
+            to={prev.path}
+            className="group rounded-lg border border-border bg-card p-4 hover:border-primary/40 transition"
+          >
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <ArrowLeft className="h-3 w-3" /> Previous
+            </div>
+            <div className="mt-1 text-sm font-semibold text-foreground group-hover:text-primary transition">
+              {prev.title}
+            </div>
           </Link>
-        ) : <div />}
+        ) : (
+          <div />
+        )}
         {next ? (
-          <Link to={next.path} className="group rounded-lg border border-border bg-card p-4 hover:border-primary/40 transition text-right">
-            <div className="flex items-center justify-end gap-1.5 text-[11px] text-muted-foreground">Next <ArrowRight className="h-3 w-3" /></div>
-            <div className="mt-1 text-sm font-semibold text-foreground group-hover:text-primary transition">{next.title}</div>
+          <Link
+            to={next.path}
+            className="group rounded-lg border border-border bg-card p-4 hover:border-primary/40 transition text-right"
+          >
+            <div className="flex items-center justify-end gap-1.5 text-[11px] text-muted-foreground">
+              Next <ArrowRight className="h-3 w-3" />
+            </div>
+            <div className="mt-1 text-sm font-semibold text-foreground group-hover:text-primary transition">
+              {next.title}
+            </div>
           </Link>
-        ) : <div />}
+        ) : (
+          <div />
+        )}
       </div>
     </div>
   );
@@ -70,7 +88,9 @@ export function Step({ n, title, children }: { n: number; title: string; childre
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="flex items-center gap-2.5">
-        <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center shrink-0">{n}</div>
+        <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center shrink-0">
+          {n}
+        </div>
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       </div>
       <div className="mt-2.5 pl-8.5 text-sm text-muted-foreground space-y-2">{children}</div>
@@ -78,7 +98,13 @@ export function Step({ n, title, children }: { n: number; title: string; childre
   );
 }
 
-export function Callout({ children, tone = "info" }: { children: ReactNode; tone?: "info" | "warn" }) {
+export function Callout({
+  children,
+  tone = "info",
+}: {
+  children: ReactNode;
+  tone?: "info" | "warn";
+}) {
   const tones = {
     info: "bg-info/5 border-info/20 text-foreground",
     warn: "bg-warning/5 border-warning/30 text-foreground",

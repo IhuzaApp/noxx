@@ -48,9 +48,22 @@ export const projects: Project[] = [
   },
 ];
 
-export const envVars: Record<string, Array<{ key: string; value: string; secret: boolean; env: "development" | "staging" | "production" }>> = {
+export const envVars: Record<
+  string,
+  Array<{
+    key: string;
+    value: string;
+    secret: boolean;
+    env: "development" | "staging" | "production";
+  }>
+> = {
   p_support: [
-    { key: "OPENAI_API_KEY", value: "sk-proj-••••••••••••••••f3A2", secret: true, env: "production" },
+    {
+      key: "OPENAI_API_KEY",
+      value: "sk-proj-••••••••••••••••f3A2",
+      secret: true,
+      env: "production",
+    },
     { key: "SUPPORT_PHONE", value: "+1 (415) 555-0100", secret: false, env: "production" },
     { key: "ESCALATION_EMAIL", value: "ops@acme.co", secret: false, env: "production" },
     { key: "MAX_RETRIES", value: "3", secret: false, env: "development" },

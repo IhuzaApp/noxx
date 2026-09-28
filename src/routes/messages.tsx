@@ -24,13 +24,23 @@ export const Route = createFileRoute("/messages")({
   head: () => ({
     meta: [
       { title: "Messages — Noxx" },
-      { name: "description", content: "Browse messages with filters or view full conversations across channels per recipient." },
+      {
+        name: "description",
+        content:
+          "Browse messages with filters or view full conversations across channels per recipient.",
+      },
     ],
   }),
   component: MessagesPage,
 });
 
-const channelIcons = { sms: Phone, email: Mail, whatsapp: MessageSquare, ai: Sparkles, voice: Phone };
+const channelIcons = {
+  sms: Phone,
+  email: Mail,
+  whatsapp: MessageSquare,
+  ai: Sparkles,
+  voice: Phone,
+};
 
 function MessagesPage() {
   const [view, setView] = useState<"table" | "conversations">("conversations");
@@ -146,16 +156,29 @@ function TableView() {
                   <tr key={m.id} className="hover:bg-muted/40 transition">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2">
-                        <span className={cn("h-7 w-7 rounded-md flex items-center justify-center", meta.bg, meta.color)}>
+                        <span
+                          className={cn(
+                            "h-7 w-7 rounded-md flex items-center justify-center",
+                            meta.bg,
+                            meta.color,
+                          )}
+                        >
                           <Icon className="h-3.5 w-3.5" />
                         </span>
                         <span className="font-medium text-foreground">{meta.label}</span>
                       </div>
                     </td>
                     <td className="px-5 py-3 text-foreground font-mono text-xs">{m.recipient}</td>
-                    <td className="px-5 py-3 text-muted-foreground max-w-md truncate">{m.preview}</td>
+                    <td className="px-5 py-3 text-muted-foreground max-w-md truncate">
+                      {m.preview}
+                    </td>
                     <td className="px-5 py-3">
-                      <span className={cn("text-xs font-medium px-2 py-0.5 rounded-md border", st.className)}>
+                      <span
+                        className={cn(
+                          "text-xs font-medium px-2 py-0.5 rounded-md border",
+                          st.className,
+                        )}
+                      >
                         {st.label}
                       </span>
                     </td>
@@ -193,7 +216,10 @@ function ConversationsView() {
         <div className="p-3 border-b border-border">
           <div className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm">
             <Search className="h-4 w-4 text-muted-foreground" />
-            <input placeholder="Search conversations…" className="flex-1 bg-transparent outline-none" />
+            <input
+              placeholder="Search conversations…"
+              className="flex-1 bg-transparent outline-none"
+            />
           </div>
         </div>
         <div className="flex-1 overflow-auto divide-y divide-border">
@@ -210,7 +236,9 @@ function ConversationsView() {
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <div className="font-medium text-foreground text-sm truncate">{c.contactName}</div>
+                  <div className="font-medium text-foreground text-sm truncate">
+                    {c.contactName}
+                  </div>
                   <div className="text-[10px] text-muted-foreground shrink-0">
                     {formatDistanceToNow(last.timestamp, { addSuffix: true })}
                   </div>
@@ -221,12 +249,21 @@ function ConversationsView() {
                     const Icon = channelIcons[ch];
                     const meta = channelMeta[ch];
                     return (
-                      <span key={ch} className={cn("h-4 w-4 rounded flex items-center justify-center", meta.bg, meta.color)}>
+                      <span
+                        key={ch}
+                        className={cn(
+                          "h-4 w-4 rounded flex items-center justify-center",
+                          meta.bg,
+                          meta.color,
+                        )}
+                      >
                         <Icon className="h-2.5 w-2.5" />
                       </span>
                     );
                   })}
-                  <span className="ml-auto text-[10px] text-muted-foreground truncate">{c.flow}</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground truncate">
+                    {c.flow}
+                  </span>
                 </div>
               </button>
             );
@@ -241,8 +278,7 @@ function ConversationsView() {
             <div className="text-base font-semibold text-foreground">{active.contactName}</div>
             <div className="text-xs text-muted-foreground font-mono">{active.recipient}</div>
             <div className="mt-2 text-[11px] text-muted-foreground">
-              From flow:{" "}
-              <span className="font-medium text-foreground">{active.flow}</span>
+              From flow: <span className="font-medium text-foreground">{active.flow}</span>
             </div>
           </div>
           <div className="flex items-center gap-2 text-[10px]">
@@ -285,19 +321,35 @@ function TimelineItem({ event }: { event: ConversationEvent }) {
   const inbound = event.direction === "inbound";
 
   const statusBadge = (() => {
-    if (event.status === "delivered") return { label: "Delivered", cls: "bg-success/15 text-success border-success/20" };
-    if (event.status === "failed") return { label: "Failed", cls: "bg-destructive/15 text-destructive border-destructive/20" };
-    if (event.status === "fallback") return { label: "Fallback triggered", cls: "bg-warning/15 text-warning-foreground border-warning/30" };
-    if (event.status === "opened") return { label: "Opened", cls: "bg-info/15 text-info border-info/20" };
-    if (event.status === "replied") return { label: "Replied", cls: "bg-primary/10 text-primary border-primary/20" };
-    if (event.status === "sent") return { label: "Sent", cls: "bg-info/15 text-info border-info/20" };
-    if (event.status === "pending") return { label: "Pending", cls: "bg-warning/15 text-warning-foreground border-warning/30" };
+    if (event.status === "delivered")
+      return { label: "Delivered", cls: "bg-success/15 text-success border-success/20" };
+    if (event.status === "failed")
+      return { label: "Failed", cls: "bg-destructive/15 text-destructive border-destructive/20" };
+    if (event.status === "fallback")
+      return {
+        label: "Fallback triggered",
+        cls: "bg-warning/15 text-warning-foreground border-warning/30",
+      };
+    if (event.status === "opened")
+      return { label: "Opened", cls: "bg-info/15 text-info border-info/20" };
+    if (event.status === "replied")
+      return { label: "Replied", cls: "bg-primary/10 text-primary border-primary/20" };
+    if (event.status === "sent")
+      return { label: "Sent", cls: "bg-info/15 text-info border-info/20" };
+    if (event.status === "pending")
+      return { label: "Pending", cls: "bg-warning/15 text-warning-foreground border-warning/30" };
     return { label: "Sent", cls: "bg-muted text-muted-foreground border-border" };
   })();
 
   return (
     <li className="relative pl-10">
-      <span className={cn("absolute left-0 top-1 h-8 w-8 rounded-full flex items-center justify-center ring-4 ring-muted/20", meta.bg, meta.color)}>
+      <span
+        className={cn(
+          "absolute left-0 top-1 h-8 w-8 rounded-full flex items-center justify-center ring-4 ring-muted/20",
+          meta.bg,
+          meta.color,
+        )}
+      >
         <Icon className="h-4 w-4" />
       </span>
       <div
@@ -328,7 +380,9 @@ function TimelineItem({ event }: { event: ConversationEvent }) {
           {event.preview}
         </div>
         <div className="mt-2">
-          <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-md border", statusBadge.cls)}>
+          <span
+            className={cn("text-[10px] font-medium px-2 py-0.5 rounded-md border", statusBadge.cls)}
+          >
             {statusBadge.label}
           </span>
         </div>

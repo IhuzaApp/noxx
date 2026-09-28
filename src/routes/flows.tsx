@@ -62,7 +62,11 @@ export const Route = createFileRoute("/flows")({
   head: () => ({
     meta: [
       { title: "Flow Builder — Noxx" },
-      { name: "description", content: "Visually design omnichannel flows with channel fallback, retries and behavior-based branching." },
+      {
+        name: "description",
+        content:
+          "Visually design omnichannel flows with channel fallback, retries and behavior-based branching.",
+      },
     ],
   }),
   component: FlowsPage,
@@ -71,7 +75,12 @@ export const Route = createFileRoute("/flows")({
 const NODE_TYPES = { flow: FlowNode };
 const nodeTypes = NODE_TYPES;
 
-const palette: Array<{ kind: FlowNodeData["kind"]; label: string; icon: typeof Webhook; group: string }> = [
+const palette: Array<{
+  kind: FlowNodeData["kind"];
+  label: string;
+  icon: typeof Webhook;
+  group: string;
+}> = [
   { kind: "trigger", label: "API trigger", icon: Webhook, group: "Triggers" },
   { kind: "whatsapp", label: "Send WhatsApp", icon: MessageSquare, group: "Channels" },
   { kind: "instagram", label: "Send Instagram", icon: Instagram, group: "Channels" },
@@ -91,7 +100,7 @@ const channelKindAccent: Record<ChannelKind, string> = {
   whatsapp: "bg-channel-whatsapp/10 text-channel-whatsapp",
   instagram: "bg-channel-ai/10 text-channel-ai",
   ai: "bg-channel-ai/10 text-channel-ai",
-  voice: ""
+  voice: "",
 };
 
 import { API_BASE } from "@/lib/api-config";
@@ -141,7 +150,7 @@ function FlowsPage() {
   const flows = useMemo(() => {
     if (dbLoaded && dbFlows.length > 0) {
       return dbFlows.map((f: any) => {
-        const properName = f.name && f.name !== f.id ? f.name : (flowNames[f.id] || f.name || f.id);
+        const properName = f.name && f.name !== f.id ? f.name : flowNames[f.id] || f.name || f.id;
         return { ...f, name: properName };
       });
     }
@@ -149,7 +158,7 @@ function FlowsPage() {
     const map = new Map<string, any>();
     storeFlows.forEach((f) => map.set(f.id, f));
     dbFlows.forEach((f) => {
-      const properName = f.name && f.name !== f.id ? f.name : (flowNames[f.id] || f.name || f.id);
+      const properName = f.name && f.name !== f.id ? f.name : flowNames[f.id] || f.name || f.id;
       map.set(f.id, { ...f, name: properName });
     });
     return Array.from(map.values());
@@ -176,8 +185,45 @@ function FlowsPage() {
   const [selectedId, setSelectedId] = useState<string | null>("2");
   const [active, setActive] = useState(flow ? flow.status === "active" : true);
   const [simulating, setSimulating] = useState(false);
-  const [logs, setLogs] = useState<Array<{ t: string; msg: string; kind: "info" | "ok" | "warn" }>>([]);
+  const [logs, setLogs] = useState<Array<{ t: string; msg: string; kind: "info" | "ok" | "warn" }>>(
+    [],
+  );
   const [showLogs, setShowLogs] = useState(false);
+  const [testSmsPhone, setTestSmsPhone] = useState("+250783332000");
+  const [testSmsSender, setTestSmsSender] = useState("PindoTest");
+  const [testSmsSending, setTestSmsSending] = useState(false);
+  const [testSmsResult, setTestSmsResult] = useState<{ success: boolean; msg: string } | null>(
+    null,
+  );
+
+  const handleSendTestSms = async () => {
+    setTestSmsSending(true);
+    setTestSmsResult(null);
+    try {
+      const selectedNode = nodes.find((n) => n.id === selectedId);
+      const res = await fetch(`${API_BASE}/send-sms`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: testSmsPhone,
+          text: selectedNode?.data?.detail || "Test SMS from Noxx flow ot4 via Pindo",
+          sender: testSmsSender,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTestSmsResult({ success: true, msg: "SMS sent successfully via Pindo!" });
+      } else {
+        const errDetail =
+          data.detail?.message || data.detail?.error || data.error || "Failed to send";
+        setTestSmsResult({ success: false, msg: `Pindo API: ${errDetail}` });
+      }
+    } catch (err: any) {
+      setTestSmsResult({ success: false, msg: err.message || "Network error sending SMS" });
+    } finally {
+      setTestSmsSending(false);
+    }
+  };
 
   // Load flow graph directly from Hasura DB when search.id changes or when flow changes
   useEffect(() => {
@@ -203,7 +249,11 @@ function FlowsPage() {
                     id: "1",
                     type: "flow",
                     position: { x: 320, y: 20 },
-                    data: { kind: "trigger", label: `${f.name || "Flow"} Event`, detail: `Trigger: ${f.trigger || "Webhook"}` },
+                    data: {
+                      kind: "trigger",
+                      label: `${f.name || "Flow"} Event`,
+                      detail: `Trigger: ${f.trigger || "Webhook"}`,
+                    },
                   },
                 ]);
               }
@@ -238,7 +288,11 @@ function FlowsPage() {
               id: "1",
               type: "flow",
               position: { x: 320, y: 20 },
-              data: { kind: "trigger", label: `${flow?.name || "Flow"} Event`, detail: "POST /v1/events/trigger" },
+              data: {
+                kind: "trigger",
+                label: `${flow?.name || "Flow"} Event`,
+                detail: "POST /v1/events/trigger",
+              },
             },
           ]);
           setEdges([]);
@@ -302,7 +356,9 @@ function FlowsPage() {
 
   const onConnect = useCallback(
     (params: Edge | Connection) =>
-      setEdges((eds) => addEdge(makeEdge(`e_${Date.now()}`, params.source!, params.target!, "default"), eds)),
+      setEdges((eds) =>
+        addEdge(makeEdge(`e_${Date.now()}`, params.source!, params.target!, "default"), eds),
+      ),
     [setEdges],
   );
 
@@ -339,7 +395,9 @@ function FlowsPage() {
 
     const startNode = nodes.find((n) => n.data.kind === "trigger") || nodes[0];
     if (!startNode) {
-      setLogs([{ t: new Date().toLocaleTimeString(), msg: "No nodes in flow to simulate", kind: "warn" }]);
+      setLogs([
+        { t: new Date().toLocaleTimeString(), msg: "No nodes in flow to simulate", kind: "warn" },
+      ]);
       setSimulating(false);
       return;
     }
@@ -377,12 +435,18 @@ function FlowsPage() {
         if (conditionPassed) {
           executionSteps.push({
             nodeId: current.id,
-            log: { msg: `Condition evaluated to TRUE → Following [${yesLabel}] branch`, kind: "ok" },
+            log: {
+              msg: `Condition evaluated to TRUE → Following [${yesLabel}] branch`,
+              kind: "ok",
+            },
           });
         } else {
           executionSteps.push({
             nodeId: current.id,
-            log: { msg: `Condition evaluated to FALSE → Following [${noLabel}] branch`, kind: "warn" },
+            log: {
+              msg: `Condition evaluated to FALSE → Following [${noLabel}] branch`,
+              kind: "warn",
+            },
           });
         }
       } else if (data.kind === "delay") {
@@ -393,12 +457,18 @@ function FlowsPage() {
       } else {
         executionSteps.push({
           nodeId: current.id,
-          log: { msg: `Executed action [${data.label}]: Sent message via ${data.kind}`, kind: "ok" },
+          log: {
+            msg: `Executed action [${data.label}]: Sent message via ${data.kind}`,
+            kind: "ok",
+          },
         });
         if (data.fallback) {
           executionSteps.push({
             nodeId: current.id,
-            log: { msg: `Omnichannel fallback configured: ${data.fallback} (after ${data.retryMinutes || 5}m)`, kind: "info" },
+            log: {
+              msg: `Omnichannel fallback configured: ${data.fallback} (after ${data.retryMinutes || 5}m)`,
+              kind: "info",
+            },
           });
         }
       }
@@ -429,9 +499,7 @@ function FlowsPage() {
         setNodes((ns) =>
           ns.map((n) => ({ ...n, data: { ...n.data, active: activeNodeIds.includes(n.id) } })),
         );
-        setEdges((es) =>
-          es.map((e) => ({ ...e, animated: activeEdgeIds.includes(e.id) })),
-        );
+        setEdges((es) => es.map((e) => ({ ...e, animated: activeEdgeIds.includes(e.id) })));
         setLogs((l) => [...l, { t: new Date().toLocaleTimeString(), ...step.log }]);
 
         stepIndex++;
@@ -440,7 +508,11 @@ function FlowsPage() {
         setTimeout(() => {
           setLogs((l) => [
             ...l,
-            { t: new Date().toLocaleTimeString(), msg: `Simulation complete · ${visited.size} steps executed · 0 errors`, kind: "ok" },
+            {
+              t: new Date().toLocaleTimeString(),
+              msg: `Simulation complete · ${visited.size} steps executed · 0 errors`,
+              kind: "ok",
+            },
           ]);
           setNodes((ns) => ns.map((n) => ({ ...n, data: { ...n.data, active: false } })));
           setEdges((es) => es.map((e) => ({ ...e, animated: false })));
@@ -466,9 +538,21 @@ function FlowsPage() {
         title={
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-1.5 hover:opacity-80 transition outline-none">
-              <span className="truncate max-w-[200px] sm:max-w-xs">{flow ? flow.name : "Select a flow"}</span>
-              <svg className="h-4 w-4 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <span className="truncate max-w-[200px] sm:max-w-xs">
+                {flow ? flow.name : "Select a flow"}
+              </span>
+              <svg
+                className="h-4 w-4 text-muted-foreground shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-72 max-h-96 overflow-y-auto">
@@ -486,15 +570,23 @@ function FlowsPage() {
                     onClick={() => navigate({ to: "/flows", search: { id: f.id } })}
                     className={cn(
                       "flex flex-col items-start gap-1 p-2.5 cursor-pointer rounded-md transition",
-                      f.id === targetId ? "bg-accent text-accent-foreground font-semibold" : "hover:bg-muted"
+                      f.id === targetId
+                        ? "bg-accent text-accent-foreground font-semibold"
+                        : "hover:bg-muted",
                     )}
                   >
                     <div className="flex items-center justify-between w-full">
-                      <span className="text-xs font-semibold text-foreground truncate max-w-[180px]">{f.name}</span>
-                      <span className={cn(
-                        "text-[10px] font-medium px-1.5 py-0.5 rounded border capitalize shrink-0 ml-2",
-                        f.status === "active" ? "bg-success/10 text-success border-success/20" : "bg-muted text-muted-foreground border-border"
-                      )}>
+                      <span className="text-xs font-semibold text-foreground truncate max-w-[180px]">
+                        {f.name}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-[10px] font-medium px-1.5 py-0.5 rounded border capitalize shrink-0 ml-2",
+                          f.status === "active"
+                            ? "bg-success/10 text-success border-success/20"
+                            : "bg-muted text-muted-foreground border-border",
+                        )}
+                      >
                         {f.status || "active"}
                       </span>
                     </div>
@@ -510,7 +602,11 @@ function FlowsPage() {
             </DropdownMenuContent>
           </DropdownMenu>
         }
-        subtitle={flow ? `Omnichannel · Last edited ${flow.createdAt || "Recently"} · ${(flow.status || "active").charAt(0).toUpperCase() + (flow.status || "active").slice(1)}` : "Omnichannel · Last edited 4 minutes ago · Draft"}
+        subtitle={
+          flow
+            ? `Omnichannel · Last edited ${flow.createdAt || "Recently"} · ${(flow.status || "active").charAt(0).toUpperCase() + (flow.status || "active").slice(1)}`
+            : "Omnichannel · Last edited 4 minutes ago · Draft"
+        }
         action={
           <div className="flex items-center gap-2">
             <button
@@ -568,20 +664,22 @@ function FlowsPage() {
                       onClick={() => addNode(p.kind, p.label)}
                       className="group w-full flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-2 text-xs font-medium text-foreground hover:border-primary/40 hover:bg-accent/40 transition"
                     >
-                      <span className={cn(
-                        "h-6 w-6 rounded-md flex items-center justify-center",
-                        p.kind === "trigger" && "bg-primary/10 text-primary",
-                        p.kind === "sms" && "bg-channel-sms/10 text-channel-sms",
-                        p.kind === "email" && "bg-channel-email/10 text-channel-email",
-                        p.kind === "whatsapp" && "bg-channel-whatsapp/10 text-channel-whatsapp",
-                        p.kind === "instagram" && "bg-channel-ai/10 text-channel-ai",
-                        p.kind === "ai" && "bg-channel-ai/10 text-channel-ai",
-                        p.kind === "agent" && "bg-channel-ai/15 text-channel-ai",
-                        p.kind === "ticket" && "bg-emerald-500/15 text-emerald-600",
-                        p.kind === "payment" && "bg-success/15 text-success",
-                        p.kind === "delay" && "bg-warning/15 text-warning-foreground",
-                        p.kind === "condition" && "bg-info/10 text-info",
-                      )}>
+                      <span
+                        className={cn(
+                          "h-6 w-6 rounded-md flex items-center justify-center",
+                          p.kind === "trigger" && "bg-primary/10 text-primary",
+                          p.kind === "sms" && "bg-channel-sms/10 text-channel-sms",
+                          p.kind === "email" && "bg-channel-email/10 text-channel-email",
+                          p.kind === "whatsapp" && "bg-channel-whatsapp/10 text-channel-whatsapp",
+                          p.kind === "instagram" && "bg-channel-ai/10 text-channel-ai",
+                          p.kind === "ai" && "bg-channel-ai/10 text-channel-ai",
+                          p.kind === "agent" && "bg-channel-ai/15 text-channel-ai",
+                          p.kind === "ticket" && "bg-emerald-500/15 text-emerald-600",
+                          p.kind === "payment" && "bg-success/15 text-success",
+                          p.kind === "delay" && "bg-warning/15 text-warning-foreground",
+                          p.kind === "condition" && "bg-info/10 text-info",
+                        )}
+                      >
                         <Icon className="h-3.5 w-3.5" />
                       </span>
                       <span className="flex-1 text-left">{p.label}</span>
@@ -671,7 +769,9 @@ function FlowsPage() {
                   <div className="space-y-3 pt-2 border-t border-border/60">
                     <div className="text-xs font-semibold text-foreground flex items-center justify-between">
                       <span>Inbound Email & Webhook Trigger</span>
-                      <span className="text-[10px] text-primary font-mono font-normal">Active Inbound</span>
+                      <span className="text-[10px] text-primary font-mono font-normal">
+                        Active Inbound
+                      </span>
                     </div>
                     <Field
                       label="Target Inbound Email Address"
@@ -682,7 +782,9 @@ function FlowsPage() {
                         onChange={(e) =>
                           updateSelected({
                             targetEmail: e.target.value,
-                            detail: e.target.value ? `Inbound: ${e.target.value}` : "All Inbound Emails",
+                            detail: e.target.value
+                              ? `Inbound: ${e.target.value}`
+                              : "All Inbound Emails",
                           })
                         }
                         placeholder="e.g. sales@agatike.com or support@agatike.com"
@@ -706,7 +808,9 @@ function FlowsPage() {
                 {/* AI Agent / AI Response Configuration */}
                 {(selected.data.kind === "agent" || selected.data.kind === "ai") && (
                   <div className="space-y-3 pt-2 border-t border-border/60">
-                    <div className="text-xs font-semibold text-foreground">AI Handling & Execution Policy</div>
+                    <div className="text-xs font-semibold text-foreground">
+                      AI Handling & Execution Policy
+                    </div>
                     <Field label="AI Mode & Routing Policy">
                       <select
                         value={selected.data.aiMode || "auto_reply"}
@@ -717,14 +821,18 @@ function FlowsPage() {
                               e.target.value === "skip_ai_ticket"
                                 ? "⚡ Skip AI → Direct Ticket"
                                 : e.target.value === "draft_only"
-                                ? "📝 Draft Reply Only"
-                                : "🤖 AI Auto-Reply",
+                                  ? "📝 Draft Reply Only"
+                                  : "🤖 AI Auto-Reply",
                           })
                         }
                         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 font-medium"
                       >
-                        <option value="auto_reply">🤖 AI Receptionist Auto-Reply (Full Auto)</option>
-                        <option value="skip_ai_ticket">⚡ Skip AI & Create Ticket Directly (Human Handling)</option>
+                        <option value="auto_reply">
+                          🤖 AI Receptionist Auto-Reply (Full Auto)
+                        </option>
+                        <option value="skip_ai_ticket">
+                          ⚡ Skip AI & Create Ticket Directly (Human Handling)
+                        </option>
                         <option value="draft_only">📝 AI Drafts Reply for Human Approval</option>
                       </select>
                     </Field>
@@ -782,7 +890,9 @@ function FlowsPage() {
                 {/* Create Ticket Block Configuration */}
                 {selected.data.kind === "ticket" && (
                   <div className="space-y-3 pt-2 border-t border-border/60">
-                    <div className="text-xs font-semibold text-foreground">Create Support Ticket Settings</div>
+                    <div className="text-xs font-semibold text-foreground">
+                      Create Support Ticket Settings
+                    </div>
                     <Field label="Assign Department">
                       <select
                         value={selected.data.ticketDepartment || "Support"}
@@ -849,6 +959,69 @@ function FlowsPage() {
                       />
                     </Field>
 
+                    {selected.data.kind === "sms" && (
+                      <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+                            <Phone className="h-3.5 w-3.5" />
+                            Pindo SMS Gateway
+                          </div>
+                          <span className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-medium">
+                            PINDO Token (.env)
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <label className="text-[11px] text-muted-foreground block mb-1">
+                              Sender ID
+                            </label>
+                            <input
+                              value={testSmsSender}
+                              onChange={(e) => setTestSmsSender(e.target.value)}
+                              placeholder="PindoTest"
+                              className="w-full rounded border border-input bg-background px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[11px] text-muted-foreground block mb-1">
+                              Test Phone
+                            </label>
+                            <input
+                              value={testSmsPhone}
+                              onChange={(e) => setTestSmsPhone(e.target.value)}
+                              placeholder="+25078..."
+                              className="w-full rounded border border-input bg-background px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary"
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleSendTestSms}
+                          disabled={testSmsSending}
+                          className="w-full mt-1 flex items-center justify-center gap-1.5 text-xs font-medium bg-primary text-primary-foreground py-1.5 rounded-md hover:bg-primary/90 transition disabled:opacity-50"
+                        >
+                          {testSmsSending ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Phone className="h-3.5 w-3.5" />
+                          )}
+                          Send Test SMS via Pindo
+                        </button>
+                        {testSmsResult && (
+                          <div
+                            className={cn(
+                              "text-[11px] p-2 rounded border leading-tight",
+                              testSmsResult.success
+                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                                : "bg-destructive/10 border-destructive/30 text-destructive",
+                            )}
+                          >
+                            {testSmsResult.msg}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/60">
                       <Field label="Assign Department">
                         <select
@@ -865,7 +1038,9 @@ function FlowsPage() {
                       <Field label="Ticket Priority">
                         <select
                           value={selected.data.ticketPriority || "normal"}
-                          onChange={(e) => updateSelected({ ticketPriority: e.target.value as any })}
+                          onChange={(e) =>
+                            updateSelected({ ticketPriority: e.target.value as any })
+                          }
                           className="w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/30"
                         >
                           <option value="normal">Normal</option>
@@ -878,7 +1053,9 @@ function FlowsPage() {
                     {/* Omnichannel: fallback */}
                     <div className="rounded-lg border border-dashed border-border bg-muted/30 p-3 space-y-3">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-foreground">Fallback channel</span>
+                        <span className="text-xs font-semibold text-foreground">
+                          Fallback channel
+                        </span>
                         <Tooltip text="If the primary channel fails or isn't delivered in time, automatically retry on this channel." />
                       </div>
                       <div className="grid grid-cols-4 gap-1.5">
@@ -889,7 +1066,9 @@ function FlowsPage() {
                             return (
                               <button
                                 key={c}
-                                onClick={() => updateSelected({ fallback: isSelected ? undefined : c })}
+                                onClick={() =>
+                                  updateSelected({ fallback: isSelected ? undefined : c })
+                                }
                                 className={cn(
                                   "rounded-md border p-2 text-[10px] font-medium capitalize transition flex flex-col items-center gap-1",
                                   isSelected
@@ -897,7 +1076,12 @@ function FlowsPage() {
                                     : "border-border bg-card text-muted-foreground hover:text-foreground",
                                 )}
                               >
-                                <span className={cn("h-5 w-5 rounded flex items-center justify-center", channelKindAccent[c])}>
+                                <span
+                                  className={cn(
+                                    "h-5 w-5 rounded flex items-center justify-center",
+                                    channelKindAccent[c],
+                                  )}
+                                >
                                   {c === "sms" && <Phone className="h-3 w-3" />}
                                   {c === "email" && <Mail className="h-3 w-3" />}
                                   {c === "whatsapp" && <MessageSquare className="h-3 w-3" />}
@@ -914,7 +1098,9 @@ function FlowsPage() {
                             type="number"
                             min={1}
                             value={selected.data.retryMinutes ?? 5}
-                            onChange={(e) => updateSelected({ retryMinutes: Number(e.target.value) })}
+                            onChange={(e) =>
+                              updateSelected({ retryMinutes: Number(e.target.value) })
+                            }
                             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
                           />
                         </Field>
@@ -926,7 +1112,10 @@ function FlowsPage() {
                 {selected.data.kind === "delay" && (
                   <Field label="Wait for">
                     <div className="flex gap-2">
-                      <input defaultValue={60} className="w-24 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                      <input
+                        defaultValue={60}
+                        className="w-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      />
                       <select className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm">
                         <option>minutes</option>
                         <option>hours</option>
@@ -943,7 +1132,10 @@ function FlowsPage() {
                       hint="Select evaluation rule to split execution path."
                     >
                       <select
-                        value={selected.data.conditionType || "If customer requests human support or is unsatisfied"}
+                        value={
+                          selected.data.conditionType ||
+                          "If customer requests human support or is unsatisfied"
+                        }
                         onChange={(e) =>
                           updateSelected({
                             conditionType: e.target.value,
@@ -952,12 +1144,24 @@ function FlowsPage() {
                         }
                         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 font-medium"
                       >
-                        <option value="If customer requests human support or is unsatisfied">⚡ If customer requests human support or is unsatisfied</option>
-                        <option value="If email body contains 'refund' or 'cancel'">🛒 If email body contains 'refund' or 'cancel'</option>
-                        <option value="If subject contains keyword (e.g. URGENT)">📩 If subject contains keyword (e.g. URGENT)</option>
-                        <option value="If target inbox matches sales@domain.com">✉️ If target inbox matches sales@domain.com</option>
-                        <option value="If sender is VIP / Enterprise domain (@enterprise.com)">⭐ If sender is VIP / Enterprise domain (@enterprise.com)</option>
-                        <option value="If AI confidence is low → Escalate to Human Agent">🤖 If AI confidence is low → Escalate to Human Agent</option>
+                        <option value="If customer requests human support or is unsatisfied">
+                          ⚡ If customer requests human support or is unsatisfied
+                        </option>
+                        <option value="If email body contains 'refund' or 'cancel'">
+                          🛒 If email body contains 'refund' or 'cancel'
+                        </option>
+                        <option value="If subject contains keyword (e.g. URGENT)">
+                          📩 If subject contains keyword (e.g. URGENT)
+                        </option>
+                        <option value="If target inbox matches sales@domain.com">
+                          ✉️ If target inbox matches sales@domain.com
+                        </option>
+                        <option value="If sender is VIP / Enterprise domain (@enterprise.com)">
+                          ⭐ If sender is VIP / Enterprise domain (@enterprise.com)
+                        </option>
+                        <option value="If AI confidence is low → Escalate to Human Agent">
+                          🤖 If AI confidence is low → Escalate to Human Agent
+                        </option>
                         <option value="If message delivered">✅ If message delivered</option>
                         <option value="If user replied">💬 If user replied</option>
                       </select>
@@ -1005,7 +1209,10 @@ function FlowsPage() {
                       </select>
                     </Field>
                     <Field label="Path">
-                      <input defaultValue="/v1/send" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono" />
+                      <input
+                        defaultValue="/v1/send"
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+                      />
                     </Field>
                   </>
                 )}
@@ -1018,7 +1225,8 @@ function FlowsPage() {
               </div>
               <div className="mt-3 text-sm font-medium text-foreground">Select a block</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Click any block in the canvas to configure messages, fallback channels and behavior branches.
+                Click any block in the canvas to configure messages, fallback channels and behavior
+                branches.
               </p>
             </Card>
           )}
@@ -1028,7 +1236,15 @@ function FlowsPage() {
   );
 }
 
-function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
+function Field({
+  label,
+  children,
+  hint,
+}: {
+  label: string;
+  children: React.ReactNode;
+  hint?: string;
+}) {
   return (
     <label className="block">
       <div className="flex items-center gap-1.5 mb-1.5">

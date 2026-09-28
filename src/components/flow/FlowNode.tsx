@@ -21,7 +21,8 @@ import {
 import { cn } from "@/lib/utils";
 
 export type ChannelKind = "sms" | "email" | "whatsapp" | "ai" | "instagram" | "voice";
-export type FlowNodeKind = "trigger" | ChannelKind | "delay" | "condition" | "agent" | "payment" | "ticket";
+export type FlowNodeKind =
+  "trigger" | ChannelKind | "delay" | "condition" | "agent" | "payment" | "ticket";
 
 export type FlowNodeData = {
   kind: FlowNodeKind;
@@ -62,18 +63,90 @@ const config: Record<
   FlowNodeKind,
   { icon: typeof Webhook; accent: string; ring: string; tag: string; label: string }
 > = {
-  trigger: { icon: Webhook, accent: "bg-primary/10 text-primary", ring: "ring-primary/40", tag: "Trigger", label: "Trigger" },
-  sms: { icon: Phone, accent: "bg-channel-sms/10 text-channel-sms", ring: "ring-channel-sms/40", tag: "Action", label: "SMS" },
-  email: { icon: Mail, accent: "bg-channel-email/10 text-channel-email", ring: "ring-channel-email/40", tag: "Action", label: "Email" },
-  whatsapp: { icon: MessageSquare, accent: "bg-channel-whatsapp/10 text-channel-whatsapp", ring: "ring-channel-whatsapp/40", tag: "Action", label: "WhatsApp" },
-  instagram: { icon: Instagram, accent: "bg-channel-ai/10 text-channel-ai", ring: "ring-channel-ai/40", tag: "Action", label: "Instagram" },
-  voice: { icon: Phone, accent: "bg-channel-sms/10 text-channel-sms", ring: "ring-channel-sms/40", tag: "Action", label: "Voice" },
-  ai: { icon: Sparkles, accent: "bg-channel-ai/10 text-channel-ai", ring: "ring-channel-ai/40", tag: "Action", label: "AI" },
-  agent: { icon: Bot, accent: "bg-channel-ai/15 text-channel-ai", ring: "ring-channel-ai/50", tag: "AI Agent", label: "AI Agent" },
-  payment: { icon: CreditCard, accent: "bg-success/15 text-success", ring: "ring-success/40", tag: "Action", label: "Payment" },
-  ticket: { icon: Ticket, accent: "bg-emerald-500/15 text-emerald-600", ring: "ring-emerald-500/40", tag: "Action", label: "Create Ticket" },
-  delay: { icon: Clock, accent: "bg-warning/15 text-warning-foreground", ring: "ring-warning/40", tag: "Logic", label: "Delay" },
-  condition: { icon: GitBranch, accent: "bg-info/10 text-info", ring: "ring-info/40", tag: "Logic", label: "Condition" },
+  trigger: {
+    icon: Webhook,
+    accent: "bg-primary/10 text-primary",
+    ring: "ring-primary/40",
+    tag: "Trigger",
+    label: "Trigger",
+  },
+  sms: {
+    icon: Phone,
+    accent: "bg-channel-sms/10 text-channel-sms",
+    ring: "ring-channel-sms/40",
+    tag: "Action",
+    label: "SMS",
+  },
+  email: {
+    icon: Mail,
+    accent: "bg-channel-email/10 text-channel-email",
+    ring: "ring-channel-email/40",
+    tag: "Action",
+    label: "Email",
+  },
+  whatsapp: {
+    icon: MessageSquare,
+    accent: "bg-channel-whatsapp/10 text-channel-whatsapp",
+    ring: "ring-channel-whatsapp/40",
+    tag: "Action",
+    label: "WhatsApp",
+  },
+  instagram: {
+    icon: Instagram,
+    accent: "bg-channel-ai/10 text-channel-ai",
+    ring: "ring-channel-ai/40",
+    tag: "Action",
+    label: "Instagram",
+  },
+  voice: {
+    icon: Phone,
+    accent: "bg-channel-sms/10 text-channel-sms",
+    ring: "ring-channel-sms/40",
+    tag: "Action",
+    label: "Voice",
+  },
+  ai: {
+    icon: Sparkles,
+    accent: "bg-channel-ai/10 text-channel-ai",
+    ring: "ring-channel-ai/40",
+    tag: "Action",
+    label: "AI",
+  },
+  agent: {
+    icon: Bot,
+    accent: "bg-channel-ai/15 text-channel-ai",
+    ring: "ring-channel-ai/50",
+    tag: "AI Agent",
+    label: "AI Agent",
+  },
+  payment: {
+    icon: CreditCard,
+    accent: "bg-success/15 text-success",
+    ring: "ring-success/40",
+    tag: "Action",
+    label: "Payment",
+  },
+  ticket: {
+    icon: Ticket,
+    accent: "bg-emerald-500/15 text-emerald-600",
+    ring: "ring-emerald-500/40",
+    tag: "Action",
+    label: "Create Ticket",
+  },
+  delay: {
+    icon: Clock,
+    accent: "bg-warning/15 text-warning-foreground",
+    ring: "ring-warning/40",
+    tag: "Logic",
+    label: "Delay",
+  },
+  condition: {
+    icon: GitBranch,
+    accent: "bg-info/10 text-info",
+    ring: "ring-info/40",
+    tag: "Logic",
+    label: "Condition",
+  },
 };
 
 export const FlowNode = memo(({ data, selected }: NodeProps<FlowNodeData>) => {
@@ -88,9 +161,7 @@ export const FlowNode = memo(({ data, selected }: NodeProps<FlowNodeData>) => {
     <div
       className={cn(
         "w-64 rounded-xl border bg-card shadow-card transition-all relative",
-        data.active
-          ? `border-transparent ring-2 ${c.ring} shadow-elevated`
-          : "border-border",
+        data.active ? `border-transparent ring-2 ${c.ring} shadow-elevated` : "border-border",
         selected && !data.active && `ring-2 ${c.ring}`,
       )}
     >
@@ -113,7 +184,9 @@ export const FlowNode = memo(({ data, selected }: NodeProps<FlowNodeData>) => {
           </div>
         </div>
         <div className="mt-2 flex items-start gap-3">
-          <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", c.accent)}>
+          <div
+            className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", c.accent)}
+          >
             <Icon className="h-4 w-4" />
           </div>
           <div className="min-w-0">
@@ -125,22 +198,26 @@ export const FlowNode = memo(({ data, selected }: NodeProps<FlowNodeData>) => {
         </div>
 
         {/* AI Language & Knowledge Badges */}
-        {(data.kind === "agent" || data.kind === "ai") && (data.aiLanguage || data.knowledgeLink) && (
-          <div className="mt-2.5 flex flex-wrap gap-1 pt-2 border-t border-border/60">
-            {data.aiLanguage && (
-              <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                <Globe className="h-3 w-3" />
-                {data.aiLanguage === "auto" ? "Auto Lang" : data.aiLanguage.toUpperCase()}
-              </span>
-            )}
-            {data.knowledgeLink && (
-              <span className="inline-flex items-center gap-1 rounded bg-accent px-1.5 py-0.5 text-[10px] font-medium text-accent-foreground max-w-[170px] truncate" title={data.knowledgeLink}>
-                <FileText className="h-3 w-3" />
-                Docs Attached
-              </span>
-            )}
-          </div>
-        )}
+        {(data.kind === "agent" || data.kind === "ai") &&
+          (data.aiLanguage || data.knowledgeLink) && (
+            <div className="mt-2.5 flex flex-wrap gap-1 pt-2 border-t border-border/60">
+              {data.aiLanguage && (
+                <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                  <Globe className="h-3 w-3" />
+                  {data.aiLanguage === "auto" ? "Auto Lang" : data.aiLanguage.toUpperCase()}
+                </span>
+              )}
+              {data.knowledgeLink && (
+                <span
+                  className="inline-flex items-center gap-1 rounded bg-accent px-1.5 py-0.5 text-[10px] font-medium text-accent-foreground max-w-[170px] truncate"
+                  title={data.knowledgeLink}
+                >
+                  <FileText className="h-3 w-3" />
+                  Docs Attached
+                </span>
+              )}
+            </div>
+          )}
 
         {/* Ticket Metadata Badges */}
         {data.kind === "ticket" && (
@@ -151,12 +228,15 @@ export const FlowNode = memo(({ data, selected }: NodeProps<FlowNodeData>) => {
               </span>
             )}
             {data.ticketPriority && (
-              <span className={cn(
-                "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase",
-                data.ticketPriority === "urgent" && "bg-destructive/10 text-destructive font-bold",
-                data.ticketPriority === "high" && "bg-warning/15 text-warning-foreground",
-                data.ticketPriority === "normal" && "bg-muted text-muted-foreground",
-              )}>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase",
+                  data.ticketPriority === "urgent" &&
+                    "bg-destructive/10 text-destructive font-bold",
+                  data.ticketPriority === "high" && "bg-warning/15 text-warning-foreground",
+                  data.ticketPriority === "normal" && "bg-muted text-muted-foreground",
+                )}
+              >
                 {data.ticketPriority}
               </span>
             )}
@@ -179,7 +259,12 @@ export const FlowNode = memo(({ data, selected }: NodeProps<FlowNodeData>) => {
         {fallbackCfg && FallbackIcon && (
           <div className="mt-3 rounded-lg border border-dashed border-border bg-muted/40 p-2 flex items-center gap-2">
             <ArrowDownRight className="h-3 w-3 text-muted-foreground shrink-0" />
-            <div className={cn("h-6 w-6 rounded-md flex items-center justify-center shrink-0", fallbackCfg.accent)}>
+            <div
+              className={cn(
+                "h-6 w-6 rounded-md flex items-center justify-center shrink-0",
+                fallbackCfg.accent,
+              )}
+            >
               <FallbackIcon className="h-3 w-3" />
             </div>
             <div className="text-[11px] text-foreground flex-1 min-w-0">
@@ -200,13 +285,25 @@ export const FlowNode = memo(({ data, selected }: NodeProps<FlowNodeData>) => {
             type="source"
             position={Position.Bottom}
             id="yes"
-            style={{ left: "25%", background: "var(--success)", width: 10, height: 10, borderWidth: 2 }}
+            style={{
+              left: "25%",
+              background: "var(--success)",
+              width: 10,
+              height: 10,
+              borderWidth: 2,
+            }}
           />
           <Handle
             type="source"
             position={Position.Bottom}
             id="no"
-            style={{ left: "75%", background: "var(--destructive)", width: 10, height: 10, borderWidth: 2 }}
+            style={{
+              left: "75%",
+              background: "var(--destructive)",
+              width: 10,
+              height: 10,
+              borderWidth: 2,
+            }}
           />
         </>
       ) : (

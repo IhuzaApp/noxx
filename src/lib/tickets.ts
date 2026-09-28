@@ -43,9 +43,24 @@ export const tickets: Ticket[] = [
     lastActivity: m(2),
     tags: ["officeats", "integration-bug", "ai"],
     messages: [
-      { id: "m1", from: "customer", text: "Muraho! The WhatsApp bot is failing to parse delivery locations in Kigali.", timestamp: m(14) },
-      { id: "m2", from: "ai", text: "Muraho Patrick 👋 I'm analyzing the logs. It seems the Google Maps API key restriction might be blocking local requests. Would you like me to check the Noxx integration config?", timestamp: m(13) },
-      { id: "m3", from: "customer", text: "Yes please. It stopped working after we added the Remera branch.", timestamp: m(3) },
+      {
+        id: "m1",
+        from: "customer",
+        text: "Muraho! The WhatsApp bot is failing to parse delivery locations in Kigali.",
+        timestamp: m(14),
+      },
+      {
+        id: "m2",
+        from: "ai",
+        text: "Muraho Patrick 👋 I'm analyzing the logs. It seems the Google Maps API key restriction might be blocking local requests. Would you like me to check the Noxx integration config?",
+        timestamp: m(13),
+      },
+      {
+        id: "m3",
+        from: "customer",
+        text: "Yes please. It stopped working after we added the Remera branch.",
+        timestamp: m(3),
+      },
       { id: "m4", from: "customer", text: "We're losing orders because of this.", timestamp: m(2) },
     ],
   },
@@ -63,9 +78,24 @@ export const tickets: Ticket[] = [
     assignee: "Kagabo Jean",
     tags: ["candidigital", "api", "escalated"],
     messages: [
-      { id: "m1", from: "customer", text: "The ERP sync webhook just returned a 500 error. Production is halted.", timestamp: m(120) },
-      { id: "m2", from: "ai", text: "I see the 500 errors in the Noxx logs. It looks like the payload size from Candi Digital exceeds the 5MB limit. Shall I escalate to an engineer?", timestamp: m(118) },
-      { id: "m3", from: "customer", text: "Yes, I need to talk to a human immediately. Our construction teams are stuck.", timestamp: m(11) },
+      {
+        id: "m1",
+        from: "customer",
+        text: "The ERP sync webhook just returned a 500 error. Production is halted.",
+        timestamp: m(120),
+      },
+      {
+        id: "m2",
+        from: "ai",
+        text: "I see the 500 errors in the Noxx logs. It looks like the payload size from Candi Digital exceeds the 5MB limit. Shall I escalate to an engineer?",
+        timestamp: m(118),
+      },
+      {
+        id: "m3",
+        from: "customer",
+        text: "Yes, I need to talk to a human immediately. Our construction teams are stuck.",
+        timestamp: m(11),
+      },
     ],
   },
   {
@@ -82,8 +112,18 @@ export const tickets: Ticket[] = [
     assignee: "You",
     tags: ["kddesign", "billing"],
     messages: [
-      { id: "m1", from: "customer", text: "Could you send the updated Q3 invoice for the Noxx integration retainer? We added 2 more workflows.", timestamp: m(180) },
-      { id: "m2", from: "agent", text: "Hi Eric — attached is the updated invoice including the new interior design automated flows. Let me know if everything looks correct.", timestamp: m(63) },
+      {
+        id: "m1",
+        from: "customer",
+        text: "Could you send the updated Q3 invoice for the Noxx integration retainer? We added 2 more workflows.",
+        timestamp: m(180),
+      },
+      {
+        id: "m2",
+        from: "agent",
+        text: "Hi Eric — attached is the updated invoice including the new interior design automated flows. Let me know if everything looks correct.",
+        timestamp: m(63),
+      },
     ],
   },
   {
@@ -99,7 +139,12 @@ export const tickets: Ticket[] = [
     lastActivity: m(140),
     tags: ["onboarding", "new-client"],
     messages: [
-      { id: "m1", from: "ai", text: "Welcome to our integration services, Diane! Ready to set up your unified inbox for Instagram and WhatsApp?", timestamp: m(160) },
+      {
+        id: "m1",
+        from: "ai",
+        text: "Welcome to our integration services, Diane! Ready to set up your unified inbox for Instagram and WhatsApp?",
+        timestamp: m(160),
+      },
       { id: "m2", from: "customer", text: "Yego, let's start with Instagram.", timestamp: m(140) },
     ],
   },
@@ -116,7 +161,12 @@ export const tickets: Ticket[] = [
     lastActivity: m(720),
     tags: ["resolved"],
     messages: [
-      { id: "m1", from: "customer", text: "I can access the Noxx dashboard now. Murakoze cyane!", timestamp: m(720) },
+      {
+        id: "m1",
+        from: "customer",
+        text: "I can access the Noxx dashboard now. Murakoze cyane!",
+        timestamp: m(720),
+      },
     ],
   },
   {
@@ -132,7 +182,12 @@ export const tickets: Ticket[] = [
     lastActivity: m(300),
     tags: ["feature-request", "ai"],
     messages: [
-      { id: "m1", from: "customer", text: "Muraho team, can we train our Noxx AI agent to use more polite Kinyarwanda phrasing? Like saying 'Murakoze' instead of 'Thanks'?", timestamp: m(300) },
+      {
+        id: "m1",
+        from: "customer",
+        text: "Muraho team, can we train our Noxx AI agent to use more polite Kinyarwanda phrasing? Like saying 'Murakoze' instead of 'Thanks'?",
+        timestamp: m(300),
+      },
     ],
   },
   {
@@ -149,9 +204,24 @@ export const tickets: Ticket[] = [
     assignee: "Kagabo Jean",
     tags: ["sms", "campaign", "bug"],
     messages: [
-      { id: "m1", from: "customer", text: "Our Friday promotional campaign didn't go out to the MTN network numbers. Airtel numbers received it fine.", timestamp: m(420) },
-      { id: "m2", from: "agent", text: "Hi Kevin, we noticed this too. The MTN aggregator is experiencing delays. We have paused the queue and will resume once it clears.", timestamp: m(380) },
-      { id: "m3", from: "customer", text: "Okay, please let me know when it's back up so I can update marketing.", timestamp: m(360) },
+      {
+        id: "m1",
+        from: "customer",
+        text: "Our Friday promotional campaign didn't go out to the MTN network numbers. Airtel numbers received it fine.",
+        timestamp: m(420),
+      },
+      {
+        id: "m2",
+        from: "agent",
+        text: "Hi Kevin, we noticed this too. The MTN aggregator is experiencing delays. We have paused the queue and will resume once it clears.",
+        timestamp: m(380),
+      },
+      {
+        id: "m3",
+        from: "customer",
+        text: "Okay, please let me know when it's back up so I can update marketing.",
+        timestamp: m(360),
+      },
     ],
   },
   {
@@ -168,8 +238,18 @@ export const tickets: Ticket[] = [
     assignee: "You",
     tags: ["whatsapp", "onboarding"],
     messages: [
-      { id: "m1", from: "customer", text: "How long does Meta usually take to approve the WhatsApp Business number? It's been 2 days.", timestamp: m(1440) },
-      { id: "m2", from: "agent", text: "Hi Sarah! For Rwandan businesses, it usually takes 2-3 business days. I'll check our partner portal to see if they need additional business registration docs from RDB.", timestamp: m(1200) },
+      {
+        id: "m1",
+        from: "customer",
+        text: "How long does Meta usually take to approve the WhatsApp Business number? It's been 2 days.",
+        timestamp: m(1440),
+      },
+      {
+        id: "m2",
+        from: "agent",
+        text: "Hi Sarah! For Rwandan businesses, it usually takes 2-3 business days. I'll check our partner portal to see if they need additional business registration docs from RDB.",
+        timestamp: m(1200),
+      },
     ],
   },
   {
@@ -185,8 +265,18 @@ export const tickets: Ticket[] = [
     lastActivity: m(2870),
     tags: ["integration", "hubspot"],
     messages: [
-      { id: "m1", from: "customer", text: "I'm trying to connect HubSpot but the OAuth screen keeps redirecting to an error page.", timestamp: m(2880) },
-      { id: "m2", from: "ai", text: "Muraho Claude! This usually happens if the redirect URI isn't added to your HubSpot private app settings. Would you like a link to our step-by-step guide?", timestamp: m(2875) },
+      {
+        id: "m1",
+        from: "customer",
+        text: "I'm trying to connect HubSpot but the OAuth screen keeps redirecting to an error page.",
+        timestamp: m(2880),
+      },
+      {
+        id: "m2",
+        from: "ai",
+        text: "Muraho Claude! This usually happens if the redirect URI isn't added to your HubSpot private app settings. Would you like a link to our step-by-step guide?",
+        timestamp: m(2875),
+      },
       { id: "m3", from: "customer", text: "Yes, that would be helpful.", timestamp: m(2870) },
     ],
   },
@@ -203,8 +293,18 @@ export const tickets: Ticket[] = [
     lastActivity: m(4300),
     tags: ["billing", "resolved"],
     messages: [
-      { id: "m1", from: "customer", text: "Hi, I need to update my BK card on file.", timestamp: m(4320) },
-      { id: "m2", from: "agent", text: "Hi Bella, I've sent a secure Stripe link to your email to update your payment methods. Let me know once it's done!", timestamp: m(4310) },
+      {
+        id: "m1",
+        from: "customer",
+        text: "Hi, I need to update my BK card on file.",
+        timestamp: m(4320),
+      },
+      {
+        id: "m2",
+        from: "agent",
+        text: "Hi Bella, I've sent a secure Stripe link to your email to update your payment methods. Let me know once it's done!",
+        timestamp: m(4310),
+      },
       { id: "m3", from: "customer", text: "Done, thanks!", timestamp: m(4300) },
     ],
   },
@@ -252,7 +352,10 @@ export const statusBadge: Record<TicketStatus, { label: string; cls: string }> =
   new: { label: "New", cls: "bg-info/15 text-info border-info/20" },
   open: { label: "Open", cls: "bg-warning/15 text-warning-foreground border-warning/30" },
   pending: { label: "Pending", cls: "bg-muted text-muted-foreground border-border" },
-  "ai-handling": { label: "AI handling", cls: "bg-channel-ai/15 text-channel-ai border-channel-ai/20" },
+  "ai-handling": {
+    label: "AI handling",
+    cls: "bg-channel-ai/15 text-channel-ai border-channel-ai/20",
+  },
   resolved: { label: "Resolved", cls: "bg-success/15 text-success border-success/20" },
   closed: { label: "Closed", cls: "bg-muted text-muted-foreground border-border" },
 };
