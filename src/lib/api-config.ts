@@ -1,7 +1,11 @@
+const envApiUrl = import.meta.env.VITE_API_URL || import.meta.env.API_URL;
+
 export const API_BASE =
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.API_URL ||
-  (typeof window !== "undefined" && window.location.port === "3000" ? "http://localhost:4000" : "");
+  typeof window !== "undefined" && window.location.port === "3000"
+    ? "http://localhost:4000"
+    : envApiUrl && envApiUrl !== "https://noxxdesk.com"
+      ? envApiUrl
+      : "";
 
 export async function safeFetchJson<T = any>(
   url: string,

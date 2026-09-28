@@ -6,7 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
 
 export default defineConfig({
-  envPrefix: ["VITE_", "HASURA_", "GROQ_", "RESEND_", "FIREBASE_"],
+  envPrefix: ["VITE_", "API_", "HASURA_", "GROQ_", "RESEND_", "FIREBASE_"],
   plugins: [
     tanstackStart(),
     nitro(),

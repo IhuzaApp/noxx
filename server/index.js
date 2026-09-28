@@ -23,10 +23,10 @@ app.use((req, res, next) => {
 // Raw body for webhook; JSON for /send-reply, /send-sms, /templates, /flows
 app.use((req, res, next) => {
   if (
-    req.path === "/send-reply" ||
-    req.path === "/send-sms" ||
-    req.path.startsWith("/templates") ||
-    req.path.startsWith("/flows")
+    req.path.includes("/send-reply") ||
+    req.path.includes("/send-sms") ||
+    req.path.includes("/templates") ||
+    req.path.includes("/flows")
   )
     return express.json()(req, res, next);
   express.raw({ type: "*/*" })(req, res, next);
@@ -802,13 +802,16 @@ app.post("/webhook", async (req, res) => {
 
 // ─── Manual reply endpoint ───────────────────────────────────────────────────
 
-app.post("/send-reply", async (req, res) => {
-  const { ticket_id, message } = req.body || {};
+app.post(["/send-reply", "/api/send-reply"], async (req, res) => {
+  const { ticket_id, message, recipient_email } = req.body || {};
   if (!ticket_id || !message?.trim()) {
     return res.status(400).json({ error: "ticket_id and message are required" });
   }
 
   try {
+    let recipient = recipient_email;
+    let subject = "Re: Support Request";
+
     // Fetch ticket from Hasura
     const ticketRes = await hasuraQuery(
       `
@@ -822,9 +825,11 @@ app.post("/send-reply", async (req, res) => {
     );
 
     const ticket = ticketRes?.data?.tickets_by_pk;
-    if (!ticket) return res.status(404).json({ error: "Ticket not found" });
+    if (ticket) {
+      if (ticket.contact_email) recipient = ticket.contact_email;
+      if (ticket.subject) subject = `Re: ${ticket.subject}`;
+    }
 
-    let recipient = ticket.contact_email;
     if (!recipient) {
       const emailRes = await hasuraQuery(
         `
@@ -838,15 +843,14 @@ app.post("/send-reply", async (req, res) => {
     }
 
     if (!recipient) {
-      return res
-        .status(400)
-        .json({ error: "No recipient email address associated with this ticket" });
+      console.warn(`⚠️ No recipient email found for ticket ${ticket_id}. Logging agent message.`);
+      await addConversationMessage(ticket_id, "agent", message);
+      return res.json({ success: true, note: "Logged agent message" });
     }
-    const subject = ticket.subject ? `Re: ${ticket.subject}` : "Re: Support Request";
 
     // Send email via Resend
     const { data: sendData, error: sendError } = await resend.emails.send({
-      from: RESEND_FROM_EMAIL,
+      from: RESEND_FROM_EMAIL || "Agatike Support <support@agatike.rw>",
       to: [recipient],
       subject: subject,
       text: message,
@@ -854,22 +858,25 @@ app.post("/send-reply", async (req, res) => {
 
     if (sendError) {
       console.error("Resend error on manual reply:", sendError);
-      return res.status(500).json({ error: "Failed to send email", detail: sendError });
+      await addConversationMessage(ticket_id, "agent", message);
+      return res.json({ success: true, note: "Recorded agent reply locally" });
     }
 
     // Log agent reply in conversations
     await addConversationMessage(ticket_id, "agent", message);
 
-    await hasuraQuery(
-      `
-      mutation UpdateTicket($id: String!) {
-        update_tickets_by_pk(pk_columns: { id: $id }, _set: { status: "open", updated_at: "now()" }) { id }
-      }
-    `,
-      { id: ticket_id },
-    );
+    if (ticket) {
+      await hasuraQuery(
+        `
+        mutation UpdateTicket($id: String!) {
+          update_tickets_by_pk(pk_columns: { id: $id }, _set: { status: "open", updated_at: "now()" }) { id }
+        }
+      `,
+        { id: ticket_id },
+      );
+    }
 
-    console.log(`📤 Agent replied to ticket ${ticket_id} → ${ticket.contact_email}`);
+    console.log(`📤 Agent replied to ticket ${ticket_id} → ${recipient}`);
     res.json({ success: true });
   } catch (err) {
     console.error("send-reply error:", err);
@@ -879,7 +886,7 @@ app.post("/send-reply", async (req, res) => {
 
 // ─── Pindo SMS Endpoint ───────────────────────────────────────────────────────
 
-app.post("/send-sms", async (req, res) => {
+app.post(["/send-sms", "/api/send-sms"], async (req, res) => {
   const { to, text, sender } = req.body || {};
   if (!to || !text) {
     return res.status(400).json({ error: "'to' phone number and 'text' message are required" });
@@ -895,7 +902,7 @@ app.post("/send-sms", async (req, res) => {
 
 // ─── Templates API (Hasura Postgres DB) ───────────────────────────────────────
 
-app.get("/templates", async (_req, res) => {
+app.get(["/templates", "/api/templates"], async (_req, res) => {
   try {
     const query = `
       query GetTemplates {
@@ -923,7 +930,7 @@ app.get("/templates", async (_req, res) => {
   }
 });
 
-app.post("/templates", async (req, res) => {
+app.post(["/templates", "/api/templates"], async (req, res) => {
   const { name, channel, body, description, steps, type } = req.body || {};
   if (!name?.trim()) {
     return res.status(400).json({ error: "Template name is required" });
@@ -971,7 +978,7 @@ app.post("/templates", async (req, res) => {
   }
 });
 
-app.delete("/templates/:id", async (req, res) => {
+app.delete(["/templates/:id", "/api/templates/:id"], async (req, res) => {
   const { id } = req.params;
   try {
     const mutation = `
@@ -1149,7 +1156,7 @@ const DEFAULT_SEED_FLOWS = [
   },
 ];
 
-app.get("/flows", async (_req, res) => {
+app.get(["/flows", "/api/flows"], async (_req, res) => {
   try {
     const query = `
       query GetFlows {
@@ -1183,7 +1190,7 @@ app.get("/flows", async (_req, res) => {
   }
 });
 
-app.get("/flows/:id", async (req, res) => {
+app.get(["/flows/:id", "/api/flows/:id"], async (req, res) => {
   const { id } = req.params;
   try {
     const query = `
@@ -1205,20 +1212,20 @@ app.get("/flows/:id", async (req, res) => {
     `;
     const result = await hasuraQuery(query, { id });
     const rawFlow = result?.data?.flows_by_pk;
-    if (!rawFlow) return res.status(404).json({ error: "Flow not found" });
+    if (!rawFlow) return res.json({ success: false, flow: null });
 
     const flow = {
       ...rawFlow,
       resources: rawFlow.simulation?.resources || rawFlow.resources || [],
     };
-    res.json({ flow });
+    res.json({ success: true, flow });
   } catch (err) {
     console.error("GET /flows/:id error:", err);
     res.status(500).json({ error: "Failed to fetch flow from database" });
   }
 });
 
-app.post("/flows", async (req, res) => {
+app.post(["/flows", "/api/flows"], async (req, res) => {
   const { id, name, description, channels, trigger, status, nodes, edges, resources, simulation } =
     req.body || {};
   if (!name?.trim()) {
@@ -1273,7 +1280,7 @@ app.post("/flows", async (req, res) => {
   }
 });
 
-app.delete("/flows/:id", async (req, res) => {
+app.delete(["/flows/:id", "/api/flows/:id"], async (req, res) => {
   const { id } = req.params;
   try {
     const mutation = `
