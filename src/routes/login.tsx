@@ -57,11 +57,8 @@ export function AuthShell({
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-background selection:bg-primary/30">
       <div className="flex flex-col justify-between p-8 lg:p-16 border-b lg:border-b-0 lg:border-r border-border/60">
-        <Link to="/" className="flex items-center gap-3 w-fit">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-primary shadow-soft">
-            <Sparkles className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-medium text-foreground tracking-tight">Noxx</span>
+        <Link to="/" className="flex items-center w-fit">
+          <img src="/logo/noxxlogo.png" alt="Noxx Logo" className="h-9 w-auto object-contain" />
         </Link>
 
         <div className="max-w-md mx-auto w-full py-16">

@@ -71,13 +71,7 @@ export function AppSidebar() {
     <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="flex h-16 items-center gap-2 px-5 border-b border-sidebar-border">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-primary shadow-soft">
-            <Sparkles className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div className="flex flex-col leading-tight">
-            <span className="font-semibold text-sidebar-foreground">Noxx</span>
-            <span className="text-[11px] text-muted-foreground">Unified Comms API</span>
-          </div>
+          <img src="/logo/noxxlogo.png" alt="Noxx Logo" className="h-9 w-auto object-contain shrink-0" />
         </Link>
       </div>
 

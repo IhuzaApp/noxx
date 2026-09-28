@@ -17,8 +17,8 @@ export const Route = createFileRoute("/signup")({
 function SignupPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-primary shadow-soft mb-8">
-        <Sparkles className="h-7 w-7 text-primary-foreground" />
+      <div className="mb-8">
+        <img src="/logo/noxxlogo.png" alt="Noxx Logo" className="h-14 w-auto object-contain mx-auto" />
       </div>
       <h1 className="text-4xl font-medium tracking-tight mb-4 text-foreground">
         We are currently working with founding partners.

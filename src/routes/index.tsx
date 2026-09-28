@@ -80,11 +80,8 @@ function SiteHeader() {
   return (
     <header className="fixed top-0 z-50 w-full bg-background/80 backdrop-blur-xl border-b border-border/40">
       <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between px-6 lg:px-10">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground shadow-sm">
-            <Sparkles className="h-4 w-4 text-background" />
-          </div>
-          <span className="text-lg font-medium tracking-tight">Noxx</span>
+        <Link to="/" className="flex items-center">
+          <img src="/logo/noxxlogo.png" alt="Noxx Logo" className="h-9 w-auto object-contain" />
         </Link>
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
           <a href="#product" className="hover:text-foreground transition-colors">
