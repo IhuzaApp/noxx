@@ -74,8 +74,10 @@ export const defaultDepartments: Department[] = [
 const STORAGE_KEY = "noxx_departments_data";
 function loadInitialDepartments(): Department[] {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    }
   } catch (e) {
     console.error("Error reading departments from localStorage:", e);
   }
@@ -86,7 +88,9 @@ export const departmentStore = createStore<Department>(loadInitialDepartments())
 
 departmentStore.subscribe(() => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(departmentStore.get()));
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(departmentStore.get()));
+    }
   } catch (e) {
     console.error("Error saving departments to localStorage:", e);
   }

@@ -21,17 +21,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const storedAuth = localStorage.getItem("noxx_auth");
-    if (storedAuth) {
-      try {
-        const { user, expiresAt } = JSON.parse(storedAuth);
-        if (Date.now() < expiresAt) {
-          setUser(user);
-        } else {
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      const storedAuth = localStorage.getItem("noxx_auth");
+      if (storedAuth) {
+        try {
+          const { user, expiresAt } = JSON.parse(storedAuth);
+          if (Date.now() < expiresAt) {
+            setUser(user);
+          } else {
+            localStorage.removeItem("noxx_auth");
+          }
+        } catch (e) {
           localStorage.removeItem("noxx_auth");
         }
-      } catch (e) {
-        localStorage.removeItem("noxx_auth");
       }
     }
     setIsLoaded(true);
@@ -47,12 +49,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: dummyUser,
       expiresAt: Date.now() + SESSION_DURATION,
     };
-    localStorage.setItem("noxx_auth", JSON.stringify(sessionData));
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      localStorage.setItem("noxx_auth", JSON.stringify(sessionData));
+    }
     setUser(dummyUser);
   };
 
   const logout = () => {
-    localStorage.removeItem("noxx_auth");
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      localStorage.removeItem("noxx_auth");
+    }
     setUser(null);
   };
 

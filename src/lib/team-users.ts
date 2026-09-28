@@ -111,8 +111,10 @@ export const defaultTeamUsers: TeamUser[] = [
 const STORAGE_KEY = "noxx_team_users_data";
 function loadInitialTeamUsers(): TeamUser[] {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    }
   } catch (e) {
     console.error("Error reading team users from localStorage:", e);
   }
@@ -123,7 +125,9 @@ export const teamUserStore = createStore<TeamUser>(loadInitialTeamUsers());
 
 teamUserStore.subscribe(() => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(teamUserStore.get()));
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(teamUserStore.get()));
+    }
   } catch (e) {
     console.error("Error saving team users to localStorage:", e);
   }
