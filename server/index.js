@@ -1168,25 +1168,8 @@ app.get("/flows", async (_req, res) => {
         }
       }
     `;
-    let result = await hasuraQuery(query);
-    let rawFlows = result?.data?.flows ?? [];
-
-    if (rawFlows.length === 0 && !hasSeededInitialFlows) {
-      hasSeededInitialFlows = true;
-      console.log("🌱 Database flows empty. Seeding initial starter flows into Hasura...");
-      for (const f of DEFAULT_SEED_FLOWS) {
-        await hasuraQuery(
-          `
-          mutation SeedFlow($object: flows_insert_input!) {
-            insert_flows_one(object: $object, on_conflict: { constraint: flows_pkey, update_columns: [name, description, simulation] }) { id }
-          }
-        `,
-          { object: f },
-        );
-      }
-      result = await hasuraQuery(query);
-      rawFlows = result?.data?.flows ?? [];
-    }
+    const result = await hasuraQuery(query);
+    const rawFlows = result?.data?.flows ?? [];
 
     const flows = rawFlows.map((f) => ({
       ...f,

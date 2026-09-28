@@ -88,7 +88,7 @@ const resourceMeta: Record<
   },
 };
 
-import { API_BASE } from "@/lib/api-config";
+import { API_BASE, safeFetchJson } from "@/lib/api-config";
 
 function MyFlowsPage() {
   const storeFlows = useStore(userFlowStore);
@@ -99,18 +99,20 @@ function MyFlowsPage() {
 
   const loadDbFlows = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/flows`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.flows && Array.isArray(json.flows)) {
-          setDbFlows(json.flows);
-          setDbLoaded(true);
-        }
+      const res = await safeFetchJson<{ flows: UserFlow[] }>(`${API_BASE}/flows`);
+      if (res.ok && res.data?.flows && Array.isArray(res.data.flows)) {
+        setDbFlows(res.data.flows);
+        setDbLoaded(true);
+      } else {
+        setDbFlows(storeFlows);
+        setDbLoaded(true);
       }
     } catch (e) {
       console.error("Failed to load flows from database:", e);
+      setDbFlows(storeFlows);
+      setDbLoaded(true);
     }
-  }, []);
+  }, [storeFlows]);
 
   useEffect(() => {
     loadDbFlows();
@@ -149,13 +151,12 @@ function MyFlowsPage() {
     try {
       // Fetch full details first to ensure nodes/edges/resources are preserved
       let fullFlow = f;
-      const detailRes = await fetch(`${API_BASE}/flows/${f.id}`);
-      if (detailRes.ok) {
-        const json = await detailRes.json();
-        if (json.flow) fullFlow = json.flow;
+      const detailRes = await safeFetchJson<{ flow: UserFlow }>(`${API_BASE}/flows/${f.id}`);
+      if (detailRes.ok && detailRes.data?.flow) {
+        fullFlow = detailRes.data.flow;
       }
 
-      await fetch(`${API_BASE}/flows`, {
+      await safeFetchJson(`${API_BASE}/flows`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...fullFlow, status: newStatus }),
@@ -171,7 +172,7 @@ function MyFlowsPage() {
     setDbFlows((prev) => prev.filter((x) => x.id !== id));
 
     try {
-      const res = await fetch(`${API_BASE}/flows/${id}`, { method: "DELETE" });
+      const res = await safeFetchJson(`${API_BASE}/flows/${id}`, { method: "DELETE" });
       if (res.ok) {
         console.log(`✅ Permanently deleted flow ${id} from database`);
       }

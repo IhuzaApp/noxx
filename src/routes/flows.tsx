@@ -103,7 +103,7 @@ const channelKindAccent: Record<ChannelKind, string> = {
   voice: "",
 };
 
-import { API_BASE } from "@/lib/api-config";
+import { API_BASE, safeFetchJson } from "@/lib/api-config";
 
 function FlowsPage() {
   const search = Route.useSearch();
@@ -115,11 +115,10 @@ function FlowsPage() {
   // Load all flows list from Hasura DB
   useEffect(() => {
     let activeSignal = true;
-    fetch(`${API_BASE}/flows`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (activeSignal && data.flows && Array.isArray(data.flows)) {
-          setDbFlows(data.flows);
+    safeFetchJson<{ flows: any[] }>(`${API_BASE}/flows`)
+      .then((res) => {
+        if (activeSignal && res.ok && res.data?.flows && Array.isArray(res.data.flows)) {
+          setDbFlows(res.data.flows);
           setDbLoaded(true);
         }
       })
@@ -232,45 +231,42 @@ function FlowsPage() {
       if (!targetId) return;
 
       try {
-        const res = await fetch(`${API_BASE}/flows/${targetId}`);
-        if (res.ok) {
-          const json = await res.json();
-          if (json.flow && !isCancelled) {
-            const f = json.flow;
-            if (f.nodes && Array.isArray(f.nodes) && f.nodes.length > 0) {
-              setNodes(f.nodes);
+        const res = await safeFetchJson<{ flow: any }>(`${API_BASE}/flows/${targetId}`);
+        if (res.ok && res.data?.flow) {
+          const f = res.data.flow;
+          if (f.nodes && Array.isArray(f.nodes) && f.nodes.length > 0) {
+            setNodes(f.nodes);
+          } else {
+            const builtIn = flowTemplates[targetId];
+            if (builtIn && builtIn.nodes && builtIn.nodes.length > 0) {
+              setNodes(builtIn.nodes);
             } else {
-              const builtIn = flowTemplates[targetId];
-              if (builtIn && builtIn.nodes && builtIn.nodes.length > 0) {
-                setNodes(builtIn.nodes);
-              } else {
-                setNodes([
-                  {
-                    id: "1",
-                    type: "flow",
-                    position: { x: 320, y: 20 },
-                    data: {
-                      kind: "trigger",
-                      label: `${f.name || "Flow"} Event`,
-                      detail: `Trigger: ${f.trigger || "Webhook"}`,
-                    },
+              setNodes([
+                {
+                  id: "1",
+                  type: "flow",
+                  position: { x: 320, y: 20 },
+                  data: {
+                    kind: "trigger",
+                    label: `${f.name || "Flow"} Event`,
+                    detail: `Trigger: ${f.trigger || "Webhook"}`,
                   },
-                ]);
-              }
+                },
+              ]);
             }
-            if (f.edges && Array.isArray(f.edges)) {
-              setEdges(f.edges);
-            } else {
-              const builtIn = flowTemplates[targetId];
-              if (builtIn && builtIn.edges) {
-                setEdges(builtIn.edges);
-              } else {
-                setEdges([]);
-              }
-            }
-            if (f.status) setActive(f.status === "active");
-            return;
           }
+          if (f.edges && Array.isArray(f.edges)) {
+            setEdges(f.edges);
+          } else {
+            const builtIn = flowTemplates[targetId];
+            if (builtIn && builtIn.edges) {
+              setEdges(builtIn.edges);
+            } else {
+              setEdges([]);
+            }
+          }
+          if (f.status) setActive(f.status === "active");
+          return;
         }
       } catch (e) {
         console.error("Failed to fetch flow from database:", e);
@@ -329,7 +325,7 @@ function FlowsPage() {
         simulation: template.simulation || {},
       };
 
-      const res = await fetch(`${API_BASE}/flows`, {
+      const res = await safeFetchJson(`${API_BASE}/flows`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -339,12 +335,9 @@ function FlowsPage() {
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
         // Reload DB flows
-        const updatedRes = await fetch(`${API_BASE}/flows`);
-        if (updatedRes.ok) {
-          const json = await updatedRes.json();
-          if (json.flows && Array.isArray(json.flows)) {
-            setDbFlows(json.flows);
-          }
+        const updatedRes = await safeFetchJson<{ flows: any[] }>(`${API_BASE}/flows`);
+        if (updatedRes.ok && updatedRes.data?.flows && Array.isArray(updatedRes.data.flows)) {
+          setDbFlows(updatedRes.data.flows);
         }
       }
     } catch (e) {
