@@ -14,10 +14,12 @@ export function Topbar({
   title,
   subtitle,
   action,
+  actions,
 }: {
   title: React.ReactNode;
   subtitle?: string;
   action?: React.ReactNode;
+  actions?: React.ReactNode;
 }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -26,6 +28,8 @@ export function Topbar({
     logout();
     navigate({ to: "/login" });
   };
+
+  const renderAction = action !== undefined ? action : actions;
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-border bg-background/80 backdrop-blur px-6">
@@ -46,7 +50,9 @@ export function Topbar({
         <Bell className="h-4 w-4" />
         <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive" />
       </button>
-      {action ?? (
+      {renderAction !== undefined ? (
+        renderAction
+      ) : (
         <button className="inline-flex items-center gap-2 rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background hover:opacity-90 transition shadow-soft">
           <Plus className="h-4 w-4" />
           New message

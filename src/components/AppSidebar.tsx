@@ -23,6 +23,8 @@ import {
   LayoutTemplate,
   Shield,
   Mail,
+  Building2,
+  Users,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -46,6 +48,8 @@ const nav: Array<{
   { to: "/surveys", label: "Surveys", icon: FileText },
   { to: "/sites", label: "Sites", icon: LayoutTemplate },
   { to: "/playground", label: "API Playground", icon: TerminalSquare },
+  { to: "/departments", label: "Departments", icon: Building2, section: "Team & Org" },
+  { to: "/users", label: "Users & Team", icon: Users },
   { to: "/tickets", label: "Support Tickets", icon: Ticket, section: "Engage" },
   { to: "/voice", label: "Voice Support", icon: PhoneCall },
   { to: "/messages", label: "Messages", icon: MessageSquare },

@@ -25,12 +25,16 @@ import {
   Loader2,
   Flag,
   ArrowLeft,
+  Building2,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Topbar } from "@/components/Topbar";
 import { Card } from "@/components/Card";
 import { cn } from "@/lib/utils";
 import { API_BASE } from "@/lib/api-config";
+import { departmentStore, type Department } from "@/lib/departments";
+import { teamUserStore, type TeamUser } from "@/lib/team-users";
+import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/tickets")({
   head: () => ({
@@ -64,6 +68,7 @@ type Ticket = {
   status: "ai-handling" | "open" | "pending" | "resolved" | "closed" | "new";
   priority: string;
   assignee: string | null;
+  department?: string | null;
   tags: string[];
   created_at: string;
   updated_at: string;
@@ -247,12 +252,20 @@ async function fetchTickets(): Promise<Ticket[]> {
         .replace(/[._-]/g, " ")
         .replace(/\b\w/g, (c) => c.toUpperCase());
     const subject = t.subject || "Support Request";
+    let deptName = t.department || null;
+    if (!deptName) {
+      if (t.tags?.includes("billing")) deptName = "Finance & Operations";
+      else if (t.tags?.includes("api") || t.tags?.includes("integration-bug") || t.tags?.includes("candidigital")) deptName = "Engineering & Tech";
+      else if (t.tags?.includes("onboarding") || t.tags?.includes("kddesign")) deptName = "Sales & Account Mgmt";
+      else deptName = "Customer Support";
+    }
     return {
       ...t,
       contact_email: email,
       contact_name: name,
       subject: subject,
       channel: t.channel || "email",
+      department: deptName,
       tags: t.tags || [],
     };
   });
@@ -346,9 +359,12 @@ function ConversationThread({ messages }: { messages: ConversationMsg[] }) {
 type FilterKey = "all" | "ai-handling" | "open" | "pending" | "resolved" | "closed";
 
 function TicketsPage() {
+  const departments = useStore(departmentStore);
+  const teamUsers = useStore(teamUserStore);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [deptFilter, setDeptFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -364,6 +380,18 @@ function TicketsPage() {
   const [aiSummary, setAiSummary] = useState<string | null>(null);
 
   const selected = tickets.find((t) => t.id === selectedId) ?? null;
+
+  const handleUpdateTicketAssignment = async (
+    ticketId: string,
+    patch: { department?: string | null; assignee?: string | null },
+  ) => {
+    try {
+      await mutateTicket(ticketId, patch);
+    } catch (e) {
+      console.warn("Ticket assignment mutation error:", e);
+    }
+    setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, ...patch } : t)));
+  };
   const {
     suggestions,
     loading: sugLoading,
@@ -493,6 +521,7 @@ ${conversationText || "No message content yet."}`;
 
   const filtered = tickets
     .filter((t) => filter === "all" || t.status === filter)
+    .filter((t) => deptFilter === "all" || t.department === deptFilter)
     .filter((t) => {
       if (!search) return true;
       const q = search.toLowerCase();
@@ -500,6 +529,8 @@ ${conversationText || "No message content yet."}`;
         t.subject?.toLowerCase().includes(q) ||
         t.contact_name?.toLowerCase().includes(q) ||
         t.contact_email?.toLowerCase().includes(q) ||
+        t.assignee?.toLowerCase().includes(q) ||
+        t.department?.toLowerCase().includes(q) ||
         t.id?.toLowerCase().includes(q)
       );
     });
@@ -627,16 +658,50 @@ ${conversationText || "No message content yet."}`;
                 </div>
               )}
 
-              {/* Assignee */}
+              {/* Department Assignment */}
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
-                  Assignee
+                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 flex items-center gap-1">
+                  <Building2 className="h-3 w-3 text-primary" /> Assigned Department
                 </div>
-                <button className="w-full flex items-center gap-2 rounded-md border border-input bg-card px-2.5 py-1.5 text-xs text-foreground hover:bg-accent/40 transition">
-                  <UserCircle2 className="h-3.5 w-3.5" />
-                  {selected.assignee ?? "Unassigned"}
-                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground ml-auto" />
-                </button>
+                <select
+                  value={selected.department || ""}
+                  onChange={(e) =>
+                    handleUpdateTicketAssignment(selected.id, {
+                      department: e.target.value || null,
+                    })
+                  }
+                  className="w-full rounded-md border border-input bg-card px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-soft"
+                >
+                  <option value="">Unassigned Department</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.name}>
+                      {d.name} ({d.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* User Assignee */}
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5 flex items-center gap-1">
+                  <UserCircle2 className="h-3 w-3 text-primary" /> Assigned User / Agent
+                </div>
+                <select
+                  value={selected.assignee || ""}
+                  onChange={(e) =>
+                    handleUpdateTicketAssignment(selected.id, {
+                      assignee: e.target.value || null,
+                    })
+                  }
+                  className="w-full rounded-md border border-input bg-card px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-soft"
+                >
+                  <option value="">Unassigned User</option>
+                  {teamUsers.map((u) => (
+                    <option key={u.id} value={u.name}>
+                      {u.name} ({u.title})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Actions */}
@@ -965,10 +1030,24 @@ ${conversationText || "No message content yet."}`;
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by subject, customer, ID…"
+              placeholder="Search by subject, customer, ID, assignee…"
               className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </div>
+
+          <select
+            value={deptFilter}
+            onChange={(e) => setDeptFilter(e.target.value)}
+            className="py-2 px-3 rounded-xl border border-border bg-card text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-soft"
+          >
+            <option value="all">All Departments</option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.name}>
+                {d.name} ({d.code})
+              </option>
+            ))}
+          </select>
+
           <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/60 border border-border">
             {FILTERS.map((f) => (
               <button
@@ -1036,6 +1115,7 @@ ${conversationText || "No message content yet."}`;
                     <th className="px-5 py-3 font-medium">Ticket</th>
                     <th className="px-3 py-3 font-medium">Customer</th>
                     <th className="px-3 py-3 font-medium">Channel</th>
+                    <th className="px-3 py-3 font-medium">Department & Assignee</th>
                     <th className="px-3 py-3 font-medium">Status</th>
                     <th className="px-3 py-3 font-medium">Msgs</th>
                     <th className="px-5 py-3 font-medium text-right">Updated</th>
@@ -1045,6 +1125,8 @@ ${conversationText || "No message content yet."}`;
                   {filtered.map((t) => {
                     const TIcon = CHANNEL_ICON[t.channel] ?? Mail;
                     const isTEscalated = t.priority === "urgent" || t.tags?.includes("escalated");
+                    const assignedDept = departments.find((d) => d.name === t.department);
+
                     return (
                       <tr
                         key={t.id}
@@ -1101,6 +1183,26 @@ ${conversationText || "No message content yet."}`;
                           >
                             <TIcon className="h-3 w-3" /> {t.channel}
                           </span>
+                        </td>
+                        <td className="px-3 py-3.5">
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-1 text-xs font-semibold text-foreground">
+                              {assignedDept ? (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+                                  {assignedDept.code}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground italic">
+                                  No Dept
+                                </span>
+                              )}
+                              <span className="truncate">{t.department || "General"}</span>
+                            </div>
+                            <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+                              <UserCircle2 className="h-3 w-3 text-muted-foreground" />
+                              <span className="truncate font-medium">{t.assignee || "Unassigned"}</span>
+                            </div>
+                          </div>
                         </td>
                         <td className="px-3 py-3.5">
                           <StatusBadge status={t.status} />

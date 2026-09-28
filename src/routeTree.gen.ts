@@ -17,6 +17,7 @@ import { Route as AutomationsRouteImport } from './routes/automations'
 import { Route as CampaignsRouteImport } from './routes/campaigns'
 import { Route as ContactsRouteImport } from './routes/contacts'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DepartmentsRouteImport } from './routes/departments'
 import { Route as DevApiRouteImport } from './routes/dev-api'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as EnvRouteImport } from './routes/env'
@@ -33,6 +34,7 @@ import { Route as SitesRouteImport } from './routes/sites'
 import { Route as SurveysRouteImport } from './routes/surveys'
 import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as TicketsRouteImport } from './routes/tickets'
+import { Route as UsersRouteImport } from './routes/users'
 import { Route as VoiceRouteImport } from './routes/voice'
 import { Route as DocsApiKeysRouteImport } from './routes/docs.api-keys'
 import { Route as DocsAutomationsRouteImport } from './routes/docs.automations'
@@ -87,6 +89,11 @@ const ContactsRoute = ContactsRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DepartmentsRoute = DepartmentsRouteImport.update({
+  id: '/departments',
+  path: '/departments',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevApiRoute = DevApiRouteImport.update({
@@ -167,6 +174,11 @@ const TemplatesRoute = TemplatesRouteImport.update({
 const TicketsRoute = TicketsRouteImport.update({
   id: '/tickets',
   path: '/tickets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsersRoute = UsersRouteImport.update({
+  id: '/users',
+  path: '/users',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VoiceRoute = VoiceRouteImport.update({
@@ -254,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/campaigns': typeof CampaignsRoute
   '/contacts': typeof ContactsRoute
   '/dashboard': typeof DashboardRoute
+  '/departments': typeof DepartmentsRoute
   '/dev-api': typeof DevApiRoute
   '/docs': typeof DocsRouteWithChildren
   '/env': typeof EnvRoute
@@ -270,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/surveys': typeof SurveysRoute
   '/templates': typeof TemplatesRoute
   '/tickets': typeof TicketsRoute
+  '/users': typeof UsersRoute
   '/voice': typeof VoiceRoute
   '/docs/api-keys': typeof DocsApiKeysRoute
   '/docs/automations': typeof DocsAutomationsRoute
@@ -295,6 +309,7 @@ export interface FileRoutesByTo {
   '/campaigns': typeof CampaignsRoute
   '/contacts': typeof ContactsRoute
   '/dashboard': typeof DashboardRoute
+  '/departments': typeof DepartmentsRoute
   '/dev-api': typeof DevApiRoute
   '/docs': typeof DocsRouteWithChildren
   '/env': typeof EnvRoute
@@ -311,6 +326,7 @@ export interface FileRoutesByTo {
   '/surveys': typeof SurveysRoute
   '/templates': typeof TemplatesRoute
   '/tickets': typeof TicketsRoute
+  '/users': typeof UsersRoute
   '/voice': typeof VoiceRoute
   '/docs/api-keys': typeof DocsApiKeysRoute
   '/docs/automations': typeof DocsAutomationsRoute
@@ -337,6 +353,7 @@ export interface FileRoutesById {
   '/campaigns': typeof CampaignsRoute
   '/contacts': typeof ContactsRoute
   '/dashboard': typeof DashboardRoute
+  '/departments': typeof DepartmentsRoute
   '/dev-api': typeof DevApiRoute
   '/docs': typeof DocsRouteWithChildren
   '/env': typeof EnvRoute
@@ -353,6 +370,7 @@ export interface FileRoutesById {
   '/surveys': typeof SurveysRoute
   '/templates': typeof TemplatesRoute
   '/tickets': typeof TicketsRoute
+  '/users': typeof UsersRoute
   '/voice': typeof VoiceRoute
   '/docs/api-keys': typeof DocsApiKeysRoute
   '/docs/automations': typeof DocsAutomationsRoute
@@ -380,6 +398,7 @@ export interface FileRouteTypes {
     | '/campaigns'
     | '/contacts'
     | '/dashboard'
+    | '/departments'
     | '/dev-api'
     | '/docs'
     | '/env'
@@ -396,6 +415,7 @@ export interface FileRouteTypes {
     | '/surveys'
     | '/templates'
     | '/tickets'
+    | '/users'
     | '/voice'
     | '/docs/api-keys'
     | '/docs/automations'
@@ -421,6 +441,7 @@ export interface FileRouteTypes {
     | '/campaigns'
     | '/contacts'
     | '/dashboard'
+    | '/departments'
     | '/dev-api'
     | '/docs'
     | '/env'
@@ -437,6 +458,7 @@ export interface FileRouteTypes {
     | '/surveys'
     | '/templates'
     | '/tickets'
+    | '/users'
     | '/voice'
     | '/docs/api-keys'
     | '/docs/automations'
@@ -462,6 +484,7 @@ export interface FileRouteTypes {
     | '/campaigns'
     | '/contacts'
     | '/dashboard'
+    | '/departments'
     | '/dev-api'
     | '/docs'
     | '/env'
@@ -478,6 +501,7 @@ export interface FileRouteTypes {
     | '/surveys'
     | '/templates'
     | '/tickets'
+    | '/users'
     | '/voice'
     | '/docs/api-keys'
     | '/docs/automations'
@@ -504,6 +528,7 @@ export interface RootRouteChildren {
   CampaignsRoute: typeof CampaignsRoute
   ContactsRoute: typeof ContactsRoute
   DashboardRoute: typeof DashboardRoute
+  DepartmentsRoute: typeof DepartmentsRoute
   DevApiRoute: typeof DevApiRoute
   DocsRoute: typeof DocsRouteWithChildren
   EnvRoute: typeof EnvRoute
@@ -520,6 +545,7 @@ export interface RootRouteChildren {
   SurveysRoute: typeof SurveysRoute
   TemplatesRoute: typeof TemplatesRoute
   TicketsRoute: typeof TicketsRoute
+  UsersRoute: typeof UsersRoute
   VoiceRoute: typeof VoiceRoute
   SIdRoute: typeof SIdRoute
   SiteSlugRoute: typeof SiteSlugRoute
@@ -581,6 +607,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/departments': {
+      id: '/departments'
+      path: '/departments'
+      fullPath: '/departments'
+      preLoaderRoute: typeof DepartmentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dev-api': {
@@ -693,6 +726,13 @@ declare module '@tanstack/react-router' {
       path: '/tickets'
       fullPath: '/tickets'
       preLoaderRoute: typeof TicketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/users': {
+      id: '/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof UsersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/voice': {
@@ -844,6 +884,7 @@ const rootRouteChildren: RootRouteChildren = {
   CampaignsRoute: CampaignsRoute,
   ContactsRoute: ContactsRoute,
   DashboardRoute: DashboardRoute,
+  DepartmentsRoute: DepartmentsRoute,
   DevApiRoute: DevApiRoute,
   DocsRoute: DocsRouteWithChildren,
   EnvRoute: EnvRoute,
@@ -860,6 +901,7 @@ const rootRouteChildren: RootRouteChildren = {
   SurveysRoute: SurveysRoute,
   TemplatesRoute: TemplatesRoute,
   TicketsRoute: TicketsRoute,
+  UsersRoute: UsersRoute,
   VoiceRoute: VoiceRoute,
   SIdRoute: SIdRoute,
   SiteSlugRoute: SiteSlugRoute,
